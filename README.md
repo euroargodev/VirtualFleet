@@ -9,10 +9,10 @@ Using GulfStream subset of the Operational Mercator daily ocean analysis and for
 
 ## Example 2
 10 floats advected for 1 years, dt= 5 minutes  
-Using Daily Mediterranean MFS - EAS4 of CMCC, at 1/24 degree.
+Using Daily Mediterranean MFS - EAS4 of CMCC, at 1/24 degree.  
 --> 4 / 8 cores in use  
---> 197 / 250 Gb in use   
---> Runtime = 00:43:48 
+--> 197 / 250 Gb in use     
+--> Runtime = 00:43:48   
   
 ![](https://raw.githubusercontent.com/euroargodev/VirtualFleet/master/10_floats_med_1y.png?token=AEIGE7GWHRUVAY3NBRWA73S6L7IYA)
 
