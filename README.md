@@ -6,4 +6,4 @@ Using GulfStream subset of the Operational Mercator global daily ocean analysis 
 --> 66Gb   
 --> Runtime = 00:15:21 
   
-![](https://raw.githubusercontent.com/euroargodev/VirtualFleet/master/50floats_linedep_2years.png)
+![](https://raw.githubusercontent.com/euroargodev/VirtualFleet/master/50floats_linedep_2years.png?token=AEIGE7HB6J4MORC5IYKNVJC6L6TOK)
