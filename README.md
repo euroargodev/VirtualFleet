@@ -1,2 +1,7 @@
-# VirtualFleet
-This repo is meant to host some codes for WP2, Virtual Argo fleet task. These are based on Ocean Parcels : Erik Van Sebille advection python tool (https://github.com/OceanParcels/parcels)
+## Example of perf   
+### Run on Datarmor  
+50 floats advected for 2 years, dt= 5 minutes  
+Using GulfStream subset of the Operational Mercator global daily ocean analysis and forecast system at 1/12 degree.  
+--> 18 cores in use  
+--> 66Gb   
+--> Runtime = 00:15:21  
