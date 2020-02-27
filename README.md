@@ -19,9 +19,9 @@ Using GulfStream subset of the Operational Mercator daily ocean analysis and for
 ### Example 3
 10 floats advected for 1 year, dt= 5 minutes  
 Using Daily Mediterranean MFS - EAS4 of CMCC, at 1/24 degree.  
--->  cores in use  
--->  Gb of memory in use     
---> Runtime = 
+-->  3 cores in use  
+-->  186 Gb of memory in use     
+--> Runtime = 00:41:29
   
 ![](URL TO PICTURE)
 
