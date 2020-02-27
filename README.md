@@ -1,24 +1,32 @@
 ## Example 1
-50 floats advected for 2 years, dt= 5 minutes  
+10 floats advected for 1 years, dt= 5 minutes  
 Using GulfStream subset of the Operational Mercator daily ocean analysis and forecast system at 1/12 degree.  
---> 18 / 25 cores in use  
---> 66 / 115 Gb in use   
---> Runtime = 00:15:21 
+--> 2 cores in use  
+--> 36 Gb of memory in use   
+--> Runtime = 00:05:30 
   
-![](https://raw.githubusercontent.com/euroargodev/VirtualFleet/master/50floats_linedep_2years.png?token=AEIGE7HB6J4MORC5IYKNVJC6L6TOK)  
+![](URL_TO_PICTURE)  
 
 ## Example 2
+100 floats advected for 1 year, dt= 5 minutes  
+Using GulfStream subset of the Operational Mercator daily ocean analysis and forecast system at 1/12 degree.  
+--> 12 cores in use  
+--> 38 Gb of memory in use     
+--> Runtime = 00:05:42   
+  
+![](URL TO PICTURE)
+
+## Example 3
 10 floats advected for 1 year, dt= 5 minutes  
 Using Daily Mediterranean MFS - EAS4 of CMCC, at 1/24 degree.  
---> 4 / 8 cores in use  
---> 197 / 250 Gb in use     
---> Runtime = 00:43:48   
+-->  cores in use  
+-->  Gb of memory in use     
+--> Runtime = 
   
-![](https://raw.githubusercontent.com/euroargodev/VirtualFleet/master/10_floats_med_1y.png?token=AEIGE7GWHRUVAY3NBRWA73S6L7IYA)
+![](URL TO PICTURE)
 
-
-
-
+## ARGO CYCLE
+![](URL TO PICTURE)
 
 
 

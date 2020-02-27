@@ -51,9 +51,12 @@ def ArgoVerticalMovement(particle, fieldset, time):
             if particle.cycle_age > cycletime:
                 particle.cycle_phase = 0
                 particle.cycle_age = 0         
+               
+        particle.cycle_age += particle.dt  # update cycle_age    
                 
 # define recovery for OutOfBounds Error
 def DeleteParticle(particle, fieldset, time):  # delete particles who run out of bounds.    
+    print("Particle deleted on boundary")
     particle.delete()
               
 def periodicBC(particle, fieldset, time):    
