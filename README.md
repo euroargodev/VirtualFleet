@@ -2,7 +2,7 @@
 
 This repository hosts a python library to perform and analyse numerical simulation of virtual Argo floats.
 
-The numerical simulator backend is [oceanparcels](http://oceanparcels.org/).
+The numerical simulator backend is [oceanparcels](http://oceanparcels.org/), the version used here is : 2.1.4
 
 **Software status**: in active development
 
