@@ -1,3 +1,25 @@
+# Argo Virtual Fleet Simulator
+
+This repository hosts a python library to perform and analyse numerical simulation of virtual Argo floats.
+
+The numerical simulator backend is [oceanparcels](http://oceanparcels.org/).
+
+**Software status**: in active development
+
+## Expected API usage:
+
+The ``virtualargofleet`` provides a convenient wrapper around the [oceanparcels](http://oceanparcels.org/) machinary.
+
+```python
+    import virtualargofleet as vaf
+    [...] 
+    tfield = vaf.velocityfield(ds=filenames, var=variables, dim=dimensions, isglobal=0)
+    [...]
+    myfleet = vaf.virtualfleet(lat=lat, lon=lon, depth=depth, time=ti, vfield=tfield)
+    [...]
+    myfleet.simulate(duration=365*2, dt_run=1./12, dt_out=24, output_file='test.nc')
+```
+
 ### Example 1
 10 floats advected for 1 years, dt= 5 minutes  
 Using GulfStream subset of the Operational Mercator daily ocean analysis and forecast system at 1/12 degree.  
@@ -28,7 +50,13 @@ Using Daily Mediterranean MFS - EAS4 of CMCC, at 1/24 degree.
 ### Float cycle representation in the simulation can be tweaked
 ![](https://raw.githubusercontent.com/euroargodev/VirtualFleet/master/Basic_argo_cycle.png?token=AEIGE7ANOU7GS73VM6MWYAK6MEP42)
 
-
+***
+This work is part and was supported by the following projects:
+<div>
+<img src="https://avatars1.githubusercontent.com/u/58258213?s=460&v=4" width="70"/>
+<img src="http://www.argo-france.fr/wp-content/uploads/2019/10/Argo-logo_banner-color.png" width="200"/>
+<img src="https://www.umr-lops.fr/var/storage/images/_aliases/logo_main/medias-ifremer/medias-lops/logos/logo-lops-2/1459683-4-fre-FR/Logo-LOPS-2.png" width="70"/>
+</div>
 
 
 

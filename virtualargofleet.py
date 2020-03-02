@@ -1,4 +1,11 @@
-#!/export/home/anaconda3/bin/python
+#!/bin/env python
+# -*coding: UTF-8 -*-
+"""
+
+Created by K. Balem on 02/28/2020
+"""
+__author__ = 'kbalem@ifremer.fr'
+
 
 from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4, ErrorCode, Variable, plotTrajectoriesFile
 from datetime import timedelta
@@ -98,7 +105,7 @@ class velocityfield:
         temp_pset.show(field=self.fieldset.U,with_particles=False)
         #temp_pset.show(field=self.fieldset.V,with_particles=False)
         
-class virtualfloat:
+class virtualfleet:
     """
     USAGE:
     lat,lon,depth,time : numpy arrays describing initial set of floats
@@ -128,7 +135,7 @@ class virtualfloat:
         #using parcels psel builtin show function for now
         self.pset.show()
             
-    def advect(self,**kwargs):
+    def simulate(self,**kwargs):
         """
         USAGE:
         duration : number of days (365)
