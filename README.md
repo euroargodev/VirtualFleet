@@ -1,5 +1,5 @@
 # Argo Virtual Fleet Simulator : 
-### [https://euroargodev.github.io/VirtualFleet](https://euroargodev.github.io/VirtualFleet)
+### [https://euroargodev.github.io/VirtualFleet](https://euroargodev.github.io/VirtualFleet){:target="_blank"}
 
 This repository hosts a python library to perform and analyse numerical simulation of virtual Argo floats.
 
