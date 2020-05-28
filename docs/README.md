@@ -56,7 +56,7 @@ Using Daily Mediterranean MFS - EAS4 of CMCC, at 1/24 degree.
 This work is part and was supported by the following projects:
 <div>
 <img src="https://avatars1.githubusercontent.com/u/58258213?s=460&v=4" width="70"/>
-<img src="http://www.argo-france.fr/wp-content/uploads/2019/10/Argo-logo_banner-color.png" width="200"/>
+<img src="https://user-images.githubusercontent.com/17851004/83142990-8fe60380-a0f1-11ea-85c1-f7b1d343be88.jpg" width="200"/>
 <img src="https://www.umr-lops.fr/var/storage/images/_aliases/logo_main/medias-ifremer/medias-lops/logos/logo-lops-2/1459683-4-fre-FR/Logo-LOPS-2.png" width="70"/>
 </div>
 
