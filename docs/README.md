@@ -101,12 +101,12 @@ Check out the notebooks under the ``examples`` folder to see how to look at the 
 
 Floats deployed in 2019 near Bermuda:
 
-![](img/GS_real.png)
+![](img/NA_real.png)
 
 
 ### Float cycle representation in the simulation can be tweaked
 
-![](https://user-images.githubusercontent.com/17851004/76072496-5f7e4580-5f98-11ea-9a92-9701657a1d6b.png)
+![](img/Basic_argo_cycle.png)
 
 ***
 This work is part of the following projects:

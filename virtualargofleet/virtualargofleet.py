@@ -147,12 +147,13 @@ class virtualfleet:
         dt_run : time step in hours for the computation (1/12)        
         dt_out : time step in hours for writing the output (24)
         output_file
-        """        
+        """
         duration = kwargs['duration']
         dt_run = kwargs['dt_run']
         dt_out = kwargs['dt_out']
         output_file = kwargs['output_file']
-        
+        self.run_params = {'duration': duration, 'dt_run':dt_run, 'dt_out': dt_out, 'output_file': output_file}
+
         # Now execute the kernels for X days, saving data every Y minutes
         self.pset.execute(self.kernels, 
                           runtime = timedelta(days = duration), 
