@@ -4,6 +4,8 @@ This repository hosts a python library to perform and analyse numerical simulati
 
 The numerical simulator backend is [oceanparcels](http://oceanparcels.org/), the version used here is : 2.1.4
 
+**Software status**: in active development
+
 ## Expected API usage:
 
 The ``virtualargofleet`` provides a convenient wrapper around the [oceanparcels](http://oceanparcels.org/) machinary.
@@ -35,6 +37,7 @@ Using GulfStream subset of the Operational Mercator daily ocean analysis and for
 --> Runtime = 00:05:42   
   
 ![GS_100floats_1y](https://user-images.githubusercontent.com/17851004/76072419-38277880-5f98-11ea-85c7-d7c87a121b27.png)
+
 
 ### Example 3
 10 floats advected for 1 year, dt= 5 minutes  
