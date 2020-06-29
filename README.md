@@ -1,6 +1,4 @@
-# <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture.png" alt="argopy logo" width="200"/> Argo data python library
-
-# Argo Virtual Fleet Simulator
+# <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture.png" alt="VirtualFleet logo" width="400"/>
 
 
 This repository hosts a python library to perform and analyse numerical simulation of virtual Argo floats.
