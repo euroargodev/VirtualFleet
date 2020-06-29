@@ -19,7 +19,7 @@ First, import the library:
     import virtualargofleet as vaf
 ```
 
-Next, define the velocity fields properties (file, variable names, etc...):
+Next, define the velocity fields properties (file, variable names, etc...). This is where you indicate where to find all the netcdf velocity files:
 ```python
     src = "data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024" # Mercator forecast    
     filenames = {'U': src + "/2019*.nc",
@@ -38,8 +38,14 @@ Then define a virtual Argo float deployment plan with arrays for latitude, longi
     lon = np.full_like(lat, -70)
     dpt = np.linspace(1.0, 1.0, nfloats) #1m depth
     tim = np.full_like(lat, np.datetime64('2019-01-01'))
-
+    
+    # Create your fleet:
     VFleet = vaf.virtualfleet(lat=lat, lon=lon, depth=depth, time=ti, vfield=tfield)
+```
+
+You can easily checkout your plan:
+```python
+    VFleet.plotfloat()
 ```
 
 And finally run the simulation:
@@ -51,7 +57,7 @@ Simulation data will be saved into the ``test.nc`` file in this example.
 
 Check out the notebooks under the ``examples`` folder to see how to look at the simulation results.
 
-## Examples
+## Simulation examples
 
 ### Gulf Stream, Example 1
 
@@ -64,8 +70,8 @@ Check out the notebooks under the ``examples`` folder to see how to look at the 
 - 2 cores in use  
 - 36 Gb of memory in use   
 - Runtime = 00:05:30 
-  
-![](https://user-images.githubusercontent.com/17851004/76072356-21812180-5f98-11ea-94e4-c7f8cb574fd3.png)  
+ 
+![](img/GS_10floats_1y.png)
 
 ### Gulf Stream, Example 2
 100 floats advected for 1 year, dt = 5 minutes  
@@ -77,7 +83,7 @@ Check out the notebooks under the ``examples`` folder to see how to look at the 
 - 38 Gb of memory in use     
 - Runtime = 00:05:42   
 
-![](https://user-images.githubusercontent.com/17851004/76072419-38277880-5f98-11ea-85c7-d7c87a121b27.png)
+![](img/GS_100floats_1y.png)
 
 ### Mediterranean Sea
 10 floats advected for 1 year, dt = 5 minutes  
@@ -89,11 +95,11 @@ Check out the notebooks under the ``examples`` folder to see how to look at the 
 - 186 Gb of memory in use     
 - Runtime = 00:41:29
   
-![](https://user-images.githubusercontent.com/17851004/76072471-52f9ed00-5f98-11ea-9ed3-01322b41e46f.png)
+![](img/MED_10floats_1y.png)
 
 ### Real vs virtual floats comparison
 
-Floats deployed in 2019 near the Gulf Stream
+Floats deployed in 2019 near Bermuda:
 
 ![](img/GS_real.png)
 
