@@ -1,0 +1,43 @@
+name: euroargodev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.6
+  - xarray
+  - dask
+  - distributed
+  - dask-kubernetes
+  - gcsfs
+  - zarr
+  - matplotlib
+  - numcodecs
+  - python-blosc
+  - lz4
+  - nomkl
+  - nbserverproxy
+  - jupyter
+  - jupyterlab=0.35
+  - jupyterlab_launcher
+  - jupyter_client
+  - jupyter_server
+  - ipywidgets
+  - graphviz
+  - nodejs
+  - scikit-image
+  - scikit-learn
+  - watermark
+  - shapely
+  - Cartopy==0.17.0
+  - pip
+  - pip:
+    - graphviz
+    - jupyter-server-proxy
+    - netCDF4
+    - erddapy
+    - gitpython
+    - cmocean
+    - git+http://github.com/euroargodev/argopy.git@master
+    - progressbar
+    - cgen
+    - pymbolic
+    - git+https://github.com/OceanParcels/parcels.git@master
