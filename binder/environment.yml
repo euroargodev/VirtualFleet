@@ -39,4 +39,5 @@ dependencies:
     - git+http://github.com/euroargodev/argopy.git@master
     - progressbar
     - cgen
+    - pymbolic
     - git+https://github.com/OceanParcels/parcels.git@master
