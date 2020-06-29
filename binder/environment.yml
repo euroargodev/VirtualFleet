@@ -2,16 +2,38 @@ name: euroargodev
 channels:
   - conda-forge
 dependencies:
-  - pangeo-notebook==2020.05.10
+  - python=3.6
   - xarray
+  - dask
+  - distributed
+  - dask-kubernetes
+  - gcsfs
+  - zarr
   - matplotlib
+  - numcodecs
+  - python-blosc
+  - lz4
+  - nomkl
+  - nbserverproxy
+  - jupyter
+  - jupyterlab=0.35
+  - jupyterlab_launcher
+  - jupyter_client
+  - jupyter_server
+  - ipywidgets
+  - graphviz
+  - nodejs
+  - scikit-image
+  - scikit-learn
   - pip
   - pip:
+    - graphviz
+    - jupyter-server-proxy
     - netCDF4
     - erddapy
     - gitpython
     - cmocean
+    - git+http://github.com/euroargodev/argopy.git@master
     - progressbar
     - cgen
-    - git+https://github.com/euroargodev/argopy.git@master
     - git+https://github.com/OceanParcels/parcels.git@master
