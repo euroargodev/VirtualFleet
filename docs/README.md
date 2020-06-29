@@ -1,5 +1,4 @@
-# Argo Virtual Fleet Simulator
-
+# Argo Virtual Fleet Simulator : 
 This repository hosts a python library to perform and analyse numerical simulation of virtual Argo floats.
 
 The numerical simulator backend is [oceanparcels](http://oceanparcels.org/), the version used here is : 2.1.4
@@ -59,6 +58,3 @@ This work is part and was supported by the following projects:
 <img src="https://user-images.githubusercontent.com/17851004/83142990-8fe60380-a0f1-11ea-85c1-f7b1d343be88.jpg" width="200"/>
 <img src="https://www.umr-lops.fr/var/storage/images/_aliases/logo_main/medias-ifremer/medias-lops/logos/logo-lops-2/1459683-4-fre-FR/Logo-LOPS-2.png" width="70"/>
 </div>
-
-
-
