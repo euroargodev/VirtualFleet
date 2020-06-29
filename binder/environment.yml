@@ -4,10 +4,14 @@ channels:
 dependencies:
   - pangeo-notebook==2020.05.10
   - xarray
+  - matplotlib
   - pip
   - pip:
+    - netCDF4
     - erddapy
     - gitpython
     - cmocean
+    - progressbar
+    - cgen
     - git+https://github.com/euroargodev/argopy.git@master
     - git+https://github.com/OceanParcels/parcels.git@master

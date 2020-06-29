@@ -9,4 +9,11 @@ sed -i -e "s|WORKSPACE_ID|/user/${JUPYTERHUB_USER}/lab|g" binder/jupyterlab-work
 jupyter lab workspaces import binder/jupyterlab-workspace.json \
   --NotebookApp.base_url=user/${JUPYTERHUB_USER}
 
+# download data for tests
+cd /home/jovyan
+mkdir data
+cd data
+wget https://storage.cloud.google.com/global-analysis-forecast-phy-001-024/20200627_global-analysis-forecast-phy-001-024.nc
+cd -
+
 exec "$@"
