@@ -1,0 +1,11 @@
+name: docs
+
+on: [push]
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+    - name: docsify-action
+    - uses: actions/checkout@master
+    - uses: tool3/docsify-action@master
