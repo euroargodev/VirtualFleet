@@ -25,6 +25,9 @@ dependencies:
   - nodejs
   - scikit-image
   - scikit-learn
+  - watermark
+  - shapely
+  - Cartopy==0.17.0
   - pip
   - pip:
     - graphviz
