@@ -1,4 +1,4 @@
-# <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture.png" alt="VirtualFleet logo" width="500"/>
+# <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture_tight.png" alt="VirtualFleet logo" width="500"/>
 
 This repository hosts a python library to perform and analyse numerical simulation of virtual Argo floats.
 
@@ -13,15 +13,32 @@ Click here to [![badge](https://img.shields.io/badge/launch-Pangeo%20binder-579A
 The ``virtualargofleet`` provides convenient wrappers around the [oceanparcels](http://oceanparcels.org/) machinary. 
 Fully dedicated to virtual Argo floats.
 
-First, import the library and define the velocity fields properties (file, variable names, etc...):
+First, import the library:
 
 ```python
     import virtualargofleet as vaf
+```
+
+Next, define the velocity fields properties (file, variable names, etc...):
+```python
+    src = "data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024" # Mercator forecast    
+    filenames = {'U': src + "/2019*.nc",
+                 'V': src + "/2019*.nc"}
+    variables = {'U':'uo','V':'vo'}
+    dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
     VELfield = vaf.velocityfield(ds=filenames, var=variables, dim=dimensions, isglobal=0)
 ```
 
-Then define a virtual Argo float deployment plan:
+Then define a virtual Argo float deployment plan with arrays for latitude, longitude, depth and time of deployments:
 ```python
+    nfloats = 10  # Number of floats we want to simulate:
+
+    # Define space/time locations of deployments:
+    lat = np.linspace(30, 38, nfloats)
+    lon = np.full_like(lat, -70)
+    dpt = np.linspace(1.0, 1.0, nfloats) #1m depth
+    tim = np.full_like(lat, np.datetime64('2019-01-01'))
+
     VFleet = vaf.virtualfleet(lat=lat, lon=lon, depth=depth, time=ti, vfield=tfield)
 ```
 
@@ -29,6 +46,10 @@ And finally run the simulation:
 ```python
     VFleet.simulate(duration=365*2, dt_run=1./12, dt_out=24, output_file='test.nc')
 ```
+
+Simulation data will be saved into the ``test.nc`` file in this example.
+
+Check out the notebooks under the ``examples`` folder to see how to look at the simulation results.
 
 ## Examples
 
@@ -69,6 +90,13 @@ And finally run the simulation:
 - Runtime = 00:41:29
   
 ![](https://user-images.githubusercontent.com/17851004/76072471-52f9ed00-5f98-11ea-9ed3-01322b41e46f.png)
+
+### Real vs virtual floats comparison
+
+Floats deployed in 2019 near the Gulf Stream
+
+![](img/GS_real.png)
+
 
 ### Float cycle representation in the simulation can be tweaked
 
