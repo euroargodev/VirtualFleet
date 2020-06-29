@@ -36,7 +36,6 @@ Using GulfStream subset of the Operational Mercator daily ocean analysis and for
   
 ![GS_100floats_1y](https://user-images.githubusercontent.com/17851004/76072419-38277880-5f98-11ea-85c7-d7c87a121b27.png)
 
-
 ### Example 3
 10 floats advected for 1 year, dt= 5 minutes  
 Using Daily Mediterranean MFS - EAS4 of CMCC, at 1/24 degree.  
@@ -57,6 +56,3 @@ This work is part and was supported by the following projects:
 <img src="https://user-images.githubusercontent.com/17851004/83142990-8fe60380-a0f1-11ea-85c1-f7b1d343be88.jpg" width="200"/>
 <img src="https://www.umr-lops.fr/var/storage/images/_aliases/logo_main/medias-ifremer/medias-lops/logos/logo-lops-2/1459683-4-fre-FR/Logo-LOPS-2.png" width="70"/>
 </div>
-
-
-
