@@ -5,7 +5,8 @@
 * [Examples](examples.md "Virtual Fleet examples")
 * [Roadmap](roadmap.md)
 
-<img src="https://avatars1.githubusercontent.com/u/58258213?s=460&v=4" width="50%" style="display: block;position:fixed;bottom:0px; left:50%;"/>
+<!-- bottom logo -->
+<div style="display: block;position:fixed;bottom:0px; left:50%;"><img src="https://avatars1.githubusercontent.com/u/58258213?s=460&v=4" width="150"/></div>
 
     
     
