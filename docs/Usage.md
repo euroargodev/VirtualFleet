@@ -52,7 +52,7 @@ And finally run the simulation:
 
 Simulation data will be saved into the ``test.nc`` file in this example.
 
-Check out the notebooks under the ``examples`` folder to see how to look at the simulation results.
+Check out the notebooks under the #/Examples folder to see how to look at the simulation results.
 
 ***
 This work is part of the following projects:
