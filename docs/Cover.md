@@ -5,7 +5,7 @@
 > Argo floats simulator.
 
 [GitHub](https://github.com/euroargodev/VirtualFleet/)
-[API Usage](#Usage)
+[API Usage](#usage)
 [Try it now](https://binder.pangeo.io/v2/gh/euroargodev/VirtualFleet/refactoring?urlpath=lab/tree/examples/try_it-CustomPlans.ipynb)
 
 <!-- background color -->
