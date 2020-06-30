@@ -110,3 +110,8 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+#@quai20
+.vscode/
+.pytest_cache
+knotebooks/
