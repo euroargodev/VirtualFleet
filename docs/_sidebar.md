@@ -1,8 +1,6 @@
 <!-- docs/_sidebar.md -->
 
 * [Home](/ "Argo Virtual Fleet")
-* [Usage](Usage.md "API Usage")
-* [Examples](Examples.md "Virtual Fleet examples")
-* [Roadmap](Roadmap.md)
-
-<img src="https://avatars1.githubusercontent.com/u/58258213?s=460&v=4" width="150"/>
+* [Usage](usage.md "API Usage")
+* [Examples](examples.md "Virtual Fleet examples")
+* [Roadmap](roadmap.md)
