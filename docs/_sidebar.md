@@ -1,5 +1,3 @@
-<img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture_tight.png" alt="VirtualFleet logo" width="300"/>
-
 <!-- docs/_sidebar.md -->
 
 * [Home](/ "Argo Virtual Fleet")
