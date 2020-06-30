@@ -11,4 +11,4 @@
 <!-- background color -->
 ![color](#fff)
 
-<img src="https://avatars1.githubusercontent.com/u/58258213?s=460&v=4" width="150" style="display: block;margin-left: auto; margin-right: auto;"/>
+<div style="display: block;margin-left: auto; margin-right: auto;"><img src="https://avatars1.githubusercontent.com/u/58258213?s=460&v=4" width="150" /></div>
