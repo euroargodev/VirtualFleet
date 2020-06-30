@@ -8,7 +8,7 @@
 [Getting started](https://euroargodev.github.io/VirtualFleet/#/usage)
 [Try it now](https://binder.pangeo.io/v2/gh/euroargodev/VirtualFleet/refactoring?urlpath=lab/tree/examples/try_it-CustomPlans.ipynb)
 
-<img src="https://avatars1.githubusercontent.com/u/58258213?s=460&v=4" width="150" style="display: block;margin-left: auto; margin-right: auto;"/>
-
 <!-- background color -->
 ![color](#fff)
+
+<img src="https://avatars1.githubusercontent.com/u/58258213?s=460&v=4" width="150" style="display: block;margin-left: auto; margin-right: auto;"/>
