@@ -1,6 +1,6 @@
 <!-- cover.md -->
 
-![logo](img/repo_picture_tight.png)
+![logo](img/repo_picture.png)
 
 > Argo floats simulator v0.1.0
 
