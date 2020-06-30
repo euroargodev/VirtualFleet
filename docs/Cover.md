@@ -5,7 +5,7 @@
 > Argo floats simulator.
 
 [GitHub](https://github.com/euroargodev/VirtualFleet/)
-[Get Started](#/)
+[Get Started](#/Usage)
 
 <!-- background color -->
 ![color](#fff)
