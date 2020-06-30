@@ -1,112 +1,18 @@
-# <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture_tight.png" alt="VirtualFleet logo" width="500"/>
+# <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture_tight.png" alt="VirtualFleet logo" width="400"/>
 
 This repository hosts a python library to perform and analyse numerical simulation of virtual Argo floats.
 
-The numerical simulator backend is [oceanparcels](http://oceanparcels.org/).
-
-**Software status**: in active development
+Checkout the documentation at: https://euroargodev.github.io/VirtualFleet
 
 Click here to [![badge](https://img.shields.io/badge/launch-Pangeo%20binder-579ACA.svg?logo=data:image/png;base64,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)](https://binder.pangeo.io/v2/gh/euroargodev/VirtualFleet/refactoring?urlpath=lab/tree/examples/try_it-CustomPlans.ipynb) and play with ``VirtualFleet`` before you even install it (thanks [Pangeo](pangeo.io)).
 
-## API usage:
-
-The ``virtualargofleet`` provides convenient wrappers around the [oceanparcels](http://oceanparcels.org/) machinary. 
-Fully dedicated to virtual Argo floats.
-
-First, import the library:
-
-```python
-    import virtualargofleet as vaf
-```
-
-Next, define the velocity fields properties (file, variable names, etc...). This is where you indicate where to find all the netcdf velocity files:
-```python
-    src = "data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024" # Mercator forecast    
-    filenames = {'U': src + "/2019*.nc",
-                 'V': src + "/2019*.nc"}
-    variables = {'U':'uo','V':'vo'}
-    dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
-    VELfield = vaf.velocityfield(ds=filenames, var=variables, dim=dimensions, isglobal=0)
-```
-
-Then define a virtual Argo float deployment plan with arrays for latitude, longitude, depth and time of deployments:
-```python
-    nfloats = 10  # Number of floats we want to simulate:
-
-    # Define space/time locations of deployments:
-    lat = np.linspace(30, 38, nfloats)
-    lon = np.full_like(lat, -70)
-    dpt = np.linspace(1.0, 1.0, nfloats) #1m depth
-    tim = np.full_like(lat, np.datetime64('2019-01-01'))
-    
-    # Create your fleet:
-    VFleet = vaf.virtualfleet(lat=lat, lon=lon, depth=depth, time=ti, vfield=tfield)
-```
-
-You can easily checkout your plan:
-```python
-    VFleet.plotfloat()
-```
-
-And finally run the simulation:
-```python
-    VFleet.simulate(duration=365*2, dt_run=1./12, dt_out=24, output_file='test.nc')
-```
-
-Simulation data will be saved into the ``test.nc`` file in this example.
-
-Check out the notebooks under the ``examples`` folder to see how to look at the simulation results.
-
-## Simulation examples
-
-### Gulf Stream, Example 1
-
-10 floats advected (initial positions in yellow dots) for 1 years, dt = 5 minutes.  
-
-**Dataset** : 
-- GulfStream subset of the Operational Mercator daily ocean analysis and forecast system at 1/12 degree.  
-  
-**Run** : 
-- 2 cores in use  
-- 36 Gb of memory in use   
-- Runtime = 00:05:30 
- 
-![](img/GS_10floats_1y.png)
-
-### Gulf Stream, Example 2
-100 floats advected for 1 year, dt = 5 minutes  
-
-**Dataset**  : GulfStream subset of the Operational Mercator daily ocean analysis and forecast system at 1/12 degree.  
-
-**Run** :
-- 12 cores in use  
-- 38 Gb of memory in use     
-- Runtime = 00:05:42   
-
-![](img/GS_100floats_1y.png)
-
-### Mediterranean Sea
-10 floats advected for 1 year, dt = 5 minutes  
-
-**Dataset** : Daily Mediterranean MFS - EAS4 of CMCC, at 1/24 degree.  
-
-**Run** :
-- 3 cores in use  
-- 186 Gb of memory in use     
-- Runtime = 00:41:29
-  
-![](img/MED_10floats_1y.png)
-
-### Real vs virtual floats comparison
-
-Floats deployed in 2019 near Bermuda:
-
-![](img/NA_real.png)
-
-
-### Float cycle representation in the simulation can be tweaked
-
-![](img/Basic_argo_cycle.png)
+Dev. roadmap:
+- [x] Core library for specific Argo kernel on Parcels
+- [x] Tutorial notebooks to get started
+- [x] Extraction of a real plan for a given region (using argopy), *not automatic yet, but in notebooks*
+- [x] Initial public release in June 2020 
+- [ ] User defined mission parameters (eg: cycle time, parking depth, and custom kernels)
+- [ ] Virtual Fleet KPI and statistics (eg. sampling, trajectories statistics)
 
 ***
 This work is part of the following projects:
