@@ -40,11 +40,11 @@
 
 ## Real vs virtual floats comparison
 
-Floats deployed in 2019 near Bermuda:
+Simulation of floats deployed in 2019 near Bermuda (plain lines are the virtual floats, dashed lines the real ones). Using the Virtual Fleet software, we do not expect every single virtual float trajectories to be similar to the real ones, but we rather expect a long term regional sampling consistent with reality. Sampling metrics are being developped to assess that automatically with the software.
 
 ![](img/NA_real.png)
 
 
-## Float cycle representation in the simulation can be tweaked
+## 3D float cycle representation
 
 ![](img/Basic_argo_cycle.png)
