@@ -13,4 +13,4 @@ Software development roadmap:
 
 [Post issues on Github to request features or if you find bugs](https://github.com/euroargodev/VirtualFleet/issues/new/choose)
 
-You can also simply engage with this software user community on [![Gitter](https://badges.gitter.im/Argo-floats/virtual-fleet.svg)](https://gitter.im/Argo-floats/virtual-fleet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+You can also [![Gitter](https://badges.gitter.im/Argo-floats/virtual-fleet.svg)](https://gitter.im/Argo-floats/virtual-fleet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) about this software (or simply opens up the chat box at the lower right corner of this documentation). 
