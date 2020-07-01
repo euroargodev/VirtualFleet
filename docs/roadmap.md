@@ -11,4 +11,6 @@ Software development roadmap:
 - [ ] Allow users to control mission parameters (eg: cycle time, parking depth, and custom kernels)
 - [ ] Module to compute Virtual Fleet KPI and statistics (eg. sampling, trajectories)
 
-[Post issues to request features or engage discussion on these items !](https://github.com/euroargodev/VirtualFleet/issues/new/choose)
+[Post issues on Github to request features or if you find bugs](https://github.com/euroargodev/VirtualFleet/issues/new/choose)
+
+You can also simply engage with this software user community on [![Gitter](https://badges.gitter.im/Argo-floats/virtual-fleet.svg)](https://gitter.im/Argo-floats/virtual-fleet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)

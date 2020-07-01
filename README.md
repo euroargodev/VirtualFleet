@@ -1,5 +1,7 @@
 # <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture_tight.png" alt="VirtualFleet logo" width="400"/>
 
+[![Gitter](https://badges.gitter.im/Argo-floats/virtual-fleet.svg)](https://gitter.im/Argo-floats/virtual-fleet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 This repository hosts a python library to perform and analyse numerical simulation of virtual Argo floats.
 
 Checkout the documentation at: https://euroargodev.github.io/VirtualFleet

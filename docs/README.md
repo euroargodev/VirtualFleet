@@ -1,5 +1,7 @@
 # Virtual Fleet: Argo floats simulator
 
+[![Gitter](https://badges.gitter.im/Argo-floats/virtual-fleet.svg)](https://gitter.im/Argo-floats/virtual-fleet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 "Virtual Fleet" is a python library to perform and analyse numerical simulation of virtual Argo floats.
 
 "Virtual Fleet" uses [oceanparcels](http://oceanparcels.org/) to simulate Argo floats. It can be seen as a convenient wrapper around Parcels that is fully dedicated to virtual Argo floats.
