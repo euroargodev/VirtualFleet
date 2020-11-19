@@ -19,12 +19,13 @@ class ArgoParticle(JITParticle):
         drift_age = Variable('drift_age', dtype = np.float32, initial = 0.)       
         
 # Define the new Kernel that mimics Argo vertical movement
-def ArgoVerticalMovement(particle, fieldset, time):               
-        driftdepth = 1000
-        maxdepth = 2000
+def ArgoVerticalMovement(particle, fieldset, time):    
+
+        driftdepth = fieldset.parking_depth
+        maxdepth = fieldset.profile_depth
         mindepth = 20
-        vertical_speed = 0.09  # in m/s
-        cycletime = 10 * 86400  # in s
+        vertical_speed = fieldset.v_speed  # in m/s
+        cycletime = fieldset.cycle_duration * 86400  # in s
 
         # Compute drifting time so that the cycletime is respected:
         transit = (driftdepth - mindepth) / vertical_speed  # Time to descent to parking (mindepth to driftdepth at vertical_speed)
@@ -115,15 +116,23 @@ class virtualfleet:
     USAGE:
     lat,lon,depth,time : numpy arrays describing initial set of floats
     vfield : velocityfield object
+    mission : dictionnary {'parking_depth':parking_depth, 'profile_depth':profile_depth, 'vertical_speed':vertical_speed, 'cycle_duration':cycle_duration}
     """    
     def __init__(self,**kwargs):    
         #props
         self.lat = kwargs['lat']
         self.lon = kwargs['lon']
         self.depth = kwargs['depth']        
-        self.time = kwargs['time']
+        self.time = kwargs['time']        
         vfield = kwargs['vfield']
-        #define parcels particleset
+        mission = kwargs['mission']
+        #Pass mission parameters to simulation through fieldset
+        vfield.fieldset.add_constant('parking_depth', mission['parking_depth'])
+        vfield.fieldset.add_constant('profile_depth', mission['profile_depth'])
+        vfield.fieldset.add_constant('v_speed', mission['vertical_speed'])
+        vfield.fieldset.add_constant('cycle_duration', mission['cycle_duration'])
+        
+        #define parcels particleset     
         self.pset = ParticleSet(fieldset = vfield.fieldset, 
                                 pclass = ArgoParticle,
                                 lon = self.lon,
