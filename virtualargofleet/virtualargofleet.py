@@ -11,7 +11,7 @@ from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4, ErrorCode,
 from datetime import timedelta
 import numpy as np
 import xarray as xr
-
+import os, tempfile
 
 class ArgoParticle(JITParticle):
     """ Internal class used by parcels to add variables to particle kernel    
@@ -177,6 +177,14 @@ class virtualfleet:
         dt_run = kwargs['dt_run']
         dt_out = kwargs['dt_out']
         output_path = kwargs['output_file']
+        if ((os.path.exists(output_path)) | (output_path=='')) :    
+            temp_name = next(tempfile._get_candidate_names())+'.nc'
+            while os.path.exists(temp_name):
+                temp_name = next(tempfile._get_candidate_names())+'.nc'                
+            output_path = temp_name        
+            print("Filename empty of file already exists, simulation will be saved in : " + output_path)
+        else:
+            print("Simulation will be saved in : " + output_path)                
         self.run_params = {'duration': duration, 'dt_run': dt_run,
                            'dt_out': dt_out, 'output_file': output_path}
 
