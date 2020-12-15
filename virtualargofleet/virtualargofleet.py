@@ -160,14 +160,19 @@ class virtualfleet:
         duration = kwargs['duration']
         dt_run = kwargs['dt_run']
         dt_out = kwargs['dt_out']
-        output_file = kwargs['output_file']
-        self.run_params = {'duration': duration, 'dt_run':dt_run, 'dt_out': dt_out, 'output_file': output_file}
+        output_path = kwargs['output_file']
+        self.run_params = {'duration': duration, 'dt_run':dt_run, 'dt_out': dt_out, 'output_file': output_path}
 
+        output_file = self.pset.ParticleFile(name=output_path, outputdt=timedelta(hours=dt_out))
         # Now execute the kernels for X days, saving data every Y minutes
         self.pset.execute(self.kernels, 
                           runtime = timedelta(days = duration), 
                           dt = timedelta(hours = dt_run), 
-                          output_file = self.pset.ParticleFile(name = output_file,outputdt = timedelta(hours = dt_out)),
-                          recovery = {ErrorCode.ErrorOutOfBounds: DeleteParticle})                        
+                          output_file = output_file,
+                          recovery = {ErrorCode.ErrorOutOfBounds: DeleteParticle})    
+        output_file.export()
+        output_file.close()
+
+
     
         
