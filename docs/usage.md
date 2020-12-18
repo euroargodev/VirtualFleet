@@ -30,10 +30,17 @@ Then define a virtual Argo float deployment plan with arrays for latitude, longi
     lat = np.linspace(30, 38, nfloats)
     lon = np.full_like(lat, -70)
     dpt = np.linspace(1.0, 1.0, nfloats) #1m depth
-    tim = np.full_like(lat, np.datetime64('2019-01-01'))
+    tim = np.array(['2019-01-01' for i in range(nfloats)],dtype='datetime64')
+
+    # Mission parameters
+    parking_depth = 1000. #in m
+    profile_depth = 2000.
+    vertical_speed = 0.09 #in m/s
+    cycle_duration = 10. # in days
+    mission = {'parking_depth':parking_depth, 'profile_depth':profile_depth, 'vertical_speed':vertical_speed, 'cycle_duration':cycle_duration}
     
     # Create your fleet:
-    VFleet = vaf.virtualfleet(lat=lat, lon=lon, depth=depth, time=ti, vfield=tfield)
+    VFleet = vaf.virtualfleet(lat=lat, lon=lon, depth=depth, time=ti, vfield=tfield, mission=mission)
 ```
 
 You can easily checkout your plan:
