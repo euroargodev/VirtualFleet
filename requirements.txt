@@ -9,3 +9,4 @@ parcels>=2.2
 progressbar
 cgen
 pymbolic
+cartopy
