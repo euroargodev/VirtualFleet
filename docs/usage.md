@@ -1,4 +1,4 @@
-# Installation
+# Install at home
 
 Download the last [release](https://github.com/euroargodev/VirtualFleet/releases) of **virtualfleet** and with a working conda/jupyter installation, you can create a dedicated environment :
 ```python
