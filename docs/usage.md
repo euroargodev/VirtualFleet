@@ -2,8 +2,9 @@
 
 Download the last [release](https://github.com/euroargodev/VirtualFleet/releases) of **virtualfleet** and with a working conda/jupyter installation, you can create a dedicated environment :
 ```python
-conda create --name virtualfleet -c conda-forge --file requirements.txt
+conda env create -f environment.yml
 ```
+Then it shoud be available in your kernel list.
 
 # API Usage
 
