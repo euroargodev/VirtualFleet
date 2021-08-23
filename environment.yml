@@ -1,9 +1,10 @@
-name: euroargodev
+name: virtualfleet
 channels:
   - conda-forge
 dependencies:
   - python=3.6
-  - xarray
+  - xarray=0.16.0
+  - parcels=2.1.4
   - dask
   - distributed
   - dask-kubernetes
@@ -27,7 +28,7 @@ dependencies:
   - scikit-learn
   - watermark
   - shapely
-  - Cartopy==0.17.0
+  - cartopy=0.19.0
   - pip
   - pip:
     - graphviz
@@ -40,4 +41,3 @@ dependencies:
     - progressbar
     - cgen
     - pymbolic
-    - git+https://github.com/OceanParcels/parcels.git@master
