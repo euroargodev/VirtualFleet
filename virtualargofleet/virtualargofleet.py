@@ -109,7 +109,7 @@ class velocityfield:
         self.isglobal = kwargs['isglobal']
         #define parcels fieldset
         self.fieldset = FieldSet.from_netcdf(
-            self.field, self.var, self.dim, allow_time_extrapolation=True)
+            self.field, self.var, self.dim, allow_time_extrapolation=True, time_periodic=False)
         if self.isglobal:
             self.fieldset.add_constant('halo_west', fieldset.U.grid.lon[0])
             self.fieldset.add_constant('halo_east', fieldset.U.grid.lon[-1])
