@@ -111,8 +111,8 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# Examples
-examples/
+# Examples data
+examples/training/data/
 
 #@quai20
 .vscode/
