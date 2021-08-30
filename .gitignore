@@ -111,6 +111,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# Examples
+examples/
+
 #@quai20
 .vscode/
 .pytest_cache
