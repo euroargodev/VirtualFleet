@@ -21,6 +21,8 @@ dependencies:
   - jupyterlab_launcher
   - jupyter_client
   - jupyter_server
+  - nb_conda_kernels
+  - ipykernel
   - ipywidgets
   - graphviz
   - nodejs
