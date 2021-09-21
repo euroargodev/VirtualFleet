@@ -75,10 +75,43 @@ def ArgoVerticalMovement(particle, fieldset, time):
     particle.cycle_age += particle.dt  # update cycle_age
 
 # define recovery for OutOfBounds Error
-# delete particles who run out of bounds.
 def DeleteParticle(particle, fieldset, time):
-    print("Particle deleted on boundary")
-    particle.delete()
+
+    # Get velocity field bounds
+    lat_min, lat_max = fieldset.gridset.dimrange(dim='lat')
+    lon_min, lon_max = fieldset.gridset.dimrange(dim='lon')
+    # Get the center of the cellgrid for depth
+    dgrid = fieldset.gridset.grids[0].depth
+    depth_min = dgrid[0] + (dgrid[1]-dgrid[0])/2
+    depth_max = dgrid[-2]+(dgrid[-1]-dgrid[-2])/2
+
+    # out of geographical area : here we can delete the particle
+    if ((particle.lat < lat_min)|(particle.lat > lat_max)|(particle.lon < lon_min)|(particle.lon > lon_max)): 
+        print("Particle out of the geographical domain --> deleted")
+        particle.delete()
+    # in the air, calm down float !    
+    elif (particle.depth < depth_min) : 
+        print("Particle is flying above surface, depth set to product min_depth. Carefull with your dtime")
+        particle.depth = depth_min 
+    # below fieldset   
+    elif (particle.depth > depth_max) :   
+        # if we're in phase 0 or 1 :
+        # -> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)     
+        if particle.cycle_phase <= 1 :
+            print("Your float went below the fieldset, your dataset is probably not deep enough for what you're trying to do. It will drift here")
+            particle.depth = depth_max - 50
+            particle.cycle_phase = 1
+        # if we're in phase 2 :
+        # -> set particle depth to max non null depth, and start profiling (phase 3)  
+        elif particle.cycle_phase == 2 :
+            print("Your float went below the fieldset, your dataset is not deep enough for what you're trying to do. It will start profiling here")
+            particle.depth = depth_max
+            particle.cycle_phase = 3        
+        else :
+            pass                
+    else :
+        print("Particle deleted on unknown OutOfBoundsError")
+        particle.delete()
 
 def periodicBC(particle, fieldset, time):
     if particle.lon < fieldset.halo_west:
@@ -110,11 +143,12 @@ class velocityfield:
         #define parcels fieldset
         self.fieldset = FieldSet.from_netcdf(
             self.field, self.var, self.dim, allow_time_extrapolation=True, time_periodic=False)
+
         if self.isglobal:
-            self.fieldset.add_constant('halo_west', fieldset.U.grid.lon[0])
-            self.fieldset.add_constant('halo_east', fieldset.U.grid.lon[-1])
-            self.fieldset.add_constant('halo_south', fieldset.U.grid.lat[0])
-            self.fieldset.add_constant('halo_north', fieldset.U.grid.lat[-1])
+            self.fieldset.add_constant('halo_west', self.fieldset.U.grid.lon[0])
+            self.fieldset.add_constant('halo_east', self.fieldset.U.grid.lon[-1])
+            self.fieldset.add_constant('halo_south', self.fieldset.U.grid.lat[0])
+            self.fieldset.add_constant('halo_north', self.fieldset.U.grid.lat[-1])
             self.fieldset.add_periodic_halo(zonal=True, meridional=True)
 
     def plot(self):
