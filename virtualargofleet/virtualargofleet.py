@@ -32,11 +32,11 @@ def ArgoVerticalMovement(particle, fieldset, time):
     """
     driftdepth = fieldset.parking_depth
     maxdepth = fieldset.profile_depth
-    mindepth = 20  # not too close to the surface so that particle doesn't go above it
+    mindepth = 1  # not too close to the surface so that particle doesn't go above it
     vertical_speed = fieldset.v_speed  # in m/s
     cycletime = fieldset.cycle_duration * 86400  # in s
     particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
-                             particle.lon]
+                                      particle.lon]
 
     # Compute drifting time so that the cycletime is respected:
     # Time to descent to parking (mindepth to driftdepth at vertical_speed)
@@ -47,6 +47,21 @@ def ArgoVerticalMovement(particle, fieldset, time):
     transit += (maxdepth - mindepth) / vertical_speed
     drifttime = cycletime - transit
 
+    # Grounding/Flying management
+    if not particle.in_water:
+        # if we're in phase 0 or 1 :
+        # -> rising 50 db and start drifting (phase 1)
+        if particle.cycle_phase <= 1:
+            print("Grouding during descent to parking or during parking, rising up 50m and try drifting here.")
+            particle.depth = particle.depth - 50
+            particle.cycle_phase = 1
+        # if we're in phase 2:
+        # -> start profiling (phase 3)
+        elif particle.cycle_phase == 2:
+            print("Grounding during descent to profile, starting profile here")
+            particle.cycle_phase = 3                
+
+    # CYCLE MANAGEMENT
     if particle.cycle_phase == 0:
         # Phase 0: Sinking with vertical_speed until depth is driftdepth
         particle.depth += vertical_speed * particle.dt
@@ -100,26 +115,24 @@ def DeleteParticle(particle, fieldset, time):
         particle.delete()
     # in the air, calm down float !
     elif (particle.depth < depth_min):
-        print("Particle is flying above surface, depth set to product min_depth. Carefull with your dtime")
+        print("Field Warning : Particle above surface, depth set to product min_depth.")
         particle.depth = depth_min
     # below fieldset
     elif (particle.depth > depth_max):
         # if we're in phase 0 or 1 :
         # -> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)
         if particle.cycle_phase <= 1:
-            print("Your float went below the fieldset, your dataset is probably not deep enough for what you're trying to do. It will drift here")
+            print("Field warning : Particle below the fieldset, your dataset is probably not deep enough for what you're trying to do. It will drift here")
             particle.depth = depth_max - 50
             particle.cycle_phase = 1
         # if we're in phase 2 :
         # -> set particle depth to max non null depth, and start profiling (phase 3)
         elif particle.cycle_phase == 2:
-            print("Your float went below the fieldset, your dataset is not deep enough for what you're trying to do. It will start profiling here")
+            print("Field warning : Particle below the fieldset, your dataset is not deep enough for what you're trying to do. It will start profiling here")
             particle.depth = depth_max
-            particle.cycle_phase = 3
-        else:
-            pass
+            particle.cycle_phase = 3        
     else:
-        print("Particle deleted on unknown OutOfBoundsError")
+        print("Field Error : Particle deleted on unknown OutOfBoundsError")
         particle.delete()
 
 
