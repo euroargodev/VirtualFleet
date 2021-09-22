@@ -35,7 +35,7 @@ def ArgoVerticalMovement(particle, fieldset, time):
     mindepth = 20  # not too close to the surface so that particle doesn't go above it
     vertical_speed = fieldset.v_speed  # in m/s
     cycletime = fieldset.cycle_duration * 86400  # in s
-    in_water = fieldset.mask[time, particle.depth, particle.lat,
+    particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                              particle.lon]
 
     # Compute drifting time so that the cycletime is respected:
