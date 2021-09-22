@@ -7,11 +7,14 @@ Created by K. Balem on 02/28/2020
 __author__ = 'kbalem@ifremer.fr'
 
 
-from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4, ErrorCode, Variable, plotTrajectoriesFile
+from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4, ErrorCode, Variable, plotTrajectoriesFile, Field
 from datetime import timedelta
 import numpy as np
 import xarray as xr
-import os, tempfile
+import os
+import glob
+import tempfile
+
 
 class ArgoParticle(JITParticle):
     """ Internal class used by parcels to add variables to particle kernel    
@@ -20,6 +23,8 @@ class ArgoParticle(JITParticle):
     cycle_phase = Variable('cycle_phase', dtype=np.int32, initial=0.)
     cycle_age = Variable('cycle_age', dtype=np.float32, initial=0.)
     drift_age = Variable('drift_age', dtype=np.float32, initial=0.)
+    in_water = Variable('in_water', dtype=np.float32, initial=1.)
+
 
 def ArgoVerticalMovement(particle, fieldset, time):
     """ This is the kernel definition that mimics the argo float behaviour.
@@ -27,9 +32,11 @@ def ArgoVerticalMovement(particle, fieldset, time):
     """
     driftdepth = fieldset.parking_depth
     maxdepth = fieldset.profile_depth
-    mindepth = 20 #not too close to the surface so that particle doesn't go above it
+    mindepth = 20  # not too close to the surface so that particle doesn't go above it
     vertical_speed = fieldset.v_speed  # in m/s
     cycletime = fieldset.cycle_duration * 86400  # in s
+    in_water = fieldset.mask[time, particle.depth, particle.lat,
+                             particle.lon]
 
     # Compute drifting time so that the cycletime is respected:
     # Time to descent to parking (mindepth to driftdepth at vertical_speed)
@@ -41,10 +48,10 @@ def ArgoVerticalMovement(particle, fieldset, time):
     drifttime = cycletime - transit
 
     if particle.cycle_phase == 0:
-       # Phase 0: Sinking with vertical_speed until depth is driftdepth
-       particle.depth += vertical_speed * particle.dt
-       if particle.depth >= driftdepth:
-           particle.cycle_phase = 1
+        # Phase 0: Sinking with vertical_speed until depth is driftdepth
+        particle.depth += vertical_speed * particle.dt
+        if particle.depth >= driftdepth:
+            particle.cycle_phase = 1
 
     elif particle.cycle_phase == 1:
         # Phase 1: Drifting at depth for drifttime seconds
@@ -75,6 +82,8 @@ def ArgoVerticalMovement(particle, fieldset, time):
     particle.cycle_age += particle.dt  # update cycle_age
 
 # define recovery for OutOfBounds Error
+
+
 def DeleteParticle(particle, fieldset, time):
 
     # Get velocity field bounds
@@ -86,32 +95,33 @@ def DeleteParticle(particle, fieldset, time):
     depth_max = dgrid[-2]+(dgrid[-1]-dgrid[-2])/2
 
     # out of geographical area : here we can delete the particle
-    if ((particle.lat < lat_min)|(particle.lat > lat_max)|(particle.lon < lon_min)|(particle.lon > lon_max)): 
+    if ((particle.lat < lat_min) | (particle.lat > lat_max) | (particle.lon < lon_min) | (particle.lon > lon_max)):
         print("Particle out of the geographical domain --> deleted")
         particle.delete()
-    # in the air, calm down float !    
-    elif (particle.depth < depth_min) : 
+    # in the air, calm down float !
+    elif (particle.depth < depth_min):
         print("Particle is flying above surface, depth set to product min_depth. Carefull with your dtime")
-        particle.depth = depth_min 
-    # below fieldset   
-    elif (particle.depth > depth_max) :   
+        particle.depth = depth_min
+    # below fieldset
+    elif (particle.depth > depth_max):
         # if we're in phase 0 or 1 :
-        # -> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)     
-        if particle.cycle_phase <= 1 :
+        # -> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)
+        if particle.cycle_phase <= 1:
             print("Your float went below the fieldset, your dataset is probably not deep enough for what you're trying to do. It will drift here")
             particle.depth = depth_max - 50
             particle.cycle_phase = 1
         # if we're in phase 2 :
-        # -> set particle depth to max non null depth, and start profiling (phase 3)  
-        elif particle.cycle_phase == 2 :
+        # -> set particle depth to max non null depth, and start profiling (phase 3)
+        elif particle.cycle_phase == 2:
             print("Your float went below the fieldset, your dataset is not deep enough for what you're trying to do. It will start profiling here")
             particle.depth = depth_max
-            particle.cycle_phase = 3        
-        else :
-            pass                
-    else :
+            particle.cycle_phase = 3
+        else:
+            pass
+    else:
         print("Particle deleted on unknown OutOfBoundsError")
         particle.delete()
+
 
 def periodicBC(particle, fieldset, time):
     if particle.lon < fieldset.halo_west:
@@ -135,24 +145,40 @@ class velocityfield:
     """
 
     def __init__(self, **kwargs):
-        #props
+        # props
         self.field = kwargs['ds']
         self.var = kwargs['var']
         self.dim = kwargs['dim']
         self.isglobal = kwargs['isglobal']
-        #define parcels fieldset
+        # define parcels fieldset
         self.fieldset = FieldSet.from_netcdf(
             self.field, self.var, self.dim, allow_time_extrapolation=True, time_periodic=False)
 
         if self.isglobal:
-            self.fieldset.add_constant('halo_west', self.fieldset.U.grid.lon[0])
-            self.fieldset.add_constant('halo_east', self.fieldset.U.grid.lon[-1])
-            self.fieldset.add_constant('halo_south', self.fieldset.U.grid.lat[0])
-            self.fieldset.add_constant('halo_north', self.fieldset.U.grid.lat[-1])
+            self.fieldset.add_constant(
+                'halo_west', self.fieldset.U.grid.lon[0])
+            self.fieldset.add_constant(
+                'halo_east', self.fieldset.U.grid.lon[-1])
+            self.fieldset.add_constant(
+                'halo_south', self.fieldset.U.grid.lat[0])
+            self.fieldset.add_constant(
+                'halo_north', self.fieldset.U.grid.lat[-1])
             self.fieldset.add_periodic_halo(zonal=True, meridional=True)
 
+        # create mask for grounding management
+        mask_file = glob.glob(self.field['U'])[0]
+        ds = xr.open_dataset(mask_file)
+        ds = ds.isel(time=0)
+        mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['U']].isnull()))[
+                 'uo'].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
+        mask = mask.values
+        # create a new parcels field that's going to be interpolated during simulation
+        self.fieldset.add_field(Field('mask', data=mask, lon=ds[self.dim['lon']].values, lat=ds[self.dim['lat']].values, depth=ds[self.dim['depth']].values,
+                                      transpose=True, mesh='spherical', interp_method='nearest'))
+
     def plot(self):
-        temp_pset = ParticleSet(fieldset=self.fieldset, pclass=ArgoParticle, lon=0, lat=0, depth=0)
+        temp_pset = ParticleSet(fieldset=self.fieldset,
+                                pclass=ArgoParticle, lon=0, lat=0, depth=0)
         temp_pset.show(field=self.fieldset.U, with_particles=False)
         #temp_pset.show(field = self.fieldset.V,with_particles = False)
 
@@ -166,21 +192,21 @@ class virtualfleet:
     """
 
     def __init__(self, **kwargs):
-        #props
+        # props
         self.lat = kwargs['lat']
         self.lon = kwargs['lon']
         self.depth = kwargs['depth']
         self.time = kwargs['time']
         vfield = kwargs['vfield']
         mission = kwargs['mission']
-        #Pass mission parameters to simulation through fieldset
+        # Pass mission parameters to simulation through fieldset
         vfield.fieldset.add_constant('parking_depth', mission['parking_depth'])
         vfield.fieldset.add_constant('profile_depth', mission['profile_depth'])
         vfield.fieldset.add_constant('v_speed', mission['vertical_speed'])
         vfield.fieldset.add_constant(
             'cycle_duration', mission['cycle_duration'])
 
-        #define parcels particleset
+        # define parcels particleset
         self.pset = ParticleSet(fieldset=vfield.fieldset,
                                 pclass=ArgoParticle,
                                 lon=self.lon,
@@ -196,7 +222,7 @@ class virtualfleet:
                 self.pset.Kernel(AdvectionRK4)
 
     def plotfloat(self):
-        #using parcels psel builtin show function for now
+        # using parcels psel builtin show function for now
         self.pset.show()
 
     def simulate(self, **kwargs):
@@ -211,14 +237,15 @@ class virtualfleet:
         dt_run = kwargs['dt_run']
         dt_out = kwargs['dt_out']
         output_path = kwargs['output_file']
-        if ((os.path.exists(output_path)) | (output_path=='')) :    
+        if ((os.path.exists(output_path)) | (output_path == '')):
             temp_name = next(tempfile._get_candidate_names())+'.nc'
             while os.path.exists(temp_name):
-                temp_name = next(tempfile._get_candidate_names())+'.nc'                
-            output_path = temp_name        
-            print("Filename empty of file already exists, simulation will be saved in : " + output_path)
+                temp_name = next(tempfile._get_candidate_names())+'.nc'
+            output_path = temp_name
+            print(
+                "Filename empty of file already exists, simulation will be saved in : " + output_path)
         else:
-            print("Simulation will be saved in : " + output_path)                
+            print("Simulation will be saved in : " + output_path)
         self.run_params = {'duration': duration, 'dt_run': dt_run,
                            'dt_out': dt_out, 'output_file': output_path}
 
