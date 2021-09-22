@@ -52,14 +52,17 @@ def ArgoVerticalMovement(particle, fieldset, time):
         # if we're in phase 0 or 1 :
         # -> rising 50 db and start drifting (phase 1)
         if particle.cycle_phase <= 1:
-            print("Grouding during descent to parking or during parking, rising up 50m and try drifting here.")
+            print(
+                "Grouding during descent to parking or during parking, rising up 50m and try drifting here.")
             particle.depth = particle.depth - 50
             particle.cycle_phase = 1
         # if we're in phase 2:
         # -> start profiling (phase 3)
         elif particle.cycle_phase == 2:
             print("Grounding during descent to profile, starting profile here")
-            particle.cycle_phase = 3                
+            particle.cycle_phase = 3
+        else:
+            pass    
 
     # CYCLE MANAGEMENT
     if particle.cycle_phase == 0:
@@ -111,7 +114,7 @@ def DeleteParticle(particle, fieldset, time):
 
     # out of geographical area : here we can delete the particle
     if ((particle.lat < lat_min) | (particle.lat > lat_max) | (particle.lon < lon_min) | (particle.lon > lon_max)):
-        print("Particle out of the geographical domain --> deleted")
+        print("Field warning : Particle out of the geographical domain --> deleted")
         particle.delete()
     # in the air, calm down float !
     elif (particle.depth < depth_min):
@@ -130,9 +133,9 @@ def DeleteParticle(particle, fieldset, time):
         elif particle.cycle_phase == 2:
             print("Field warning : Particle below the fieldset, your dataset is not deep enough for what you're trying to do. It will start profiling here")
             particle.depth = depth_max
-            particle.cycle_phase = 3        
+            particle.cycle_phase = 3
     else:
-        print("Field Error : Particle deleted on unknown OutOfBoundsError")
+        print("Field Warning : OutOfBounds")
         particle.delete()
 
 
