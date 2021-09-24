@@ -145,9 +145,14 @@ def DeleteParticle(particle, fieldset, time):
             particle.depth = depth_max
             particle.cycle_phase = 3
     else:
-        print(particle.cycle_phase, particle.depth)
-        print("Field Warning : OutOfBounds")
-        particle.delete()
+        # I don't know why yet but in some cases, during ascent,  I get an outOfBounds error, even with a depth > depth_min...
+        if particle.cycle_phase == 3:
+            particle.depth = depth_min
+            particle.cycle_phase = 4
+        else :
+            print(particle.cycle_phase, particle.depth)
+            print("Field Warning : Unknown OutOfBounds --> deleted")
+            particle.delete()
 
 
 def periodicBC(particle, fieldset, time):
