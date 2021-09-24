@@ -47,7 +47,8 @@ def ArgoVerticalMovement(particle, fieldset, time):
     transit += (maxdepth - mindepth) / vertical_speed
     drifttime = cycletime - transit
 
-    # Grounding/Flying management
+    # Grounding management : Since parcels turns NaN to Zero within our domain, we have to manage
+    # groundings in another way that the recovery of deleted particles (below)
     if not particle.in_water:
         # if we're in phase 0 or 1 :
         # -> rising 50 db and start drifting (phase 1)
@@ -55,6 +56,8 @@ def ArgoVerticalMovement(particle, fieldset, time):
             print(
                 "Grouding during descent to parking or during parking, rising up 50m and try drifting here.")
             particle.depth = particle.depth - 50
+            particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
+                                      particle.lon]
             particle.cycle_phase = 1
         # if we're in phase 2:
         # -> start profiling (phase 3)
@@ -68,6 +71,8 @@ def ArgoVerticalMovement(particle, fieldset, time):
     if particle.cycle_phase == 0:
         # Phase 0: Sinking with vertical_speed until depth is driftdepth
         particle.depth += vertical_speed * particle.dt
+        particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
+                                      particle.lon]
         if particle.depth >= driftdepth:
             particle.cycle_phase = 1
 
@@ -81,12 +86,16 @@ def ArgoVerticalMovement(particle, fieldset, time):
     elif particle.cycle_phase == 2:
         # Phase 2: Sinking further to maxdepth
         particle.depth += vertical_speed * particle.dt
+        particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
+                                      particle.lon]
         if particle.depth >= maxdepth:
             particle.cycle_phase = 3
 
     elif particle.cycle_phase == 3:
         # Phase 3: Rising with vertical_speed until at surface
         particle.depth -= vertical_speed * particle.dt
+        particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
+                                      particle.lon]
         if particle.depth <= mindepth:
             particle.depth = mindepth
             particle.cycle_phase = 4
@@ -120,6 +129,7 @@ def DeleteParticle(particle, fieldset, time):
     elif (particle.depth < depth_min):
         print("Field Warning : Particle above surface, depth set to product min_depth.")
         particle.depth = depth_min
+        particle.cycle_phase = 4
     # below fieldset
     elif (particle.depth > depth_max):
         # if we're in phase 0 or 1 :
@@ -135,6 +145,7 @@ def DeleteParticle(particle, fieldset, time):
             particle.depth = depth_max
             particle.cycle_phase = 3
     else:
+        print(particle.cycle_phase, particle.depth)
         print("Field Warning : OutOfBounds")
         particle.delete()
 
