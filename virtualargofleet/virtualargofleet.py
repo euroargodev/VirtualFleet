@@ -200,9 +200,11 @@ class velocityfield:
         # create mask for grounding management
         mask_file = glob.glob(self.field['U'])[0]
         ds = xr.open_dataset(mask_file)
-        ds = ds.isel(time=0)
-        mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['U']].isnull()))[
-                 'uo'].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
+        ds = eval("ds.isel("+self.dim['time']+"=0)")
+        ds = ds[[self.var['U'],self.var['V']]].squeeze()
+
+        mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
+                 self.var['U']].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
         mask = mask.values
         # create a new parcels field that's going to be interpolated during simulation
         self.fieldset.add_field(Field('mask', data=mask, lon=ds[self.dim['lon']].values, lat=ds[self.dim['lat']].values, depth=ds[self.dim['depth']].values,
