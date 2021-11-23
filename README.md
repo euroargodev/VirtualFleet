@@ -15,6 +15,5 @@ This work is part of the following projects:
 </div>
 and is developped by:
 <div>
-<img src="https://www.argo-france.fr/wp-content/uploads/2019/10/Argo-logo_banner-color.png" width="200"/>
-<img src="https://www.umr-lops.fr/var/storage/images/_aliases/logo_main/medias-ifremer/medias-lops/logos/logo-lops-2/1459683-4-fre-FR/Logo-LOPS-2.png" width="70"/>
+<img src="https://www.argo-france.fr/var/storage/images/_aliases/listitem_thumbnail/medias-ifremer/medias-argo-france/argo-logo_color_4_3/1837422-1-fre-FR/Argo-logo_color_4_3.jpg" width="200"/>
 </div>
