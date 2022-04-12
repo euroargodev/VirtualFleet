@@ -2,9 +2,9 @@ name: virtualfleet
 channels:
   - conda-forge
 dependencies:
-  - python=3.6
-  - xarray=0.16.0
-  - parcels=2.1.4
+  - python=3.8
+  - xarray>0.16.0
+  - parcels>=2.1.4
   - dask
   - distributed
   - dask-kubernetes
@@ -17,7 +17,7 @@ dependencies:
   - nomkl
   - nbserverproxy
   - jupyter
-  - jupyterlab=0.35
+  - jupyterlab>=0.35
   - jupyterlab_launcher
   - jupyter_client
   - jupyter_server
@@ -30,7 +30,7 @@ dependencies:
   - scikit-learn
   - watermark
   - shapely
-  - cartopy=0.19.0
+  - cartopy>=0.19.0
   - py
   - pip
   - pip:
