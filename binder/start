@@ -4,6 +4,12 @@
 
 export PANGEO_ENV="BINDER_TEMPLATE"
 
+cd /home/jovyan
+mkdir data
+cd data
+wget https://storage.cloud.google.com/global-analysis-forecast-phy-001-024/2019-monthly.tar.gz
+tar -xvf 2019-monthly.tar.gz
+
 # ==== ONLY EDIT WITHIN THIS BLOCK =====
 
 exec "$@"
