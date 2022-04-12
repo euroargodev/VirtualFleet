@@ -118,3 +118,6 @@ examples/training/data/
 .vscode/
 .pytest_cache
 knotebooks/
+
+#@gmaze
+local_work/
