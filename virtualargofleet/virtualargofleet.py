@@ -6,6 +6,7 @@ Created by K. Balem on 02/28/2020
 """
 __author__ = 'kbalem@ifremer.fr'
 
+import warnings
 
 from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4, ErrorCode, Variable, plotTrajectoriesFile, Field
 from datetime import timedelta
@@ -17,7 +18,13 @@ import tempfile
 
 
 class ArgoParticle(JITParticle):
-    """ Internal class used by parcels to add variables to particle kernel    
+    """ Internal class used by parcels to add variables to particle kernel
+
+    Inherit from :class:`parcels.JITParticle`
+
+    Returns
+    -------
+    :class:`parcels.particle.JITParticle``
     """
     # Phase of cycle: init_descend = 0, drift = 1, profile_descend = 2, profile_ascend = 3, transmit = 4
     cycle_phase = Variable('cycle_phase', dtype=np.int32, initial=0.)
@@ -27,8 +34,21 @@ class ArgoParticle(JITParticle):
 
 
 def ArgoVerticalMovement(particle, fieldset, time):
-    """ This is the kernel definition that mimics the argo float behaviour.
-        It can only have (particle, fieldset, time) as arguments. So missions parameters are passed as constants through the fieldset.         
+    """This is the kernel definition that mimics an Argo float.
+
+    It can only have (particle, fieldset, time) as arguments. So missions parameters are passed as constants through the fieldset.
+
+    Parameters
+    ----------
+    particle:
+    fieldset: :class:`parcels.fieldset.FieldSet`
+        FieldSet class instance that holds hydrodynamic data needed to execute particles
+
+    time
+
+    Returns
+    -------
+    :class:`parcels.kernels`
     """
     driftdepth = fieldset.parking_depth
     maxdepth = fieldset.profile_depth
@@ -168,15 +188,17 @@ def periodicBC(particle, fieldset, time):
 
 
 class velocityfield:
-    """
-    USAGE :    
-    ds : filenames for U & V
-    var : dictionnary for variables 
-    dim : dictionnary for dimensions lat,lon,depth,time
-    isglobal : 1 if field is global, 0 otherwise
-    """
+    """Velocity Field Helper"""
 
     def __init__(self, **kwargs):
+        """
+        Parameters
+        ----------
+        ds : filenames for U & V
+        var : dictionnary for variables
+        dim : dictionnary for dimensions lat,lon,depth,time
+        isglobal : 1 if field is global, 0 otherwise
+        """
         # props
         self.field = kwargs['ds']
         self.var = kwargs['var']
@@ -211,6 +233,7 @@ class velocityfield:
                                       transpose=True, mesh='spherical', interp_method='nearest'))
 
     def plot(self):
+        """Show ParticleSet"""
         temp_pset = ParticleSet(fieldset=self.fieldset,
                                 pclass=ArgoParticle, lon=0, lat=0, depth=0)
         temp_pset.show(field=self.fieldset.U, with_particles=False)
@@ -218,14 +241,16 @@ class velocityfield:
 
 
 class virtualfleet:
-    """
-    USAGE:
-    lat,lon,depth,time : numpy arrays describing initial set of floats
-    vfield : velocityfield object
-    mission : dictionnary {'parking_depth':parking_depth, 'profile_depth':profile_depth, 'vertical_speed':vertical_speed, 'cycle_duration':cycle_duration}
-    """
+    """Argo Virtual Fleet simulator."""
 
     def __init__(self, **kwargs):
+        """
+        Parameters
+        ----------
+        lat,lon,depth,time : numpy arrays describing where Argo floats are deployed
+        vfield : :class:`virtualargofleet.velocityfield`
+        mission : dictionary {'parking_depth':parking_depth, 'profile_depth':profile_depth, 'vertical_speed':vertical_speed, 'cycle_duration':cycle_duration}
+        """
         # props
         self.lat = kwargs['lat']
         self.lon = kwargs['lon']
@@ -240,7 +265,7 @@ class virtualfleet:
         vfield.fieldset.add_constant(
             'cycle_duration', mission['cycle_duration'])
 
-        # define parcels particleset
+        # Define parcels :class:`parcels.particleset.particlesetsoa.ParticleSetSOA`
         self.pset = ParticleSet(fieldset=vfield.fieldset,
                                 pclass=ArgoParticle,
                                 lon=self.lon,
@@ -255,22 +280,46 @@ class virtualfleet:
             self.kernels = ArgoVerticalMovement + \
                 self.pset.Kernel(AdvectionRK4)
 
-    def plotfloat(self):
-        # using parcels psel builtin show function for now
+    @property
+    def ParticleSet(self):
+        """Container class for storing particle and executing kernel over them.
+
+        Returns
+        -------
+        :class:`parcels.particleset.particlesetsoa.ParticleSetSOA`
+        """
+        return self.pset
+
+    def show_deployment(self):
+        """Method to show where Argo Floats have been deployed
+
+        Using parcels psel builtin show function for now
+        """
         self.pset.show()
 
+    def plotfloat(self):
+        warnings.warn("'plotfloat' has been replaced by 'show_deployment'", category=DeprecationWarning, stacklevel=2)
+        return self.show_deployment()
+
     def simulate(self, **kwargs):
-        """
-        USAGE:
-        duration : number of days (365)
-        dt_run : time step in hours for the computation (1/12)        
-        dt_out : time step in hours for writing the output (24)
-        output_file
+        """Execute Virtual Fleet simulation
+
+        Inputs
+        ------
+        duration: int,
+            Number of days (365)
+        dt_run: float
+            Time step in hours for the computation (1/12)
+        dt_out: float
+            Time step in hours for writing the output (24)
+        output_file: str
+            Name of the netcdf file where to store simulation results
         """
         duration = kwargs['duration']
         dt_run = kwargs['dt_run']
         dt_out = kwargs['dt_out']
         output_path = kwargs['output_file']
+
         if ((os.path.exists(output_path)) | (output_path == '')):
             temp_name = next(tempfile._get_candidate_names())+'.nc'
             while os.path.exists(temp_name):
