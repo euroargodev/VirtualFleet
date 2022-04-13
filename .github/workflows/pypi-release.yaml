@@ -1,8 +1,7 @@
 name: Build and Upload virtualfleet to PyPI
 on:
   release:
-    types:
-      - published
+    types: [created, edited]
   push:
     tags:
       - 'v*'
