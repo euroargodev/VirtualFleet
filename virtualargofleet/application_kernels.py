@@ -28,8 +28,7 @@ def ArgoVerticalMovement(particle, fieldset, time):
     particle:
     fieldset: :class:`parcels.fieldset.FieldSet`
         FieldSet class instance that holds hydrodynamic data needed to execute particles
-
-    time
+    time:
 
     Returns
     -------
@@ -153,7 +152,7 @@ def DeleteParticle(particle, fieldset, time):
         if particle.cycle_phase == 3:
             particle.depth = depth_min
             particle.cycle_phase = 4
-        else :
+        else:
             print(particle.cycle_phase, particle.depth)
             print("Field Warning : Unknown OutOfBounds --> deleted")
             particle.delete()
