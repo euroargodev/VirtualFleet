@@ -6,6 +6,7 @@ graft virtualargofleet
 
 prune binder
 prune docs
+prune examples
 prune *.egg-info
 
 exclude *.yml
