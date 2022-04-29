@@ -7,13 +7,13 @@ on:
       - pypi-packaging
 #    tags:
 #      - 'v*'
-  workflow_dispatch:
+#  workflow_dispatch:
 
 
 jobs:
   build-artifacts:
     runs-on: ubuntu-latest
-    if: github.repository == 'euroargodev/virtualfleet'
+    if: github.repository == 'euroargodev/VirtualFleet'
     steps:
       - uses: actions/checkout@v3
         with:
