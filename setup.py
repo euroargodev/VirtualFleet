@@ -4,5 +4,5 @@ import setuptools
 
 if __name__ == "__main__":
     setuptools.setup(
-        version='0.0.1'
+        use_scm_version={'write_to': 'virtualargofleet/_version_setup.py'}
     )
