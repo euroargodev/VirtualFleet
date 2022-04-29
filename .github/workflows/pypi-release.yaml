@@ -1,12 +1,14 @@
 name: Build and Upload virtualfleet to PyPI
 on:
-  release:
-    types: [created, edited]
+#  release:
+#    types: [created, edited]
   push:
-    tags:
-      - 'v*'
+    branches:
+      - pypi-packaging
+#    tags:
+#      - 'v*'
   workflow_dispatch:
-      
+
 
 jobs:
   build-artifacts:
