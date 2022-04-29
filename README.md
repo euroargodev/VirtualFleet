@@ -14,6 +14,10 @@ fleet of Argo floats.
 
 Checkout the documentation at: https://euroargodev.github.io/VirtualFleet
  
+### Usage
+
+[![Binder](https://img.shields.io/static/v1.svg?logo=Jupyter&label=Binder&message=Click+here+to+try+VirtualFleet+online+!&color=blue&style=for-the-badge)](https://mybinder.org/v2/gh/euroargodev/binder-sandbox/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Feuroargodev%252FVirtualFleet%26urlpath%3Dlab%252Ftree%252FVirtualFleet%252Fexamples%252Ftry_it-CustomPlans.ipynb%26branch%3Dpackaging)
+
 ### Why Virtual Fleet?
 
 The optimisation of the Argo array is quite complex to determine in specific regions, where the local ocean dynamic shifts away from *standard* large scale open ocean. These regions are typically the Western Boundary Currents where turbulence is more significant than anywhere else, and Polar regions where floats can temporarily evolve under sea-ice. **Virtual Fleet** aims to help the Argo program to optimise floats deployment and programming in such regions.
