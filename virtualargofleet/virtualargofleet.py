@@ -97,7 +97,7 @@ class VirtualFleet:
         dt_out = kwargs['dt_out']
         output_path = kwargs['output_file']
 
-        if os.path.exists(output_path) | output_path == '':
+        if os.path.exists(output_path) or output_path == '':
             temp_name = next(tempfile._get_candidate_names())+'.nc'
             while os.path.exists(temp_name):
                 temp_name = next(tempfile._get_candidate_names())+'.nc'

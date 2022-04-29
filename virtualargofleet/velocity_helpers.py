@@ -13,6 +13,16 @@ class VelocityField:
 
     (This is so thin, it may be remove in the future).
 
+    Example
+    -------
+    >>> from virtualargofleet import velocityfield
+    >>> src = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"  # Datarmor
+    >>> filenames = {'U': src + "/2019*.nc",
+    >>>              'V': src + "/2019*.nc"}
+    >>> variables = {'U':'uo', 'V':'vo'}
+    >>> dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
+    >>> VELfield = velocityfield(ds=filenames, var=variables, dim=dimensions)
+    >>> VELfield.plot()
     """
 
     def __init__(self, ds, var, dim, isglobal: bool = False, **kwargs):
