@@ -82,6 +82,7 @@ cache
 
 # pyenv
 .python-version
+_version_setup.py
 
 # celery beat schedule file
 celerybeat-schedule
