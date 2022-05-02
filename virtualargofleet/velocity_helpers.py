@@ -32,7 +32,7 @@ def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *ar
     >>> VELfield.plot()
 
     """
-    if model == 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024':
+    if model in ['GLOBAL_ANALYSIS_FORECAST_PHY_001_024', 'PSY4QV3R1', 'GLORYS12V1']:
         return VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(*args, **kwargs)
     else:
         raise ValueError('Unknown model')
