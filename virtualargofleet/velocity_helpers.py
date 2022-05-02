@@ -1,52 +1,78 @@
+"""
+Velocity Field Helper
+
+
+"""
 
 from parcels import FieldSet, ParticleSet, Field
 import xarray as xr
 import glob
+from abc import ABC, abstractmethod
 
-from .application_kernels import ArgoParticle
+from .app_parcels import ArgoParticle
 
 
-class VelocityField:
-    """Velocity Field Helper.
+def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args, **kwargs):
+    """Thin layer above Parcels to manage velocity fields definition.
 
-    Thin layer above Parcels to manage velocity fields definition.
+    .. warning::
 
-    (This is so thin, it may be remove in the future).
+        This is so thin, it may be remove in the future
+
+    Parameters
+    ----------
+    model: str
+        Model string definition
 
     Example
     -------
-    >>> from virtualargofleet import velocityfield
-    >>> src = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"  # Datarmor
-    >>> filenames = {'U': src + "/2019*.nc",
-    >>>              'V': src + "/2019*.nc"}
-    >>> variables = {'U':'uo', 'V':'vo'}
-    >>> dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
-    >>> VELfield = velocityfield(ds=filenames, var=variables, dim=dimensions)
+    >>> from virtualargofleet import VelocityField
+    >>> src = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"  # from Datarmor
+    >>> VELfield = VelocityField(model='GLOBAL_ANALYSIS_FORECAST_PHY_001_024', src="%s/2019*.nc" % src)
     >>> VELfield.plot()
+
+    """
+    if model == 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024':
+        return VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(*args, **kwargs)
+    else:
+        raise ValueError('Unknown model')
+
+
+class VelocityFieldProto(ABC):
+    def plot(self):
+        """Show ParticleSet"""
+        temp_pset = ParticleSet(fieldset=self.fieldset,
+                                pclass=ArgoParticle, lon=0, lat=0, depth=0)
+        temp_pset.show(field=self.fieldset.U, with_particles=False)
+        # temp_pset.show(field = self.fieldset.V,with_particles = False)
+
+
+class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
+    """Velocity Field Helper for GLOBAL-ANALYSIS-FORECAST-PHY-001-024 product.
+
+    Reference
+    ---------
+    https://resources.marine.copernicus.eu/product-detail/GLOBAL_ANALYSIS_FORECAST_PHY_001_024/DATA-ACCESS
+
     """
 
-    def __init__(self, ds, var, dim, isglobal: bool = False, **kwargs):
+    def __init__(self, src, isglobal: bool = False, **kwargs):
         """
-
-        .. warning::
-
-            This should evolve as more grid/dataset become supported
-
 
         Parameters
         ----------
-        ds: dict
-            Dictionary with 'U' and 'V' as keys and list of corresponding files as values
-        var: dict
-            Dictionary mapping 'U' and 'V' to netcdf velocity variable names
-        dim: dict
-            Dictionary mapping 'time', 'depth', 'lat' and 'lon' to netcdf velocity variable names
+        src: pattern
+            Pattern to list netcdf source files
         isglobal : bool, default False
             Set to 1 if field is global, 0 otherwise
         """
-        self.field = ds
-        self.var = var
-        self.dim = dim
+        filenames = {'U': src, 'V': src}
+        variables = {'U': 'uo', 'V': 'vo'}
+        dimensions = {'time': 'time', 'depth': 'depth', 'lat': 'latitude', 'lon': 'longitude'}
+
+        self.field = filenames  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
+        self.var = variables  # Dictionary mapping 'U' and 'V' to netcdf velocity variable names
+        self.dim = dimensions  # Dictionary mapping 'time', 'depth', 'lat' and 'lon' to netcdf velocity variable names
         self.isglobal = isglobal
 
         # define parcels fieldset
@@ -74,13 +100,11 @@ class VelocityField:
                  self.var['U']].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
         mask = mask.values
         # create a new parcels field that's going to be interpolated during simulation
-        self.fieldset.add_field(Field('mask', data=mask, lon=ds[self.dim['lon']].values, lat=ds[self.dim['lat']].values, depth=ds[self.dim['depth']].values,
+        self.fieldset.add_field(Field('mask', data=mask, lon=ds[self.dim['lon']].values, lat=ds[self.dim['lat']].values,
+                                      depth=ds[self.dim['depth']].values,
                                       transpose=True, mesh='spherical', interp_method='nearest'))
 
-    def plot(self):
-        """Show ParticleSet"""
-        temp_pset = ParticleSet(fieldset=self.fieldset,
-                                pclass=ArgoParticle, lon=0, lat=0, depth=0)
-        temp_pset.show(field=self.fieldset.U, with_particles=False)
-        #temp_pset.show(field = self.fieldset.V,with_particles = False)
+    def __repr__(self):
+        summary = ["<VelocityField.GLOBAL_ANALYSIS_FORECAST_PHY_001_024>"]
 
+        return "\n".join(summary)

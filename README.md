@@ -18,6 +18,47 @@ Checkout the documentation at: https://euroargodev.github.io/VirtualFleet
 
 [![Binder](https://img.shields.io/static/v1.svg?logo=Jupyter&label=Binder&message=Click+here+to+try+VirtualFleet+online+!&color=blue&style=for-the-badge)](https://mybinder.org/v2/gh/euroargodev/binder-sandbox/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Feuroargodev%252FVirtualFleet%26urlpath%3Dlab%252Ftree%252FVirtualFleet%252Fexamples%252Ftry_it-CustomPlans.ipynb%26branch%3Dpackaging)
 
+Import the usual suspects:
+```python
+from virtualargofleet import velocityfield, virtualfleet
+import numpy as np
+```
+
+Define velocity field to use:
+```python
+src = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+VELfield = velocityfield(model='GLOBAL_ANALYSIS_FORECAST_PHY_001_024', src="%s/2019*.nc" % src)
+```
+
+Define a deployment plan:
+```python
+# Number of floats we want to simulate:
+nfloats = 10
+
+# Define space/time locations of deployments:
+lat = np.linspace(30, 38, nfloats)
+lon = np.full_like(lat, -60)
+dpt = np.linspace(1.0, 1.0, nfloats) #1m depth
+#tim = np.array(['2019-01-01' for i in range(nfloats)],dtype='datetime64')
+tim = np.arange('2019-01-01','2019-01-11',dtype='datetime64')
+```
+
+Define Argo floats mission parameters:
+```python
+this_mission = {'parking_depth': 1000.,  # in m
+                'profile_depth': 2000.,  # in m 
+                'vertical_speed': 0.09,  # in m/s
+                'cycle_duration': 10.,   # in days
+                }
+```
+
+Define and simulate the virtual fleet:
+```python
+VFleet = virtualfleet(lat=lat, lon=lon, depth=dpt, time=tim, vfield=VELfield, mission=this_mission)
+VFleet.simulate(duration=365, dt_run=1/2, dt_out=1, output_file='output.nc')
+```
+
+
 ### Why Virtual Fleet?
 
 The optimisation of the Argo array is quite complex to determine in specific regions, where the local ocean dynamic shifts away from *standard* large scale open ocean. These regions are typically the Western Boundary Currents where turbulence is more significant than anywhere else, and Polar regions where floats can temporarily evolve under sea-ice. **Virtual Fleet** aims to help the Argo program to optimise floats deployment and programming in such regions.

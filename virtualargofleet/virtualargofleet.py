@@ -1,19 +1,16 @@
-__author__ = 'kbalem@ifremer.fr, gmaze@ifremer.fr'  # Should be removed in the future
-
 import warnings
-
 from parcels import ParticleSet, AdvectionRK4, ErrorCode
 from datetime import timedelta
 import os
 import tempfile
-
-from .application_kernels import ArgoParticle, DeleteParticle, ArgoVerticalMovement, periodicBC
+import numpy as np
+from .app_parcels import ArgoParticle, DeleteParticleKernel, ArgoFloatKernel, PeriodicBoundaryConditionKernel
 
 
 class VirtualFleet:
-    """Argo Virtual Fleet simulator.
+    """Argo Virtual Fleet simulator helper.
 
-    This class should make it easy to process and analyse a simulation.
+    This class should make it easier to process and analyse a simulation.
 
     """
 
@@ -23,7 +20,7 @@ class VirtualFleet:
         ----------
         lat, lon, depth, time:
             Numpy arrays describing where Argo floats are deployed
-        vfield: :class:`virtualargofleet.velocityfield`
+        vfield: :class:`virtualargofleet.VelocityFieldProto`
         mission: dict
             Dictionary with Argo float parameters {'parking_depth': parking_depth, 'profile_depth': profile_depth, 'vertical_speed': vertical_speed, 'cycle_duration': cycle_duration}
         """
@@ -51,11 +48,11 @@ class VirtualFleet:
         self.run_params = {}
         if vfield.isglobal:
             # combine Argo vertical movement kernel with Advection kernel + boundaries
-            self.kernels = ArgoVerticalMovement + \
-                self.pset.Kernel(AdvectionRK4) + self.pset.Kernel(periodicBC)
+            self.kernels = ArgoFloatKernel + \
+                           self.pset.Kernel(AdvectionRK4) + self.pset.Kernel(PeriodicBoundaryConditionKernel)
         else:
-            self.kernels = ArgoVerticalMovement + \
-                self.pset.Kernel(AdvectionRK4)
+            self.kernels = ArgoFloatKernel + \
+                           self.pset.Kernel(AdvectionRK4)
 
     @property
     def ParticleSet(self):
@@ -117,6 +114,6 @@ class VirtualFleet:
                           runtime=timedelta(days=duration),
                           dt=timedelta(hours=dt_run),
                           output_file=output_file,
-                          recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+                          recovery={ErrorCode.ErrorOutOfBounds: DeleteParticleKernel})
         output_file.export()
         output_file.close()

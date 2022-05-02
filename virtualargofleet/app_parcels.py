@@ -18,7 +18,7 @@ class ArgoParticle(JITParticle):
     in_water = Variable('in_water', dtype=np.float32, initial=1.)
 
 
-def ArgoVerticalMovement(particle, fieldset, time):
+def ArgoFloatKernel(particle, fieldset, time):
     """This is the kernel definition that mimics an Argo float.
 
     It can only have (particle, fieldset, time) as arguments. So missions parameters are passed as constants through the fieldset.
@@ -113,8 +113,8 @@ def ArgoVerticalMovement(particle, fieldset, time):
     particle.cycle_age += particle.dt  # update cycle_age
 
 
-def DeleteParticle(particle, fieldset, time):
-    # define recovery for OutOfBounds Error
+def DeleteParticleKernel(particle, fieldset, time):
+    """Define recovery for OutOfBounds Error."""
 
     # Get velocity field bounds
     lat_min, lat_max = fieldset.gridset.dimrange(dim='lat')
@@ -158,7 +158,8 @@ def DeleteParticle(particle, fieldset, time):
             particle.delete()
 
 
-def periodicBC(particle, fieldset, time):
+def PeriodicBoundaryConditionKernel(particle, fieldset, time):
+    """Define periodic Boundary Conditions."""
     if particle.lon < fieldset.halo_west:
         particle.lon += fieldset.halo_east - fieldset.halo_west
     elif particle.lon > fieldset.halo_east:

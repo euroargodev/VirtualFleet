@@ -1,13 +1,16 @@
-from .virtualargofleet import VirtualFleet as virtualfleet
-from .velocity_helpers import VelocityField as velocityfield
+from .virtualargofleet import VirtualFleet
+from .utilities import FloatConfiguration, ConfigParam
+from .velocity_helpers import VelocityFieldFacade as VelocityField
 from ._version import version
 __version__ = version
 
 #
 __all__ = (
     # Classes:
-    "velocityfield",
-    "virtualfleet",
+    "VelocityField",
+    "VirtualFleet",
+    "FloatConfiguration",
+    "ConfigParam",
     # Constants
     "__version__"
 )
