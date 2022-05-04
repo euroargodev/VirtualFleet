@@ -122,3 +122,4 @@ knotebooks/
 
 #@gmaze
 local_work/
+cli/build-pypi
