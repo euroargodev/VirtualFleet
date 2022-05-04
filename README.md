@@ -45,6 +45,7 @@ tim = np.array(['2019-01-01' for i in range(nfloats)], dtype='datetime64')
 Define Argo floats mission parameters:
 ```python
 cfg = FloatConfiguration('default')
+# cfg.update('parking_depth', 500)
 cfg
 ```
 
