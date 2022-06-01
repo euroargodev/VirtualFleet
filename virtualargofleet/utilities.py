@@ -67,7 +67,7 @@ class FloatConfiguration():
                                       description='Drifting depth', dtype=float)
             self.params = ConfigParam(key='vertical_speed', value=0.09, unit='m/s',
                                       description='Vertical profiling speed', dtype=float)
-            self.params = ConfigParam(key='cycle_duration', value=10, unit='day',
+            self.params = ConfigParam(key='cycle_duration', value=10., unit='day',
                                       description='Maximum length of float complete cycle', dtype=float)
 
     def __repr__(self):
