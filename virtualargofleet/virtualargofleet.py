@@ -1,5 +1,6 @@
 import warnings
 from parcels import ParticleSet, AdvectionRK4, ErrorCode
+import datetime
 from datetime import timedelta
 import os
 import tempfile
@@ -19,7 +20,7 @@ class VirtualFleet:
         Parameters
         ----------
         lat, lon, depth, time:
-            Numpy arrays describing where Argo floats are deployed
+            Numpy arrays describing where Argo floats are deployed. Depth is optional, if not provided it will be set to 1m.
         vfield: :class:`virtualargofleet.VelocityFieldProto`
         mission: dict
             Dictionary with Argo float parameters {'parking_depth': parking_depth, 'profile_depth': profile_depth, 'vertical_speed': vertical_speed, 'cycle_duration': cycle_duration}
@@ -27,7 +28,10 @@ class VirtualFleet:
         # props
         self.lat = kwargs['lat']
         self.lon = kwargs['lon']
-        self.depth = kwargs['depth']
+        if 'depth' not in kwargs:
+            self.depth = np.full(self.lat.shape, 1.0)
+        else:
+            self.depth = kwargs['depth']
         self.time = kwargs['time']
         vfield = kwargs['vfield']
         mission = kwargs['mission']
@@ -80,18 +84,20 @@ class VirtualFleet:
 
         Inputs
         ------
-        duration: int,
-            Number of days (365)
-        dt_run: float
-            Time step in hours for the computation (1/12)
-        dt_out: float
-            Time step in hours for writing the output (24)
+        duration: timedelta,
+            Eg: timedelta(days=365)
+        dt_run: timedelta
+            Time step for the computation
+            Eg: timedelta(minutes=5)
+        dt_out: timedelta
+            Time step for writing the output
+            Eg: timedelta(hours=1)
         output_file: str
             Name of the netcdf file where to store simulation results
         """
-        duration = kwargs['duration']
-        dt_run = kwargs['dt_run']
-        dt_out = kwargs['dt_out']
+        duration = kwargs['duration'] if isinstance(kwargs['duration'], datetime.timedelta) else timedelta(days=kwargs['duration'])
+        dt_run = kwargs['dt_run'] if isinstance(kwargs['dt_run'], datetime.timedelta) else timedelta(minutes=kwargs['dt_run'])
+        dt_out = kwargs['dt_out'] if isinstance(kwargs['dt_out'], datetime.timedelta) else timedelta(hours=kwargs['dt_out'])
         output_path = kwargs['output_file']
 
         if os.path.exists(output_path) or output_path == '':
@@ -107,12 +113,12 @@ class VirtualFleet:
                            'dt_out': dt_out,
                            'output_file': output_path}
 
-        output_file = self.pset.ParticleFile(name=output_path,
-                                             outputdt=timedelta(hours=dt_out))
+        output_file = self.pset.ParticleFile(name=self.run_params['output_file'],
+                                             outputdt=self.run_params['dt_out'])
         # Now execute the kernels for X days, saving data every Y minutes
         self.pset.execute(self.kernels,
-                          runtime=timedelta(days=duration),
-                          dt=timedelta(hours=dt_run),
+                          runtime=self.run_params['duration'],
+                          dt=self.run_params['dt_run'],
                           output_file=output_file,
                           recovery={ErrorCode.ErrorOutOfBounds: DeleteParticleKernel})
         output_file.export()
