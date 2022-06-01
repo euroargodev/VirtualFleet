@@ -8,6 +8,7 @@ dependencies:
   - dask
   - distributed
   - dask-kubernetes
+  - bottleneck
   - gcsfs
   - zarr
   - matplotlib
@@ -31,6 +32,10 @@ dependencies:
   - watermark
   - shapely
   - cartopy>=0.19.0
+  - seaborn
+  - xhistogram
+  - argopy
+  - tqdm
   - py
   - pip
   - pip:
@@ -39,7 +44,6 @@ dependencies:
     - erddapy
     - gitpython
     - cmocean
-    - git+http://github.com/euroargodev/argopy.git@master
     - progressbar
     - cgen
     - pymbolic
