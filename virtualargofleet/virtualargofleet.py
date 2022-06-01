@@ -4,6 +4,7 @@ import datetime
 from datetime import timedelta
 import os
 import tempfile
+import pandas as pd
 import numpy as np
 from .app_parcels import (
     ArgoParticle,
@@ -30,7 +31,7 @@ class VirtualFleet:
         mission: dict
             Dictionary with Argo float parameters {'parking_depth': parking_depth, 'profile_depth': profile_depth, 'vertical_speed': vertical_speed, 'cycle_duration': cycle_duration}
         """
-        # props
+        # Deployment plan:
         self.lat = kwargs["lat"]
         self.lon = kwargs["lon"]
         if "depth" not in kwargs:
@@ -38,9 +39,14 @@ class VirtualFleet:
         else:
             self.depth = kwargs["depth"]
         self.time = kwargs["time"]
+        if isinstance(self.time, pd.core.series.Series):
+            self.time = self.time.array
+
+        # Velocity/Hydrodynamic field:
         vfield = kwargs["vfield"]
+
+        # Forward mission parameters to the simulation through fieldset
         mission = kwargs["mission"]
-        # Cary mission parameters to simulation through fieldset
         vfield.fieldset.add_constant("parking_depth", mission["parking_depth"])
         vfield.fieldset.add_constant("profile_depth", mission["profile_depth"])
         vfield.fieldset.add_constant("v_speed", mission["vertical_speed"])
@@ -55,7 +61,6 @@ class VirtualFleet:
             depth=self.depth,
             time=self.time,
         )
-        self.run_params = {}
         if vfield.isglobal:
             # combine Argo vertical movement kernel with Advection kernel + boundaries
             self.kernels = (
