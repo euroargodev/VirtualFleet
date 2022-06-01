@@ -86,39 +86,43 @@ class VirtualFleet:
         ------
         duration: timedelta,
             Eg: timedelta(days=365)
-        dt_run: timedelta
+        step: timedelta
             Time step for the computation
             Eg: timedelta(minutes=5)
-        dt_out: timedelta
+        record: timedelta
             Time step for writing the output
             Eg: timedelta(hours=1)
         output_file: str
             Name of the netcdf file where to store simulation results
+        output_folder: str
+            Name of folder where to store 'output_file'
         """
-        duration = kwargs['duration'] if isinstance(kwargs['duration'], datetime.timedelta) else timedelta(days=kwargs['duration'])
-        dt_run = kwargs['dt_run'] if isinstance(kwargs['dt_run'], datetime.timedelta) else timedelta(minutes=kwargs['dt_run'])
-        dt_out = kwargs['dt_out'] if isinstance(kwargs['dt_out'], datetime.timedelta) else timedelta(hours=kwargs['dt_out'])
-        output_path = kwargs['output_file']
+        duration = kwargs['duration'] if isinstance(kwargs['duration'], datetime.timedelta) else timedelta(hours=kwargs['duration'])
+        dt_run = kwargs['step'] if isinstance(kwargs['step'], datetime.timedelta) else timedelta(hours=kwargs['step'])
+        dt_out = kwargs['record'] if isinstance(kwargs['record'], datetime.timedelta) else timedelta(hours=kwargs['record'])
+        output_file = kwargs['output_file'] if 'output_file' in kwargs else ""
+        output_folder = kwargs['output_folder'] if 'output_folder' in kwargs else "."
+        output_path = os.path.join(output_folder, output_file)
 
-        if os.path.exists(output_path) or output_path == '':
+        if os.path.exists(output_path) or output_path[0] == ".":
             temp_name = next(tempfile._get_candidate_names())+'.nc'
             while os.path.exists(temp_name):
                 temp_name = next(tempfile._get_candidate_names())+'.nc'
-            output_path = temp_name
+            output_path = os.path.join(output_folder, temp_name)
             print("Empty 'output_file' or file already exists, simulation will be saved in : " + output_path)
         else:
             print("Simulation will be saved in : " + output_path)
         self.run_params = {'duration': duration,
-                           'dt_run': dt_run,
-                           'dt_out': dt_out,
+                           'step': dt_run,
+                           'record': dt_out,
                            'output_file': output_path}
 
         output_file = self.pset.ParticleFile(name=self.run_params['output_file'],
-                                             outputdt=self.run_params['dt_out'])
+                                             outputdt=self.run_params['record'])
         # Now execute the kernels for X days, saving data every Y minutes
         self.pset.execute(self.kernels,
                           runtime=self.run_params['duration'],
-                          dt=self.run_params['dt_run'],
+                          dt=self.run_params['step'],
                           output_file=output_file,
                           recovery={ErrorCode.ErrorOutOfBounds: DeleteParticleKernel})
         output_file.export()

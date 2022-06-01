@@ -38,7 +38,6 @@ nfloats = 10
 # Define space/time locations of deployments:
 lat = np.linspace(30, 38, nfloats)
 lon = np.full_like(lat, -60)
-dpt = np.linspace(1.0, 1.0, nfloats) #1m depth
 tim = np.array(['2019-01-01' for i in range(nfloats)], dtype='datetime64')
 ```
 
@@ -51,8 +50,8 @@ cfg
 
 Define and simulate the virtual fleet:
 ```python
-VFleet = virtualfleet(lat=lat, lon=lon, depth=dpt, time=tim, vfield=VELfield, mission=cfg.mission)
-VFleet.simulate(duration=365, dt_run=1/2, dt_out=1, output_file='output.nc')
+VFleet = virtualfleet(lat=lat, lon=lon, time=tim, vfield=VELfield, mission=cfg.mission)
+VFleet.simulate(duration=365, step=5, record=1, output_file='output.nc')
 ```
 
 

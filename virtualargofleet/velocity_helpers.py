@@ -77,7 +77,10 @@ class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
 
         # define parcels fieldset
         self.fieldset = FieldSet.from_netcdf(
-            self.field, self.var, self.dim, allow_time_extrapolation=True, time_periodic=False)
+            self.field, self.var, self.dim,
+            allow_time_extrapolation=True,
+            time_periodic=False,
+            deferred_load=True)
 
         if self.isglobal:
             self.fieldset.add_constant(
