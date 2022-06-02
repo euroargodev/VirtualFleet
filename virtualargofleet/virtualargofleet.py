@@ -39,8 +39,10 @@ class VirtualFleet:
         else:
             self.depth = kwargs["depth"]
         self.time = kwargs["time"]
-        if isinstance(self.time, pd.core.series.Series):
-            self.time = self.time.array
+        # if isinstance(self.time, pd.core.series.Series):
+        #     self.time = self.time.array
+            # self.time = np.array([np.datetime64(t) for t in self.time.dt.strftime('%Y-%m-%d').array])
+        # print(self.time[0], type(self.time[0]))
 
         # Velocity/Hydrodynamic field:
         vfield = kwargs["vfield"]
