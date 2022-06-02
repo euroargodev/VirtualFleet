@@ -1,4 +1,6 @@
 import collections
+import numpy as np
+import xarray as xr
 
 
 class ConfigParam:
@@ -113,3 +115,65 @@ class FloatConfiguration():
     def load(self):
         """Should be able to read from file a float configuration"""
         pass
+
+
+def get_splitdates(t, N=1):
+    """Given a list of dates, return index of dates before a date change larger than N days"""
+    dt = np.diff(t).astype('timedelta64[D]')
+    # print(dt)
+    return np.argwhere(dt > np.timedelta64(N, 'D'))[:, 0]
+
+
+def splitonprofiles(ds):
+    sub_grp = ds.isel(obs=get_splitdates(ds['time']))
+    # plt.plot(ds['time'], -ds['z'], 'k.')
+    # plt.plot(sub_grp['time'], -sub_grp['z'], 'r.')
+    return sub_grp
+
+
+def simu2index(ds):
+    """Convert a simulation obs/traj dataset to an Argo index of profiles"""
+    ds_list = []
+    for traj in ds['traj']:
+        for iphase, grp in ds.sel(traj=traj).groupby(group='cycle_phase'):
+            if iphase == 3:
+                sub_grp = splitonprofiles(grp)
+                sub_grp['cycle_number'] = xr.DataArray(np.arange(0, len(sub_grp['obs'])), dims='obs')
+                ds_list.append(sub_grp)
+    ds_profiles = xr.concat(ds_list, dim='obs')
+
+    df = ds_profiles.to_dataframe()
+    df = df.rename({'time': 'date', 'lat': 'latitude', 'lon': 'longitude', 'z': 'min_depth'}, axis='columns')
+    df = df[['date', 'latitude', 'longitude', 'wmo', 'cycle_number']]
+    df['wmo'] = df['wmo'].astype('int')
+    df['latitude'] = np.fix(df['latitude'] * 1000).astype('int') / 1000
+    df['longitude'] = np.fix(df['longitude'] * 1000).astype('int') / 1000
+    df = df.reset_index(drop=True)
+
+    return df
+
+
+def set_WMO(ds, argo_index):
+    """Identify virtual floats with their real WMO
+
+    Parameters
+    ----------
+    ds
+    argo_index
+    """
+    ds['wmo'] = xr.DataArray(np.full((len(ds['traj']),), 0), dims='traj')
+    wmos = []
+
+    x_real = np.round(argo_index['longitude'], 5).values
+    y_real = np.round(argo_index['latitude'], 5).values
+    for i in ds['traj']:
+        this = ds.isel(traj=i).sortby('time')
+        x_virt = np.round(this.sel(obs=0)['lon'], 3).values
+        y_virt = np.round(this.sel(obs=0)['lat'], 3).values
+        ii = np.argmin(np.sqrt(np.power(x_real - x_virt, 2) + np.power(y_real - y_virt, 2)))
+        wmo = np.array((argo_index.iloc[ii]['wmo'],))[0]
+        wmos.append(wmo)
+    ds['wmo'].values = wmos
+
+    return ds
+
