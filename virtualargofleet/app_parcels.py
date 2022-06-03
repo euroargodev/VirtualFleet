@@ -1,5 +1,8 @@
 import numpy as np
 from parcels import JITParticle, Variable
+import logging
+
+log = logging.getLogger("virtualfleet.parcels")
 
 
 class ArgoParticle(JITParticle):
@@ -54,8 +57,8 @@ def ArgoFloatKernel(particle, fieldset, time):
     # Grounding management : Since parcels turns NaN to Zero within our domain, we have to manage
     # groundings in another way that the recovery of deleted particles (below)
     if not particle.in_water:
-        # if we're in phase 0 or 1 :
-        # -> rising 50 db and start drifting (phase 1)
+        # if we're in phase 0 or 1 :
+        #-> rising 50 db and start drifting (phase 1)
         if particle.cycle_phase <= 1:
             print(
                 "Grouding during descent to parking or during parking, rising up 50m and try drifting here.")
@@ -63,8 +66,8 @@ def ArgoFloatKernel(particle, fieldset, time):
             particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
             particle.cycle_phase = 1
-        # if we're in phase 2:
-        # -> start profiling (phase 3)
+        # if we're in phase 2:
+        #-> start profiling (phase 3)
         elif particle.cycle_phase == 2:
             print("Grounding during descent to profile, starting profile here")
             particle.cycle_phase = 3
@@ -135,14 +138,14 @@ def DeleteParticleKernel(particle, fieldset, time):
         particle.cycle_phase = 4
     # below fieldset
     elif (particle.depth > depth_max):
-        # if we're in phase 0 or 1 :
-        # -> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)
+        # if we're in phase 0 or 1 :
+        #-> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)
         if particle.cycle_phase <= 1:
             print("Field warning : Particle below the fieldset, your dataset is probably not deep enough for what you're trying to do. It will drift here")
             particle.depth = depth_max - 50
             particle.cycle_phase = 1
-        # if we're in phase 2 :
-        # -> set particle depth to max non null depth, and start profiling (phase 3)
+        # if we're in phase 2 :
+        #-> set particle depth to max non null depth, and start profiling (phase 3)
         elif particle.cycle_phase == 2:
             print("Field warning : Particle below the fieldset, your dataset is not deep enough for what you're trying to do. It will start profiling here")
             particle.depth = depth_max
@@ -153,7 +156,7 @@ def DeleteParticleKernel(particle, fieldset, time):
             particle.depth = depth_min
             particle.cycle_phase = 4
         else:
-            print(particle.cycle_phase, particle.depth)
+            print("%i: %f" % (particle.cycle_phase, particle.depth))
             print("Field Warning : Unknown OutOfBounds --> deleted")
             particle.delete()
 

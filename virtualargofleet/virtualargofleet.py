@@ -12,6 +12,9 @@ from .app_parcels import (
     ArgoFloatKernel,
     PeriodicBoundaryConditionKernel,
 )
+import logging
+
+log = logging.getLogger("virtualfleet")
 
 
 class VirtualFleet:
@@ -153,12 +156,12 @@ class VirtualFleet:
             while os.path.exists(temp_name):
                 temp_name = next(tempfile._get_candidate_names()) + ".nc"
             output_path = os.path.join(output_folder, temp_name)
-            print(
+            log.debug(
                 "Empty 'output_file' or file already exists, simulation will be saved in : "
                 + output_path
             )
         else:
-            print("Simulation will be saved in : " + output_path)
+            log.debug("Simulation will be saved in : " + output_path)
         self.run_params = {
             "duration": duration,
             "step": dt_run,
@@ -166,13 +169,13 @@ class VirtualFleet:
             "output_file": output_path,
         }
 
-        output_file = self.pset.ParticleFile(
-            name=self.run_params["output_file"], outputdt=self.run_params["record"]
-        )
         # Now execute the kernels for X days, saving data every Y minutes
-        print(
+        log.debug(
             "Starting Virtual Fleet simulation of %i days, with data recording every %f hours"
             % (self.run_params["duration"].days, self.run_params["record"].seconds/3600)
+        )
+        output_file = self.pset.ParticleFile(
+            name=self.run_params["output_file"], outputdt=self.run_params["record"]
         )
 
         self.pset.execute(
@@ -180,7 +183,9 @@ class VirtualFleet:
             runtime=self.run_params["duration"],
             dt=self.run_params["step"],
             output_file=output_file,
-            recovery={ErrorCode.ErrorOutOfBounds: DeleteParticleKernel},
+            recovery={ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
+                      ErrorCode.ErrorThroughSurface: DeleteParticleKernel},
         )
+
         output_file.export()
         output_file.close()
