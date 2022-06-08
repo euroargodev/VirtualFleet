@@ -56,6 +56,7 @@ class VirtualFleet:
         vfield.fieldset.add_constant("profile_depth", mission["profile_depth"])
         vfield.fieldset.add_constant("v_speed", mission["vertical_speed"])
         vfield.fieldset.add_constant("cycle_duration", mission["cycle_duration"])
+        vfield.fieldset.add_constant("life_expectancy", mission["life_expectancy"])
 
         # Define parcels :class:`parcels.particleset.particlesetsoa.ParticleSetSOA`
         self.pset = ParticleSet(
@@ -189,3 +190,8 @@ class VirtualFleet:
 
         output_file.export()
         output_file.close()
+
+        # Add more variables to the output file:
+        # ncout = self.run_params["output_file"]
+        # ds = xr.open_dataset(ncout)
+

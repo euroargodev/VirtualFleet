@@ -15,10 +15,11 @@ class ArgoParticle(JITParticle):
     :class:`parcels.particle.JITParticle``
     """
     # Phase of cycle: init_descend = 0, drift = 1, profile_descend = 2, profile_ascend = 3, transmit = 4
-    cycle_phase = Variable('cycle_phase', dtype=np.int32, initial=0.)
-    cycle_age = Variable('cycle_age', dtype=np.float32, initial=0.)
-    drift_age = Variable('drift_age', dtype=np.float32, initial=0.)
-    in_water = Variable('in_water', dtype=np.float32, initial=1.)
+    cycle_phase = Variable('cycle_phase', dtype=np.int32, initial=0, to_write=True)
+    cycle_age = Variable('cycle_age', dtype=np.float32, initial=0., to_write=True)
+    cycle_number = Variable('cycle_number', dtype=np.int32, initial=1, to_write=True)  # 1-based
+    drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=True)
+    in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=True)
 
 
 def ArgoFloatKernel(particle, fieldset, time):
@@ -44,6 +45,7 @@ def ArgoFloatKernel(particle, fieldset, time):
     cycletime = fieldset.cycle_duration * 86400  # in s
     particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
+    max_cycle_number = fieldset.life_expectancy
 
     # Compute drifting time so that the cycletime is respected:
     # Time to descent to parking (mindepth to driftdepth at vertical_speed)
@@ -52,7 +54,13 @@ def ArgoFloatKernel(particle, fieldset, time):
     transit += (maxdepth - driftdepth) / vertical_speed
     # Time to ascent (maxdepth to mindepth at vertical_speed)
     transit += (maxdepth - mindepth) / vertical_speed
-    drifttime = cycletime - transit
+    drifttime = cycletime - transit - particle.dt
+
+    # Life expectancy management:
+    if particle.cycle_number > max_cycle_number:  # Kill this float
+        print("%i > %i" % (particle.cycle_number, max_cycle_number))
+        print("Field Warning : This float is killed because it exceeds its life expectancy")
+        particle.delete()
 
     # Grounding management : Since parcels turns NaN to Zero within our domain, we have to manage
     # groundings in another way that the recovery of deleted particles (below)
@@ -110,10 +118,13 @@ def ArgoFloatKernel(particle, fieldset, time):
     elif particle.cycle_phase == 4:
         # Phase 4: Transmitting at surface until cycletime is reached
         if particle.cycle_age >= cycletime:
+            print("End of cycle number %i" % particle.cycle_number)
             particle.cycle_phase = 0
             particle.cycle_age = 0
+            particle.cycle_number += 1
 
     particle.cycle_age += particle.dt  # update cycle_age
+
 
 
 def DeleteParticleKernel(particle, fieldset, time):
@@ -151,7 +162,7 @@ def DeleteParticleKernel(particle, fieldset, time):
             particle.depth = depth_max
             particle.cycle_phase = 3
     else:
-        # I don't know why yet but in some cases, during ascent,  I get an outOfBounds error, even with a depth > depth_min...
+        # I don't know why yet but in some cases, during ascent, I get an outOfBounds error, even with a depth > depth_min...
         if particle.cycle_phase == 3:
             particle.depth = depth_min
             particle.cycle_phase = 4
@@ -159,6 +170,7 @@ def DeleteParticleKernel(particle, fieldset, time):
             print("%i: %f" % (particle.cycle_phase, particle.depth))
             print("Field Warning : Unknown OutOfBounds --> deleted")
             particle.delete()
+
 
 
 def PeriodicBoundaryConditionKernel(particle, fieldset, time):

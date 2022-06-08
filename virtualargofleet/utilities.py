@@ -71,6 +71,8 @@ class FloatConfiguration():
                                       description='Vertical profiling speed', dtype=float)
             self.params = ConfigParam(key='cycle_duration', value=10., unit='day',
                                       description='Maximum length of float complete cycle', dtype=float)
+            self.params = ConfigParam(key='life_expectancy', value=200, unit='cycle',
+                                      description='Maximum number of completed cycle', dtype=int)
 
     def __repr__(self):
         summary = ["<FloatConfiguration>"]
@@ -139,13 +141,15 @@ def simu2index(ds):
             if iphase == 3:
                 sub_grp = splitonprofiles(grp)
                 sub_grp['cycle_number'] = xr.DataArray(np.arange(0, len(sub_grp['obs'])), dims='obs')
+                sub_grp['traj_id'] = xr.DataArray(np.full_like(sub_grp['obs'], fill_value=traj.data), dims='obs')
                 ds_list.append(sub_grp)
     ds_profiles = xr.concat(ds_list, dim='obs')
 
     df = ds_profiles.to_dataframe()
     df = df.rename({'time': 'date', 'lat': 'latitude', 'lon': 'longitude', 'z': 'min_depth'}, axis='columns')
-    df = df[['date', 'latitude', 'longitude', 'wmo', 'cycle_number']]
+    df = df[['date', 'latitude', 'longitude', 'wmo', 'cycle_number', 'traj_id']]
     df['wmo'] = df['wmo'].astype('int')
+    df['traj_id'] = df['traj_id'].astype('int')
     df['latitude'] = np.fix(df['latitude'] * 1000).astype('int') / 1000
     df['longitude'] = np.fix(df['longitude'] * 1000).astype('int') / 1000
     df = df.reset_index(drop=True)
