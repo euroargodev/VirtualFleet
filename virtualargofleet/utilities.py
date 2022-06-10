@@ -81,7 +81,7 @@ class FloatConfiguration:
             Name of a known configuration to load
         """
         self._params_dict = {}
-        if name == 'default':
+        def set_default():
             self.params = ConfigParam(key='profile_depth',
                                       value=2000.,
                                       unit='m',
@@ -106,7 +106,7 @@ class FloatConfiguration:
                                       value=10 * 24.,
                                       unit='hours',
                                       description='Maximum length of float complete cycle',
-                                      techkey='CONFIG_CycleTime_hours',  # ! Not the same unit !
+                                      techkey='CONFIG_CycleTime_hours',
                                       dtype=float)
 
             self.params = ConfigParam(key='life_expectancy',
@@ -115,6 +115,49 @@ class FloatConfiguration:
                                       description='Maximum number of completed cycle',
                                       techkey='CONFIG_MaxCycles_NUMBER',
                                       dtype=int)
+
+        if name == 'default':
+            set_default()
+
+        if name == 'gse-experiment':
+            set_default()
+
+            self.params = ConfigParam(key='area_cycle_duration',
+                                      value=5 * 24,
+                                      unit='hours',
+                                      description='Maximum length of float complete cycle in AREA',
+                                      techkey='CONFIG_CycleTime_hours',
+                                      dtype=float)
+
+            self.params = ConfigParam(key='area_xmin',
+                                      value=-75,
+                                      unit='deg_longitude',
+                                      description='AREA Western bound',
+                                      techkey='',
+                                      dtype=float)
+
+            self.params = ConfigParam(key='area_xmax',
+                                      value=-48,
+                                      unit='deg_longitude',
+                                      description='AREA Eastern bound',
+                                      techkey='',
+                                      dtype=float)
+
+            self.params = ConfigParam(key='area_ymin',
+                                      value=33.,
+                                      unit='deg_latitude',
+                                      description='AREA Southern bound',
+                                      techkey='',
+                                      dtype=float)
+
+            self.params = ConfigParam(key='area_ymax',
+                                      value=45.5,
+                                      unit='deg_latitude',
+                                      description='AREA Northern bound',
+                                      techkey='',
+                                      dtype=float)
+
+        self.name = name
 
     def __repr__(self):
         summary = ["<FloatConfiguration>"]
@@ -136,7 +179,7 @@ class FloatConfiguration:
 
     def update(self, key, new_value):
         if key not in self.params:
-            raise ValueError("Invalid parameter '%s'" % key)
+            raise ValueError("Invalid parameter '%s' for configuration '%s'" % (key, self.name))
         self._params_dict[key].value = new_value
         return self
 
