@@ -38,7 +38,7 @@ class ConfigParam:
     value = property(get_value, set_value)
 
 
-class FloatConfiguration():
+class FloatConfiguration:
     """Float mission configuration manager
 
     Create a default configuration and then possibly update parameter values or add new parameters
@@ -48,7 +48,9 @@ class FloatConfiguration():
     Examples
     --------
     >>> cfg = FloatConfiguration('default')
-    >>> cfg.update('parking_depth', 500)
+    >>> cfg.update('parking_depth', 500)  # Update one parameter value
+    >>> cfg.params  # Return the list of parameters
+    >>> cfg.mission # Return the configuration as a dictionary
     >>> cfg
 
     """
@@ -119,32 +121,49 @@ class FloatConfiguration():
         pass
 
 
-def get_splitdates(t, N=1):
+def get_splitdates(t, N = 1):
     """Given a list of dates, return index of dates before a date change larger than N days"""
     dt = np.diff(t).astype('timedelta64[D]')
     # print(dt)
     return np.argwhere(dt > np.timedelta64(N, 'D'))[:, 0]
 
 
-def splitonprofiles(ds):
-    sub_grp = ds.isel(obs=get_splitdates(ds['time']))
+def splitonprofiles(ds, N = 1):
+    sub_grp = ds.isel(obs=get_splitdates(ds['time'], N=N))
     # plt.plot(ds['time'], -ds['z'], 'k.')
     # plt.plot(sub_grp['time'], -sub_grp['z'], 'r.')
     return sub_grp
 
 
-def simu2index(ds):
-    """Convert a simulation obs/traj dataset to an Argo index of profiles"""
-    ds_list = []
-    for traj in ds['traj']:
-        for iphase, grp in ds.sel(traj=traj).groupby(group='cycle_phase'):
-            if iphase == 3:
-                sub_grp = splitonprofiles(grp)
-                sub_grp['cycle_number'] = xr.DataArray(np.arange(0, len(sub_grp['obs'])), dims='obs')
-                sub_grp['traj_id'] = xr.DataArray(np.full_like(sub_grp['obs'], fill_value=traj.data), dims='obs')
-                ds_list.append(sub_grp)
-    ds_profiles = xr.concat(ds_list, dim='obs')
+def simu2index(ds, N = 1):
+    """Convert a simulation dataset obs/traj to an Argo index of profiles
 
+    Profiles are identified using the 'cycle_number' variable if available or 'cycle_phase' otherwise.
+
+    A profile is identified if the last obs of a cycle_number sequence is in cycle_phase 3 or 4.
+    A profile is identified if the last obs of a cycle_phase==3 sequence is separated by N days from the next sequence.
+    """
+    ds_list = []
+
+    if 'cycle_number' in ds.data_vars:
+        for traj in ds['traj']:
+            for cyc, grp in ds.sel(traj=traj).groupby(group='cycle_number'):
+                ds_cyc = grp.isel(obs=-1)
+                if ds_cyc['cycle_phase'] in [3, 4]:
+                    ds_cyc['traj_id'] = xr.DataArray(np.full_like((1,), fill_value=traj.data), dims='obs')
+                    ds_list.append(ds_cyc)
+    else:
+        for traj in ds['traj']:
+            for iphase, grp in ds.sel(traj=traj).groupby(group='cycle_phase'):
+                if iphase == 3:
+                    sub_grp = splitonprofiles(grp, N=N)
+                    sub_grp['cycle_number'] = xr.DataArray(np.arange(1, len(sub_grp['obs'])), dims='obs')
+                    sub_grp['traj_id'] = xr.DataArray(np.full_like(sub_grp['obs'], fill_value=traj.data), dims='obs')
+                    ds_list.append(sub_grp)
+
+    ds_profiles = xr.concat(ds_list, dim='obs')
+    if 'wmo' not in ds_profiles.data_vars:
+        ds_profiles['wmo'] = ds_profiles['traj_id'] + 9000000
     df = ds_profiles.to_dataframe()
     df = df.rename({'time': 'date', 'lat': 'latitude', 'lon': 'longitude', 'z': 'min_depth'}, axis='columns')
     df = df[['date', 'latitude', 'longitude', 'wmo', 'cycle_number', 'traj_id']]

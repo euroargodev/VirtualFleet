@@ -1,6 +1,8 @@
 import numpy as np
 from parcels import JITParticle, Variable
 import logging
+import math
+
 
 log = logging.getLogger("virtualfleet.parcels")
 
@@ -16,10 +18,10 @@ class ArgoParticle(JITParticle):
     """
     # Phase of cycle: init_descend = 0, drift = 1, profile_descend = 2, profile_ascend = 3, transmit = 4
     cycle_phase = Variable('cycle_phase', dtype=np.int32, initial=0, to_write=True)
-    cycle_age = Variable('cycle_age', dtype=np.float32, initial=0., to_write=True)
     cycle_number = Variable('cycle_number', dtype=np.int32, initial=1, to_write=True)  # 1-based
-    drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=True)
-    in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=True)
+    cycle_age = Variable('cycle_age', dtype=np.float32, initial=0., to_write=True)
+    drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=False)
+    in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=False)
 
 
 def ArgoFloatKernel(particle, fieldset, time):
@@ -42,7 +44,7 @@ def ArgoFloatKernel(particle, fieldset, time):
     maxdepth = fieldset.profile_depth
     mindepth = 1  # not too close to the surface so that particle doesn't go above it
     vertical_speed = fieldset.v_speed  # in m/s
-    cycletime = fieldset.cycle_duration * 86400  # in s
+    cycletime = fieldset.cycle_duration * 3600  # has to be in seconds
     particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
     max_cycle_number = fieldset.life_expectancy
@@ -54,13 +56,9 @@ def ArgoFloatKernel(particle, fieldset, time):
     transit += (maxdepth - driftdepth) / vertical_speed
     # Time to ascent (maxdepth to mindepth at vertical_speed)
     transit += (maxdepth - mindepth) / vertical_speed
-    drifttime = cycletime - transit - particle.dt
+    drifttime = cycletime - transit - 15*60  # Remove 15 minutes for surface transmission
+    drifttime = math.floor(drifttime / particle.dt) * particle.dt  # Should be a multiple of dt
 
-    # Life expectancy management:
-    if particle.cycle_number > max_cycle_number:  # Kill this float
-        print("%i > %i" % (particle.cycle_number, max_cycle_number))
-        print("Field Warning : This float is killed because it exceeds its life expectancy")
-        particle.delete()
 
     # Grounding management : Since parcels turns NaN to Zero within our domain, we have to manage
     # groundings in another way that the recovery of deleted particles (below)
@@ -123,7 +121,13 @@ def ArgoFloatKernel(particle, fieldset, time):
             particle.cycle_age = 0
             particle.cycle_number += 1
 
-    particle.cycle_age += particle.dt  # update cycle_age
+    # Life expectancy management:
+    if particle.cycle_number > max_cycle_number:  # Kill this float before moving on to a new cycle
+        print("%i > %i" % (particle.cycle_number, max_cycle_number))
+        print("Field Warning : This float is killed because it exceeds its life expectancy")
+        particle.delete()
+    else:
+        particle.cycle_age += particle.dt  # update cycle_age
 
 
 
