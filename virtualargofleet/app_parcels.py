@@ -116,7 +116,7 @@ def ArgoFloatKernel(particle, fieldset, time):
     elif particle.cycle_phase == 4:
         # Phase 4: Transmitting at surface until cycletime is reached
         if particle.cycle_age >= cycletime:
-            print("End of cycle number %i" % particle.cycle_number)
+            # print("End of cycle number %i" % particle.cycle_number)
             particle.cycle_phase = 0
             particle.cycle_age = 0
             particle.cycle_number += 1
@@ -128,6 +128,137 @@ def ArgoFloatKernel(particle, fieldset, time):
         particle.delete()
     else:  # otherwise continue to cycle
         particle.cycle_age += particle.dt  # update cycle_age
+
+
+class ArgoParticle_exp(JITParticle):
+    """ Internal class used by parcels to add variables to particle kernel
+
+    Inherit from :class:`parcels.JITParticle`
+
+    Returns
+    -------
+    :class:`parcels.particle.JITParticle``
+    """
+    # Phase of cycle: init_descend = 0, drift = 1, profile_descend = 2, profile_ascend = 3, transmit = 4
+    cycle_phase = Variable('cycle_phase', dtype=np.int32, initial=0, to_write=True)
+    cycle_number = Variable('cycle_number', dtype=np.int32, initial=1, to_write=True)  # 1-based
+    cycle_age = Variable('cycle_age', dtype=np.float32, initial=0., to_write=True)
+    drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=False)
+    in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=False)
+
+
+def ArgoFloatKernel_exp(particle, fieldset, time):
+    """This is the kernel definition that mimics an Argo float.
+
+    It can only have (particle, fieldset, time) as arguments. So missions parameters are passed as constants through the fieldset.
+
+    Parameters
+    ----------
+    particle:
+    fieldset: :class:`parcels.fieldset.FieldSet`
+        FieldSet class instance that holds hydrodynamic data needed to execute particles
+    time:
+
+    Returns
+    -------
+    :class:`parcels.kernels`
+    """
+    driftdepth = fieldset.parking_depth
+    maxdepth = fieldset.profile_depth
+    mindepth = 1  # not too close to the surface so that particle doesn't go above it
+    vertical_speed = fieldset.v_speed  # in m/s
+    cycletime = fieldset.cycle_duration * 3600  # has to be in seconds
+    particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
+                                      particle.lon]
+    max_cycle_number = fieldset.life_expectancy
+
+    # Adjust mission parameters if float enters in the experiment area:
+    xmin, xmax = fieldset.area_xmin, fieldset.area_xmax
+    ymin, ymax = fieldset.area_ymin, fieldset.area_ymax
+    if particle.lat >= ymin and particle.lat <= ymax and particle.lon >= xmin and particle.lon <= xmax:
+        print("Field Warning : This float is in the experiment area")
+        cycletime = fieldset.area_cycle_duration * 3600  # has to be in seconds
+
+    # Compute drifting time so that the cycletime is respected:
+    # Time to descent to parking (mindepth to driftdepth at vertical_speed)
+    transit = (driftdepth - mindepth) / vertical_speed
+    # Time to descent to profile depth (driftdepth to maxdepth at vertical_speed)
+    transit += (maxdepth - driftdepth) / vertical_speed
+    # Time to ascent (maxdepth to mindepth at vertical_speed)
+    transit += (maxdepth - mindepth) / vertical_speed
+    drifttime = cycletime - transit - 15*60  # Remove 15 minutes for surface transmission
+    drifttime = math.floor(drifttime / particle.dt) * particle.dt  # Should be a multiple of dt
+
+
+    # Grounding management : Since parcels turns NaN to Zero within our domain, we have to manage
+    # groundings in another way that the recovery of deleted particles (below)
+    if not particle.in_water:
+        # if we're in phase 0 or 1 :
+        #-> rising 50 db and start drifting (phase 1)
+        if particle.cycle_phase <= 1:
+            print(
+                "Grouding during descent to parking or during parking, rising up 50m and try drifting here.")
+            particle.depth = particle.depth - 50
+            particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
+                                      particle.lon]
+            particle.cycle_phase = 1
+        # if we're in phase 2:
+        #-> start profiling (phase 3)
+        elif particle.cycle_phase == 2:
+            print("Grounding during descent to profile, starting profile here")
+            particle.cycle_phase = 3
+        else:
+            pass
+
+    # CYCLE MANAGEMENT
+    if particle.cycle_phase == 0:
+        # Phase 0: Sinking with vertical_speed until depth is driftdepth
+        particle.depth += vertical_speed * particle.dt
+        particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
+                                      particle.lon]
+        if particle.depth >= driftdepth:
+            particle.cycle_phase = 1
+
+    elif particle.cycle_phase == 1:
+        # Phase 1: Drifting at depth for drifttime seconds
+        particle.drift_age += particle.dt
+        if particle.drift_age >= drifttime:
+            particle.drift_age = 0  # reset drift_age for next cycle
+            particle.cycle_phase = 2
+
+    elif particle.cycle_phase == 2:
+        # Phase 2: Sinking further to maxdepth
+        particle.depth += vertical_speed * particle.dt
+        particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
+                                      particle.lon]
+        if particle.depth >= maxdepth:
+            particle.cycle_phase = 3
+
+    elif particle.cycle_phase == 3:
+        # Phase 3: Rising with vertical_speed until at surface
+        particle.depth -= vertical_speed * particle.dt
+        particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
+                                      particle.lon]
+        if particle.depth <= mindepth:
+            particle.depth = mindepth
+            particle.cycle_phase = 4
+
+    elif particle.cycle_phase == 4:
+        # Phase 4: Transmitting at surface until cycletime is reached
+        if particle.cycle_age >= cycletime:
+            # print("End of cycle number %i" % particle.cycle_number)
+            particle.cycle_phase = 0
+            particle.cycle_age = 0
+            particle.cycle_number += 1
+
+    # Life expectancy management:
+    if particle.cycle_number > max_cycle_number:  # Kill this float before moving on to a new cycle
+        print("%i > %i" % (particle.cycle_number, max_cycle_number))
+        print("Field Warning : This float is killed because it exceeds its life expectancy")
+        particle.delete()
+    else:  # otherwise continue to cycle
+        particle.cycle_age += particle.dt  # update cycle_age
+
 
 
 

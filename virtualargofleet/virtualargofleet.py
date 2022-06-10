@@ -8,8 +8,10 @@ import pandas as pd
 import numpy as np
 from .app_parcels import (
     ArgoParticle,
+    ArgoParticle_exp,
     DeleteParticleKernel,
     ArgoFloatKernel,
+    ArgoFloatKernel_exp,
     PeriodicBoundaryConditionKernel,
 )
 import logging
@@ -58,10 +60,22 @@ class VirtualFleet:
         vfield.fieldset.add_constant("cycle_duration", mission["cycle_duration"])
         vfield.fieldset.add_constant("life_expectancy", mission["life_expectancy"])
 
+        Particle = ArgoParticle
+        FloatKernel = ArgoFloatKernel
+
+        if "area_cycle_duration" in mission:
+            vfield.fieldset.add_constant("area_cycle_duration", mission["area_cycle_duration"])
+            vfield.fieldset.add_constant("area_xmin", mission["area_xmin"])
+            vfield.fieldset.add_constant("area_xmax", mission["area_xmax"])
+            vfield.fieldset.add_constant("area_ymin", mission["area_ymin"])
+            vfield.fieldset.add_constant("area_ymax", mission["area_ymax"])
+            Particle = ArgoParticle_exp
+            FloatKernel = ArgoFloatKernel_exp
+
         # Define parcels :class:`parcels.particleset.particlesetsoa.ParticleSetSOA`
         self.pset = ParticleSet(
             fieldset=vfield.fieldset,
-            pclass=ArgoParticle,
+            pclass=Particle,
             lon=self.lon,
             lat=self.lat,
             depth=self.depth,
@@ -70,12 +84,12 @@ class VirtualFleet:
         if vfield.isglobal:
             # combine Argo vertical movement kernel with Advection kernel + boundaries
             self.kernels = (
-                ArgoFloatKernel
+                FloatKernel
                 + self.pset.Kernel(AdvectionRK4)
                 + self.pset.Kernel(PeriodicBoundaryConditionKernel)
             )
         else:
-            self.kernels = ArgoFloatKernel + self.pset.Kernel(AdvectionRK4)
+            self.kernels = FloatKernel + self.pset.Kernel(AdvectionRK4)
 
         self.run_params = None  # Will be set by .simulate() method
 
