@@ -255,7 +255,7 @@ def simu2index(ds, N = 1):
             for iphase, grp in ds.sel(traj=traj).groupby(group='cycle_phase'):
                 if iphase == 3:
                     sub_grp = splitonprofiles(grp, N=N)
-                    sub_grp['cycle_number'] = xr.DataArray(np.arange(1, len(sub_grp['obs'])), dims='obs')
+                    sub_grp['cycle_number'] = xr.DataArray(np.arange(1, len(sub_grp['obs']) + 1), dims='obs')
                     sub_grp['traj_id'] = xr.DataArray(np.full_like(sub_grp['obs'], fill_value=traj.data), dims='obs')
                     ds_list.append(sub_grp)
 
