@@ -126,7 +126,7 @@ def ArgoFloatKernel(particle, fieldset, time):
         print("%i > %i" % (particle.cycle_number, max_cycle_number))
         print("Field Warning : This float is killed because it exceeds its life expectancy")
         particle.delete()
-    else:
+    else:  # otherwise continue to cycle
         particle.cycle_age += particle.dt  # update cycle_age
 
 
