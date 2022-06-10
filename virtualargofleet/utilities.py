@@ -1,7 +1,10 @@
 import collections
 import numpy as np
 import xarray as xr
-
+from tqdm import tqdm
+import concurrent.futures
+import os
+import pandas as pd
 
 class ConfigParam:
     """Configuration parameter manager
@@ -10,17 +13,18 @@ class ConfigParam:
 
     Examples
     --------
-    >>> ConfigParam(key='profile_depth', value=2000.)
-    >>> ConfigParam(key='profile_depth', value=2000., unit='m', description='Maximum profile depth', dtype=float)
+    >>> p = ConfigParam(key='profile_depth', value=2000.)
+    >>> p = ConfigParam(key='profile_depth', value=2000., unit='m', description='Maximum profile depth', dtype=float)
+    >>> p.value
 
     """
+    str_val = lambda s, v: ("%s" % v).split("'")[1] if isinstance(v, type) else str(v)
+
     def __init__(self, key, value, **kwargs):
         self.key = key
-        self._value = value
-        default_meta = {'description': '', 'unit': '', 'dtype': ''}
+        default_meta = {'description': '', 'unit': '', 'dtype': '', 'techkey': ''}
         self.meta = {**default_meta, **kwargs}
-        if self.meta['dtype'] != '':
-            self._value = self.meta['dtype'](self.value)
+        self.set_value(value)
 
     def __repr__(self):
         desc = "" if self.meta['description'] == '' else "(%s)" % self.meta['description']
@@ -32,8 +36,21 @@ class ConfigParam:
 
     def set_value(self, value):
         if self.meta['dtype'] != '':
-            value = self.meta['dtype'](value)
+            try:
+                value = self.meta['dtype'](value)
+            except ValueError:
+                raise ValueError("Cannot cast '%s' value as expected %s" % (self.key, self.str_val(self.meta['dtype'])))
         self._value = value
+
+    def to_json(self):
+        """Return a dictionary serialisable in json"""
+
+        def meta_to_json(d):
+            [d.update({key: self.str_val(val)}) for key, val in self.meta.items()]
+            return d
+
+        js = {self.key: {'value': self.value, 'meta': meta_to_json(self.meta.copy())}}
+        return js
 
     value = property(get_value, set_value)
 
@@ -65,16 +82,39 @@ class FloatConfiguration:
         """
         self._params_dict = {}
         if name == 'default':
-            self.params = ConfigParam(key='profile_depth', value=2000., unit='m',
-                                      description='Maximum profile depth', dtype=float)
-            self.params = ConfigParam(key='parking_depth', value=1000., unit='m',
-                                      description='Drifting depth', dtype=float)
-            self.params = ConfigParam(key='vertical_speed', value=0.09, unit='m/s',
-                                      description='Vertical profiling speed', dtype=float)
-            self.params = ConfigParam(key='cycle_duration', value=10., unit='day',
-                                      description='Maximum length of float complete cycle', dtype=float)
-            self.params = ConfigParam(key='life_expectancy', value=200, unit='cycle',
-                                      description='Maximum number of completed cycle', dtype=int)
+            self.params = ConfigParam(key='profile_depth',
+                                      value=2000.,
+                                      unit='m',
+                                      description='Maximum profile depth',
+                                      techkey='CONFIG_ProfilePressure_dbar',
+                                      dtype=float)
+
+            self.params = ConfigParam(key='parking_depth',
+                                      value=1000.,
+                                      unit='m',
+                                      description='Drifting depth',
+                                      techkey='CONFIG_ParkPressure_dbar',
+                                      dtype=float)
+
+            self.params = ConfigParam(key='vertical_speed',
+                                      value=0.09,
+                                      unit='m/s',
+                                      description='Vertical profiling speed',
+                                      dtype=float)
+
+            self.params = ConfigParam(key='cycle_duration',
+                                      value=10 * 24.,
+                                      unit='hours',
+                                      description='Maximum length of float complete cycle',
+                                      techkey='CONFIG_CycleTime_hours',  # ! Not the same unit !
+                                      dtype=float)
+
+            self.params = ConfigParam(key='life_expectancy',
+                                      value=200,
+                                      unit='cycle',
+                                      description='Maximum number of completed cycle',
+                                      techkey='CONFIG_MaxCycles_NUMBER',
+                                      dtype=int)
 
     def __repr__(self):
         summary = ["<FloatConfiguration>"]
@@ -112,13 +152,28 @@ class FloatConfiguration:
         """Should be able to read simple parameters from a real float file"""
         pass
 
-    def save(self):
+    def to_netcdf(self):
         """Should be able to save on file a float configuration"""
         pass
 
-    def load(self):
+    def to_json(self):
+        """Should be able to save on file a float configuration"""
+        js = {}
+        for p in self._params_dict.keys():
+            js = {**js, **self._params_dict[p].to_json()}
+        return js
+
+    def from_netcdf(self):
         """Should be able to read from file a float configuration"""
         pass
+
+    @property
+    def tech(self):
+        summary = ["<FloatConfiguration.Technical>"]
+        for p in self._params_dict.keys():
+            if self._params_dict[p].meta['techkey'] != '':
+                summary.append("- %s: %s" % (self._params_dict[p].meta['techkey'], self._params_dict[p].value))
+        return "\n".join(summary)
 
 
 def get_splitdates(t, N = 1):
@@ -174,6 +229,116 @@ def simu2index(ds, N = 1):
     df = df.reset_index(drop=True)
 
     return df
+
+
+def simu2index_par(ds):
+    def reducerA(sub_ds):
+        sub_grp = None
+        for iphase, grp in sub_ds.groupby(group='cycle_phase'):
+            if iphase == 3:
+                sub_grp = splitonprofiles(grp, N=1)
+                sub_grp['cycle_number'] = xr.DataArray(np.arange(1, len(sub_grp['obs']) + 1), dims='obs')
+                sub_grp['traj_id'] = xr.DataArray(
+                    np.full_like(sub_grp['obs'], fill_value=np.unique(sub_ds['trajectory'])[0]), dims='obs')
+                return sub_grp
+
+    def reducerB(sub_ds):
+        ds_list = []
+        for cyc, grp in sub_ds.groupby(group='cycle_number'):
+            ds_cyc = grp.isel(obs=-1)
+            if ds_cyc['cycle_phase'] in [3, 4]:
+                ds_cyc['traj_id'] = xr.DataArray(np.full_like((1,), fill_value=np.unique(sub_ds['trajectory'])[0]),
+                                                 dims='obs')
+        return xr.concat(ds_list, dim='obs')
+
+    reducer = reducerB if 'cycle_number' in ds.data_vars else reducerA
+
+    ConcurrentExecutor = concurrent.futures.ThreadPoolExecutor()
+    with ConcurrentExecutor as executor:
+        future_to_url = {executor.submit(reducer, ds.sel(traj=traj)): ds.sel(traj=traj) for traj in ds['traj']}
+        futures = concurrent.futures.as_completed(future_to_url)
+        futures = tqdm(futures, total=len(ds['traj']))
+
+        ds_list, failed = [], []
+        for future in futures:
+            data = None
+            try:
+                data = future.result()
+            except Exception:
+                failed.append(future_to_url[future])
+                raise
+            finally:
+                ds_list.append(data)
+
+    ds_list = [r for r in ds_list if r is not None]  # Only keep non-empty results
+    ds_profiles = xr.concat(ds_list, dim='obs')
+    if 'wmo' not in ds_profiles.data_vars:
+        ds_profiles['wmo'] = ds_profiles['traj_id'] + 9000000
+    df = ds_profiles.to_dataframe()
+    df = df.rename({'time': 'date', 'lat': 'latitude', 'lon': 'longitude', 'z': 'min_depth'}, axis='columns')
+    df = df[['date', 'latitude', 'longitude', 'wmo', 'cycle_number', 'traj_id']]
+    df['wmo'] = df['wmo'].astype('int')
+    df['traj_id'] = df['traj_id'].astype('int')
+    df['latitude'] = np.fix(df['latitude'] * 1000).astype('int') / 1000
+    df['longitude'] = np.fix(df['longitude'] * 1000).astype('int') / 1000
+    df = df.reset_index(drop=True)
+    return df
+
+
+def simu2csv(simu_file, index_file=None, df=None):
+    """Save simulation results profile index to file, as Argo index
+
+    Argo profile index can be loaded with argopy.
+
+    Parameters
+    ----------
+    simu_file: str
+        Path to netcdf file of simulation results, to load profiles from
+    index_file: str, optional
+        Path to csf file to write index
+    df: :class:Pandas.Dataframe, optional
+        If provided, will use as profile index, otherwise, compute index from simu_file
+
+    Returns
+    -------
+    str
+        Path to Argo profile index
+    """
+    if index_file is None:
+        index_file = simu_file.replace(".nc", "_ar_index_prof.txt")
+
+    txt_header = """# Title : Profile directory file of a VirtualFleet simulation
+# Description : Profiles from simulation result file: {}
+# Project : ARGO, EARISE
+# Format version : 2.0
+# Date of update : {}
+# FTP root number 1 : ftp://ftp.ifremer.fr/ifremer/argo/dac
+# FTP root number 2 : ftp://usgodae.org/pub/outgoing/argo/dac
+# GDAC node : -
+""".format(os.path.abspath(simu_file), pd.to_datetime('now', utc=True).strftime('%Y%m%d%H%M%S'))
+    with open(index_file, 'w') as f:
+        f.write(txt_header)
+
+    if df is None:
+        try:
+            ardf = simu2index_par(xr.open_dataset(simu_file))
+        except ValueError:
+            ardf = simu2index(xr.open_dataset(simu_file))
+    else:
+        ardf = df.copy()
+
+    if len(ardf) > 0:
+        with open(index_file, 'a+') as f:
+            ardf['institution'] = 'VF'  # VirtualFleet
+            ardf['profiler_type'] = 999  # Reserved
+            ardf['ocean'] = 'A'  # Atlantic ocean area
+            ardf['date_update'] = pd.to_datetime('now', utc=True)
+            ardf['file'] = ardf.apply(
+                lambda row: "vf/%i/profiles/R%i_%0.2d.nc" % (row['wmo'], row['wmo'], row['cycle_number']), axis=1)
+            ardf = ardf[['file', 'date', 'latitude', 'longitude', 'ocean', 'profiler_type', 'institution', 'date_update']]
+            ardf.to_csv(f, index=False, date_format='%Y%m%d%H%M%S')
+
+    return index_file
 
 
 def set_WMO(ds, argo_index):
