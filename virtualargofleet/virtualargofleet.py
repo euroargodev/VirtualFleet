@@ -65,6 +65,7 @@ class VirtualFleet:
 
         if "area_cycle_duration" in mission:
             vfield.fieldset.add_constant("area_cycle_duration", mission["area_cycle_duration"])
+            vfield.fieldset.add_constant("area_parking_depth", mission["area_parking_depth"])
             vfield.fieldset.add_constant("area_xmin", mission["area_xmin"])
             vfield.fieldset.add_constant("area_xmax", mission["area_xmax"])
             vfield.fieldset.add_constant("area_ymin", mission["area_ymin"])

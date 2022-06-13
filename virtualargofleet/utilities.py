@@ -129,6 +129,13 @@ class FloatConfiguration:
                                       techkey='CONFIG_CycleTime_hours',
                                       dtype=float)
 
+            self.params = ConfigParam(key='area_parking_depth',
+                                      value=1000.,
+                                      unit='m',
+                                      description='Drifting depth in AREA',
+                                      techkey='CONFIG_ParkPressure_dbar',
+                                      dtype=float)
+
             self.params = ConfigParam(key='area_xmin',
                                       value=-75,
                                       unit='deg_longitude',

@@ -178,6 +178,7 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
     if particle.lat >= ymin and particle.lat <= ymax and particle.lon >= xmin and particle.lon <= xmax:
         print("Field Warning : This float is in the experiment area")
         cycletime = fieldset.area_cycle_duration * 3600  # has to be in seconds
+        driftdepth = fieldset.area_parking_depth
 
     # Compute drifting time so that the cycletime is respected:
     # Time to descent to parking (mindepth to driftdepth at vertical_speed)
