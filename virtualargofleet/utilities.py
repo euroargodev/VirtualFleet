@@ -384,11 +384,11 @@ def simu2csv(simu_file, index_file=None, df=None):
         f.write(txt_header)
 
     if df is None:
-        # ardf = simu2index(xr.open_dataset(simu_file))
-        try:
-            ardf = simu2index_par(xr.open_dataset(simu_file))
-        except ValueError:
-            ardf = simu2index(xr.open_dataset(simu_file))
+        ardf = simu2index(xr.open_dataset(simu_file))
+        # try:
+        #     ardf = simu2index_par(xr.open_dataset(simu_file))
+        # except ValueError:
+        #     ardf = simu2index(xr.open_dataset(simu_file))
     else:
         ardf = df.copy()
 
