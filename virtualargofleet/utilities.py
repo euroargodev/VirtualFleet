@@ -3,8 +3,14 @@ import numpy as np
 import xarray as xr
 from tqdm import tqdm
 import concurrent.futures
+import multiprocessing
 import os
 import pandas as pd
+import logging
+
+
+log = logging.getLogger("virtualfleet.utils")
+
 
 class ConfigParam:
     """Configuration parameter manager
@@ -284,26 +290,34 @@ def simu2index(ds, N = 1):
 def simu2index_par(ds):
     def reducerA(sub_ds):
         sub_grp = None
+        traj_id = np.unique(sub_ds['trajectory'])[0]
         for iphase, grp in sub_ds.groupby(group='cycle_phase'):
             if iphase == 3:
                 sub_grp = splitonprofiles(grp, N=1)
                 sub_grp['cycle_number'] = xr.DataArray(np.arange(1, len(sub_grp['obs']) + 1), dims='obs')
                 sub_grp['traj_id'] = xr.DataArray(
-                    np.full_like(sub_grp['obs'], fill_value=np.unique(sub_ds['trajectory'])[0]), dims='obs')
+                    np.full_like(sub_grp['obs'], fill_value=traj_id), dims='obs')
                 return sub_grp
 
     def reducerB(sub_ds):
         ds_list = []
+        traj_id = np.unique(sub_ds['trajectory'])[0]
         for cyc, grp in sub_ds.groupby(group='cycle_number'):
             ds_cyc = grp.isel(obs=-1)
             if ds_cyc['cycle_phase'] in [3, 4]:
-                ds_cyc['traj_id'] = xr.DataArray(np.full_like((1,), fill_value=np.unique(sub_ds['trajectory'])[0]),
-                                                 dims='obs')
-        return xr.concat(ds_list, dim='obs')
+                ds_cyc['traj_id'] = xr.DataArray(np.full_like((1,), fill_value=traj_id), dims='obs')
+                ds_list.append(ds_cyc)
+        try:
+            ds = xr.concat(ds_list, dim='obs')
+        except Exception:
+            log.debug("Error on concat with traj_id: %i" % traj_id)
+            ds = None
+            pass
+        return ds
 
     reducer = reducerB if 'cycle_number' in ds.data_vars else reducerA
 
-    ConcurrentExecutor = concurrent.futures.ThreadPoolExecutor()
+    ConcurrentExecutor = concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count())
     with ConcurrentExecutor as executor:
         future_to_url = {executor.submit(reducer, ds.sel(traj=traj)): ds.sel(traj=traj) for traj in ds['traj']}
         futures = concurrent.futures.as_completed(future_to_url)
