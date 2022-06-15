@@ -257,14 +257,14 @@ def simu2index(ds, N = 1):
     ds_list = []
 
     if 'cycle_number' in ds.data_vars:
-        for traj in ds['traj']:
+        for traj in tqdm(ds['traj'], total=len(ds['traj'])):
             for cyc, grp in ds.sel(traj=traj).groupby(group='cycle_number'):
                 ds_cyc = grp.isel(obs=-1)
                 if ds_cyc['cycle_phase'] in [3, 4]:
                     ds_cyc['traj_id'] = xr.DataArray(np.full_like((1,), fill_value=traj.data), dims='obs')
                     ds_list.append(ds_cyc)
     else:
-        for traj in ds['traj']:
+        for traj in tqdm(ds['traj'], total=len(ds['traj'])):
             for iphase, grp in ds.sel(traj=traj).groupby(group='cycle_phase'):
                 if iphase == 3:
                     sub_grp = splitonprofiles(grp, N=N)
@@ -384,10 +384,11 @@ def simu2csv(simu_file, index_file=None, df=None):
         f.write(txt_header)
 
     if df is None:
-        try:
-            ardf = simu2index_par(xr.open_dataset(simu_file))
-        except ValueError:
-            ardf = simu2index(xr.open_dataset(simu_file))
+        ardf = simu2index(xr.open_dataset(simu_file))
+        # try:
+        #     ardf = simu2index_par(xr.open_dataset(simu_file))
+        # except ValueError:
+        #     ardf = simu2index(xr.open_dataset(simu_file))
     else:
         ardf = df.copy()
 
