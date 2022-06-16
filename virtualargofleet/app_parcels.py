@@ -145,6 +145,7 @@ class ArgoParticle_exp(JITParticle):
     cycle_age = Variable('cycle_age', dtype=np.float32, initial=0., to_write=True)
     drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=False)
     in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=False)
+    in_area = Variable('in_area', dtype=np.float32, initial=0., to_write=False)
 
 
 def ArgoFloatKernel_exp(particle, fieldset, time):
@@ -176,9 +177,13 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
     xmin, xmax = fieldset.area_xmin, fieldset.area_xmax
     ymin, ymax = fieldset.area_ymin, fieldset.area_ymax
     if particle.lat >= ymin and particle.lat <= ymax and particle.lon >= xmin and particle.lon <= xmax:
-        print("Field Warning : This float is in the experiment area")
+        if not particle.in_area:
+            print("Field Warning : This float is entering the experiment area")
+            particle.in_area = 1
         cycletime = fieldset.area_cycle_duration * 3600  # has to be in seconds
         driftdepth = fieldset.area_parking_depth
+    else:
+        particle.in_area = 0
 
     # Compute drifting time so that the cycletime is respected:
     # Time to descent to parking (mindepth to driftdepth at vertical_speed)
