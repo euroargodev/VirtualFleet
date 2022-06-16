@@ -7,7 +7,7 @@ import multiprocessing
 import os
 import pandas as pd
 import logging
-
+import json
 
 log = logging.getLogger("virtualfleet.utils")
 
@@ -125,7 +125,7 @@ class FloatConfiguration:
         if name == 'default':
             set_default()
 
-        if name == 'gse-experiment':
+        elif name == 'gse-experiment':
             set_default()
 
             self.params = ConfigParam(key='area_cycle_duration',
@@ -170,10 +170,26 @@ class FloatConfiguration:
                                       techkey='',
                                       dtype=float)
 
+        elif os.path.splitext(name)[-1] == ".json":
+            # Load configuration from file
+            with open(name, "r") as f:
+                js = json.load(f)
+            if js['version'] != "1.0":
+                raise ValueError("Unsupported file format version '%s'" % js['version'])
+            data = js['data']
+            for key in data.keys():
+                value = data[key]['value']
+                meta = data[key]['meta']
+                meta['dtype'] = eval(meta['dtype'])
+                self.params = ConfigParam(key=key, value=value, **meta)
+
+        else:
+            raise ValueError("Please give me a known configuration name ('default', 'gse-experiment') or a json file to load from !")
+
         self.name = name
 
     def __repr__(self):
-        summary = ["<FloatConfiguration>"]
+        summary = ["<FloatConfiguration><%s>" % self.name]
         for p in self._params_dict.keys():
             summary.append("- %s" % str(self._params_dict[p]))
         return "\n".join(summary)
@@ -198,7 +214,7 @@ class FloatConfiguration:
 
     @property
     def mission(self):
-        """Return a simple dictionary with key/value of all parameters"""
+        """Return a dictionary with key/value of all parameters"""
         mission = {}
         for key in self._params_dict.keys():
             mission[key] = self._params_dict[key].value
@@ -212,12 +228,21 @@ class FloatConfiguration:
         """Should be able to save on file a float configuration"""
         pass
 
-    def to_json(self):
-        """Should be able to save on file a float configuration"""
-        js = {}
+    def to_json(self, file_name=None):
+        """Return or save json dump of configuration"""
+        data = {}
         for p in self._params_dict.keys():
-            js = {**js, **self._params_dict[p].to_json()}
-        return js
+            data = {**data, **self._params_dict[p].to_json()}
+        js = {}
+        js['name'] = self.name
+        js['version'] = "1.0"
+        js['created'] = pd.to_datetime('now', utc=True).strftime('%Y%m%d%H%M%S')
+        js['data'] = data
+        if file_name is not None:
+            with open(file_name, "w") as f:
+                json.dump(js, f, indent=4)
+        else:
+            return js
 
     def from_netcdf(self):
         """Should be able to read from file a float configuration"""
@@ -225,7 +250,7 @@ class FloatConfiguration:
 
     @property
     def tech(self):
-        summary = ["<FloatConfiguration.Technical>"]
+        summary = ["<FloatConfiguration.Technical><%s>" % self.name]
         for p in self._params_dict.keys():
             if self._params_dict[p].meta['techkey'] != '':
                 summary.append("- %s: %s" % (self._params_dict[p].meta['techkey'], self._params_dict[p].value))
