@@ -182,7 +182,7 @@ class FloatConfiguration:
                 meta = data[key]['meta']
                 meta['dtype'] = eval(meta['dtype'])
                 self.params = ConfigParam(key=key, value=value, **meta)
-            name = data['name']
+            name = js['name']
 
         else:
             raise ValueError("Please give me a known configuration name ('default', 'gse-experiment') or a json file to load from !")
