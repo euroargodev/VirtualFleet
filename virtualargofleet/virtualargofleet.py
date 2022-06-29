@@ -167,6 +167,12 @@ class VirtualFleet:
         output_folder = kwargs["output_folder"] if "output_folder" in kwargs else "."
         output_path = os.path.join(output_folder, output_file)
 
+        verbose_progress = (
+            kwargs["verbose"]
+            if "verbose" in kwargs
+            else True
+        )
+
         if os.path.exists(output_path) or output_path[0] == ".":
             temp_name = next(tempfile._get_candidate_names()) + ".nc"
             while os.path.exists(temp_name):
@@ -199,6 +205,7 @@ class VirtualFleet:
             runtime=self.run_params["duration"],
             dt=self.run_params["step"],
             output_file=output_file,
+            verbose_progress=verbose_progress,
             recovery={ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
                       ErrorCode.ErrorThroughSurface: DeleteParticleKernel},
         )
