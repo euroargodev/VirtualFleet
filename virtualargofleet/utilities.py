@@ -411,7 +411,8 @@ def simu2csv(simu_file, index_file=None, df=None):
 
     if df is None:
         log.debug("Computing profile index from simulation file: %s" % simu_file)
-        ardf = simu2index(xr.open_dataset(simu_file))
+        ds = xr.open_dataset(simu_file, engine='netcdf4')
+        ardf = simu2index(ds)
         # try:
         #     ardf = simu2index_par(xr.open_dataset(simu_file))
         # except ValueError:
