@@ -385,7 +385,7 @@ def simu2csv(simu_file, index_file=None, df=None):
     simu_file: str
         Path to netcdf file of simulation results, to load profiles from
     index_file: str, optional
-        Path to csf file to write index
+        Path to csv file to write index to
     df: :class:Pandas.Dataframe, optional
         If provided, will use as profile index, otherwise, compute index from simu_file
 
