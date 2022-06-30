@@ -410,6 +410,7 @@ def simu2csv(simu_file, index_file=None, df=None):
         f.write(txt_header)
 
     if df is None:
+        log.debug("Computing profile index from simulation file: %s" % simu_file)
         ardf = simu2index(xr.open_dataset(simu_file))
         # try:
         #     ardf = simu2index_par(xr.open_dataset(simu_file))
@@ -419,6 +420,7 @@ def simu2csv(simu_file, index_file=None, df=None):
         ardf = df.copy()
 
     if len(ardf) > 0:
+        log.debug("Writing profile index file: %s" % index_file)
         with open(index_file, 'a+') as f:
             ardf['institution'] = 'VF'  # VirtualFleet
             ardf['profiler_type'] = 999  # Reserved
