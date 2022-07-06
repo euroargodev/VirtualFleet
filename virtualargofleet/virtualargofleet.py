@@ -35,6 +35,8 @@ class VirtualFleet:
         vfield: :class:`virtualargofleet.VelocityFieldProto`
         mission: dict
             Dictionary with Argo float parameters {'parking_depth': parking_depth, 'profile_depth': profile_depth, 'vertical_speed': vertical_speed, 'cycle_duration': cycle_duration}
+        verbose_events: bool, default: True
+            Print event details for each floats
         """
         # Deployment plan:
         self.lat = kwargs["lat"]
@@ -72,6 +74,14 @@ class VirtualFleet:
             vfield.fieldset.add_constant("area_ymax", mission["area_ymax"])
             Particle = ArgoParticle_exp
             FloatKernel = ArgoFloatKernel_exp
+
+        # More useful parameters to be sent to floats:
+        verbose_events = (
+            kwargs["verbose_events"]
+            if "verbose_events" in kwargs
+            else True
+        )
+        vfield.fieldset.add_constant("verbose_events", verbose_events)
 
         # Define parcels :class:`parcels.particleset.particlesetsoa.ParticleSetSOA`
         self.pset = ParticleSet(
@@ -168,8 +178,8 @@ class VirtualFleet:
         output_path = os.path.join(output_folder, output_file)
 
         verbose_progress = (
-            kwargs["verbose"]
-            if "verbose" in kwargs
+            kwargs["verbose_progress"]
+            if "verbose_progress" in kwargs
             else True
         )
 
@@ -200,6 +210,7 @@ class VirtualFleet:
             name=self.run_params["output_file"], outputdt=self.run_params["record"]
         )
 
+        log.debug("starting pset.execute")
         self.pset.execute(
             self.kernels,
             runtime=self.run_params["duration"],
@@ -209,8 +220,12 @@ class VirtualFleet:
             recovery={ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
                       ErrorCode.ErrorThroughSurface: DeleteParticleKernel},
         )
+        log.debug("ending pset.execute")
 
+        log.debug("starting export")
         output_file.export()
+        log.debug("ending export")
+
         output_file.close()
 
         # Add more variables to the output file:

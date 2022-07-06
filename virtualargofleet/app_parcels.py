@@ -49,6 +49,10 @@ def ArgoFloatKernel(particle, fieldset, time):
                                       particle.lon]
     max_cycle_number = fieldset.life_expectancy
 
+    def print_this(txt, verbose_print=fieldset.verbose_events):
+        if verbose_print:
+            print(txt)
+
     # Compute drifting time so that the cycletime is respected:
     # Time to descent to parking (mindepth to driftdepth at vertical_speed)
     transit = (driftdepth - mindepth) / vertical_speed
@@ -66,7 +70,7 @@ def ArgoFloatKernel(particle, fieldset, time):
         # if we're in phase 0 or 1 :
         #-> rising 50 db and start drifting (phase 1)
         if particle.cycle_phase <= 1:
-            print(
+            print_this(
                 "Grouding during descent to parking or during parking, rising up 50m and try drifting here.")
             particle.depth = particle.depth - 50
             particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
@@ -75,7 +79,7 @@ def ArgoFloatKernel(particle, fieldset, time):
         # if we're in phase 2:
         #-> start profiling (phase 3)
         elif particle.cycle_phase == 2:
-            print("Grounding during descent to profile, starting profile here")
+            print_this("Grounding during descent to profile, starting profile here")
             particle.cycle_phase = 3
         else:
             pass
@@ -116,15 +120,15 @@ def ArgoFloatKernel(particle, fieldset, time):
     elif particle.cycle_phase == 4:
         # Phase 4: Transmitting at surface until cycletime is reached
         if particle.cycle_age >= cycletime:
-            # print("End of cycle number %i" % particle.cycle_number)
+            # print_this("End of cycle number %i" % particle.cycle_number)
             particle.cycle_phase = 0
             particle.cycle_age = 0
             particle.cycle_number += 1
 
     # Life expectancy management:
     if particle.cycle_number > max_cycle_number:  # Kill this float before moving on to a new cycle
-        print("%i > %i" % (particle.cycle_number, max_cycle_number))
-        print("Field Warning : This float is killed because it exceeds its life expectancy")
+        print_this("%i > %i" % (particle.cycle_number, max_cycle_number))
+        print_this("Field Warning : This float is killed because it exceeds its life expectancy")
         particle.delete()
     else:  # otherwise continue to cycle
         particle.cycle_age += particle.dt  # update cycle_age
@@ -173,12 +177,16 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
                                       particle.lon]
     max_cycle_number = fieldset.life_expectancy
 
+    def print_this(txt, verbose_print=fieldset.verbose_events):
+        if verbose_print:
+            print(txt)
+
     # Adjust mission parameters if float enters in the experiment area:
     xmin, xmax = fieldset.area_xmin, fieldset.area_xmax
     ymin, ymax = fieldset.area_ymin, fieldset.area_ymax
     if particle.lat >= ymin and particle.lat <= ymax and particle.lon >= xmin and particle.lon <= xmax:
         if not particle.in_area:
-            print("Field Warning : This float is entering the experiment area")
+            print_this("Field Warning : This float is entering the experiment area")
             particle.in_area = 1
         cycletime = fieldset.area_cycle_duration * 3600  # has to be in seconds
         driftdepth = fieldset.area_parking_depth
@@ -202,7 +210,7 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
         # if we're in phase 0 or 1 :
         #-> rising 50 db and start drifting (phase 1)
         if particle.cycle_phase <= 1:
-            print(
+            print_this(
                 "Grouding during descent to parking or during parking, rising up 50m and try drifting here.")
             particle.depth = particle.depth - 50
             particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
@@ -211,7 +219,7 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
         # if we're in phase 2:
         #-> start profiling (phase 3)
         elif particle.cycle_phase == 2:
-            print("Grounding during descent to profile, starting profile here")
+            print_this("Grounding during descent to profile, starting profile here")
             particle.cycle_phase = 3
         else:
             pass
@@ -252,20 +260,18 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
     elif particle.cycle_phase == 4:
         # Phase 4: Transmitting at surface until cycletime is reached
         if particle.cycle_age >= cycletime:
-            # print("End of cycle number %i" % particle.cycle_number)
+            # print_this("End of cycle number %i" % particle.cycle_number)
             particle.cycle_phase = 0
             particle.cycle_age = 0
             particle.cycle_number += 1
 
     # Life expectancy management:
     if particle.cycle_number > max_cycle_number:  # Kill this float before moving on to a new cycle
-        print("%i > %i" % (particle.cycle_number, max_cycle_number))
-        print("Field Warning : This float is killed because it exceeds its life expectancy")
+        print_this("%i > %i" % (particle.cycle_number, max_cycle_number))
+        print_this("Field Warning : This float is killed because it exceeds its life expectancy")
         particle.delete()
     else:  # otherwise continue to cycle
         particle.cycle_age += particle.dt  # update cycle_age
-
-
 
 
 def DeleteParticleKernel(particle, fieldset, time):
@@ -311,7 +317,6 @@ def DeleteParticleKernel(particle, fieldset, time):
             print("%i: %f" % (particle.cycle_phase, particle.depth))
             print("Field Warning : Unknown OutOfBounds --> deleted")
             particle.delete()
-
 
 
 def PeriodicBoundaryConditionKernel(particle, fieldset, time):
