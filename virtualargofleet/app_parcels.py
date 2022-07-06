@@ -48,10 +48,9 @@ def ArgoFloatKernel(particle, fieldset, time):
     particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
     max_cycle_number = fieldset.life_expectancy
-
-    def print_this(txt, verbose_print=fieldset.verbose_events):
-        if verbose_print:
-            print(txt)
+    
+    verbose_print = fieldset.verbose_events
+    print_this = lambda x: print(x) if verbose_print else None
 
     # Compute drifting time so that the cycletime is respected:
     # Time to descent to parking (mindepth to driftdepth at vertical_speed)
@@ -177,9 +176,8 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
                                       particle.lon]
     max_cycle_number = fieldset.life_expectancy
 
-    def print_this(txt, verbose_print=fieldset.verbose_events):
-        if verbose_print:
-            print(txt)
+    verbose_print = fieldset.verbose_events
+    print_this = lambda x: print(x) if verbose_print else None
 
     # Adjust mission parameters if float enters in the experiment area:
     xmin, xmax = fieldset.area_xmin, fieldset.area_xmax
