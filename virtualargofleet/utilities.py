@@ -8,6 +8,7 @@ import os
 import pandas as pd
 import logging
 import json
+import urllib.request
 
 log = logging.getLogger("virtualfleet.utils")
 
@@ -70,10 +71,14 @@ class FloatConfiguration:
 
     Examples
     --------
-    >>> cfg = FloatConfiguration('default')
+    >>> cfg = FloatConfiguration('default')  # Internally defined
+    >>> cfg = FloatConfiguration('gse-experiment')  # Internally defined
+    >>> cfg = FloatConfiguration('cfg_file.json')  # From json file
+    >>> cfg = FloatConfiguration([6902919, 132])  # From Euro-Argo Fleet API
     >>> cfg.update('parking_depth', 500)  # Update one parameter value
     >>> cfg.params  # Return the list of parameters
     >>> cfg.mission # Return the configuration as a dictionary
+    >>> cfg.to_json("cfg_file.json") # Save to file for later re-use
     >>> cfg
 
     """
@@ -170,7 +175,7 @@ class FloatConfiguration:
                                       techkey='',
                                       dtype=float)
 
-        elif os.path.splitext(name)[-1] == ".json":
+        elif isinstance(name, str) and os.path.splitext(name)[-1] == ".json":
             # Load configuration from file
             with open(name, "r") as f:
                 js = json.load(f)
@@ -183,6 +188,17 @@ class FloatConfiguration:
                 meta['dtype'] = eval(meta['dtype'])
                 self.params = ConfigParam(key=key, value=value, **meta)
             name = js['name']
+
+        elif isinstance(name, list):
+            # Load configuration of one float cycle from EA API
+            wmo = name[0]
+            cyc = name[1]
+            df = get_float_config(wmo, cyc)
+            set_default()
+            self.update('profile_depth', df['CONFIG_ProfilePressure_dbar'])
+            self.update('parking_depth', df['CONFIG_ParkPressure_dbar'])
+            self.update('cycle_duration', df['CONFIG_CycleTime_hours'])
+            self.update('life_expectancy', df['CONFIG_MaxCycles_NUMBER'])
 
         else:
             raise ValueError("Please give me a known configuration name ('default', 'gse-experiment') or a json file to load from !")
@@ -221,13 +237,13 @@ class FloatConfiguration:
             mission[key] = self._params_dict[key].value
         return mission
 
-    def load_from_float(self):
-        """Should be able to read simple parameters from a real float file"""
-        pass
+    # def load_from_float(self):
+    #     """Should be able to read simple parameters from a real float file"""
+    #     pass
 
-    def to_netcdf(self):
-        """Should be able to save on file a float configuration"""
-        pass
+    # def to_netcdf(self):
+    #     """Should be able to save on file a float configuration"""
+    #     pass
 
     def to_json(self, file_name=None):
         """Return or save json dump of configuration"""
@@ -245,9 +261,13 @@ class FloatConfiguration:
         else:
             return js
 
-    def from_netcdf(self):
-        """Should be able to read from file a float configuration"""
-        pass
+    # def from_netcdf(self):
+    #     """Should be able to read from file a float configuration"""
+    #     pass
+
+    # def from_ea(self, wmo, cyc):
+    #     """Should be able to read from the euro-argo fleet monitoring API"""
+    #     pass
 
     @property
     def tech(self):
@@ -458,4 +478,62 @@ def set_WMO(ds, argo_index):
     ds['wmo'].values = wmos
 
     return ds
+
+
+def get_float_config(wmo, cyc=None):
+    """Download floats meta-data from EA API
+
+    Parameters
+    ----------
+    wmo : int
+    cyc: None or int
+
+    Returns
+    -------
+    pandas.DataFrame
+    """
+    def id_mission(missionCycles, a_cyc):
+        this_mission = None
+        for im, mission in enumerate(missionCycles):
+            cycles = missionCycles[mission]
+            if str(a_cyc) in cycles:
+                this_mission = mission
+        return this_mission
+
+    # Download floats meta-data from EA API:
+    URI = "https://fleetmonitoring.euro-argo.eu/floats/%s" % wmo
+    with urllib.request.urlopen(URI) as url:
+        data = json.load(url)
+
+    # Get the list of cycles covered:
+    all_cycles = []
+    for mission in data['configurations']['missionCycles']:
+        cycles = data['configurations']['missionCycles'][mission]
+        cycles = np.sort([int(cyc) for cyc in cycles])
+        [all_cycles.append(cyc) for cyc in cycles]
+        # cycles = [str(cyc) for cyc in cycles]
+        # print("mission #%s: from #%s to #%s" % (mission, cycles[0], cycles[-1]))
+        # print(cycles[0],"-",cycles[-1])
+        # print(",".join(cycles) in data['configurations']['cycles'])
+        # data['configurations']['cycles'][",".join(cycles)]
+    all_cycles = np.sort(all_cycles)
+
+    # Create a dataframe with all mission config at each cycles:
+    CONFIG = {'CONFIG_MissionID': []}
+    for item in data['configurations']['cycles'][list(data['configurations']['cycles'].keys())[0]]:
+        CONFIG[item['argoCode']] = []
+    for a_cyc in all_cycles:
+        for im, mission_cycles in enumerate(data['configurations']['cycles']):
+            if a_cyc in [int(cyc) for cyc in mission_cycles.split(',')]:
+                CONFIG['CONFIG_MissionID'].append(id_mission(data['configurations']['missionCycles'], a_cyc))
+                this_mission = data['configurations']['cycles'][mission_cycles]
+                for item in this_mission:
+                    CONFIG[item['argoCode']].append(item['value'])
+    df = pd.DataFrame(CONFIG, index=all_cycles)
+    df.index.name = 'CYCLE_NUMBER'
+
+    if cyc is not None:
+        df = df.loc[cyc]
+
+    return df
 
