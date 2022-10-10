@@ -74,7 +74,7 @@ The last release 0.3 introduces a couple of new features but also breaking chang
     cfg.mission # Return the configuration as a dictionary, to be pass on a VirtualFleet instance 
     cfg.to_json("cfg_file.json") # Save to file for later re-use
 ```      
-- **New Argo virtual floats type**: this new float type can change their mission parameters when they enter a specific geographic area (a rectangular domain). In order to select these floats, you have to add to load the specific FloatConfiguration instance ``local-change`, like this:
+- **New Argo virtual floats type**: this new float type can change their mission parameters when they enter a specific geographic area (a rectangular domain). In order to select these floats, you have to add to load the specific FloatConfiguration instance ``local-change``, like this:
 ```python
     cfg = FloatConfiguration('local-change')  # Internally define new float parameters area_*
     >> <FloatConfiguration><local-change>
@@ -101,7 +101,10 @@ The last release 0.3 introduces a couple of new features but also breaking chang
 
 #### Breaking changes
 
-- Options in the VirtualFleet instantiation
+- Internal refactoring, with proper submodule assignment.
+- Options in the VirtualFleet
+  - instantiation option ``vfield`` has been replaced by ``fieldset`` and now must take a Parcels fieldset instance.
+  - simulate method have been renamed to be more explicit and now takes timedelta as values, instead of mixed integer units. 
 
 ### Why Virtual Fleet?
 
