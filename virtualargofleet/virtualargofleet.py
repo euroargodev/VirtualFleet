@@ -26,17 +26,16 @@ class VirtualFleet:
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, isglobal=False, **kwargs):
         """
         Parameters
         ----------
         lat, lon, depth, time:
             Numpy arrays describing where Argo floats are deployed. Depth is optional, if not provided it will be set to 1m.
-        vfield: :class:`virtualargofleet.VelocityFieldProto`
+        fieldset: :class:`parcels.fieldset`
         mission: dict
             Dictionary with Argo float parameters {'parking_depth': parking_depth, 'profile_depth': profile_depth, 'vertical_speed': vertical_speed, 'cycle_duration': cycle_duration}
-        verbose_events: bool, default: True
-            Print event details for each floats
+        isglobal: False
         """
         # Deployment plan:
         self.lat = kwargs["lat"]
@@ -52,26 +51,26 @@ class VirtualFleet:
         # print(self.time[0], type(self.time[0]))
 
         # Velocity/Hydrodynamic field:
-        vfield = kwargs["vfield"]
+        fieldset = kwargs["fieldset"]
 
         # Forward mission parameters to the simulation through fieldset
         mission = kwargs["mission"]
-        vfield.fieldset.add_constant("parking_depth", mission["parking_depth"])
-        vfield.fieldset.add_constant("profile_depth", mission["profile_depth"])
-        vfield.fieldset.add_constant("v_speed", mission["vertical_speed"])
-        vfield.fieldset.add_constant("cycle_duration", mission["cycle_duration"])
-        vfield.fieldset.add_constant("life_expectancy", mission["life_expectancy"])
+        fieldset.add_constant("parking_depth", mission["parking_depth"])
+        fieldset.add_constant("profile_depth", mission["profile_depth"])
+        fieldset.add_constant("v_speed", mission["vertical_speed"])
+        fieldset.add_constant("cycle_duration", mission["cycle_duration"])
+        fieldset.add_constant("life_expectancy", mission["life_expectancy"])
 
         Particle = ArgoParticle
         FloatKernel = ArgoFloatKernel
 
         if "area_cycle_duration" in mission:
-            vfield.fieldset.add_constant("area_cycle_duration", mission["area_cycle_duration"])
-            vfield.fieldset.add_constant("area_parking_depth", mission["area_parking_depth"])
-            vfield.fieldset.add_constant("area_xmin", mission["area_xmin"])
-            vfield.fieldset.add_constant("area_xmax", mission["area_xmax"])
-            vfield.fieldset.add_constant("area_ymin", mission["area_ymin"])
-            vfield.fieldset.add_constant("area_ymax", mission["area_ymax"])
+            fieldset.add_constant("area_cycle_duration", mission["area_cycle_duration"])
+            fieldset.add_constant("area_parking_depth", mission["area_parking_depth"])
+            fieldset.add_constant("area_xmin", mission["area_xmin"])
+            fieldset.add_constant("area_xmax", mission["area_xmax"])
+            fieldset.add_constant("area_ymin", mission["area_ymin"])
+            fieldset.add_constant("area_ymax", mission["area_ymax"])
             Particle = ArgoParticle_exp
             FloatKernel = ArgoFloatKernel_exp
 
@@ -81,18 +80,18 @@ class VirtualFleet:
             if "verbose_events" in kwargs
             else 1
         )
-        vfield.fieldset.add_constant("verbose_events", verbose_events)
+        fieldset.add_constant("verbose_events", verbose_events)
 
         # Define parcels :class:`parcels.particleset.particlesetsoa.ParticleSetSOA`
         self.pset = ParticleSet(
-            fieldset=vfield.fieldset,
+            fieldset=fieldset,
             pclass=Particle,
             lon=self.lon,
             lat=self.lat,
             depth=self.depth,
             time=self.time,
         )
-        if vfield.isglobal:
+        if isglobal:
             # combine Argo vertical movement kernel with Advection kernel + boundaries
             self.kernels = (
                 FloatKernel

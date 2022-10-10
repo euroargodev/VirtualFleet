@@ -41,7 +41,7 @@ cfg = FloatConfiguration('default')  # Standard Argo
 
 Define the virtual fleet:
 ```python
-VFleet = virtualfleet(lat=lat, lon=lon, time=tim, vfield=VELfield, mission=cfg.mission)
+VFleet = virtualfleet(lat=lat, lon=lon, time=tim, fieldset=VELfield.fieldset, mission=cfg.mission)
 ```
 and execute a simulation: 
 ```python
