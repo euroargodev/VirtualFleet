@@ -6,8 +6,6 @@
 
 "Virtual Fleet" uses [oceanparcels](http://oceanparcels.org/) to simulate Argo floats. It can be seen as a convenient wrapper around Parcels that is fully dedicated to virtual Argo floats.
 
-Click here to [![Binder](https://img.shields.io/static/v1.svg?logo=Jupyter&label=Binder&message=Open+a+notebook+test&color=blue)](https://mybinder.org/v2/gh/euroargodev/VirtualFleet/master?labpath=examples%2Ftry_it-CustomPlans.ipynb) and to play with ``VirtualFleet`` before you even install it (thanks [Binder](mybinder.org)).
-
 ***
 This software is developed by:
 <div>

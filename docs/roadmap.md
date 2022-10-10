@@ -6,10 +6,12 @@ Software development roadmap:
 - [x] Tutorial notebooks to get started
 - [x] Extraction of a real plan for a given region (using argopy), *not automatic yet, but in notebooks*
 - [x] Initial public release in June 2020 
-- [ ] Clean software packaging (pypi install and unit testing)
+- [x] Allow users to control mission parameters (eg: cycle time, parking depth, and custom kernels)
+- [x] Module to compute Virtual Fleet KPI and statistics (eg. sampling, trajectories)
 - [ ] Improve documentation with regard to preparing the velocity field for the Virtual Fleet
-- [ ] Allow users to control mission parameters (eg: cycle time, parking depth, and custom kernels)
-- [ ] Module to compute Virtual Fleet KPI and statistics (eg. sampling, trajectories)
+- [ ] Add ISA option
+- [ ] Clean software packaging (pypi install and unit testing)
+
 
 [Post issues on Github to request features or if you find bugs](https://github.com/euroargodev/VirtualFleet/issues/new/choose)
 
