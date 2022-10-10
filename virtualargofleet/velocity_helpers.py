@@ -97,15 +97,20 @@ class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
         mask_file = glob.glob(self.field['U'])[0]
         ds = xr.open_dataset(mask_file)
         ds = eval("ds.isel("+self.dim['time']+"=0)")
-        ds = ds[[self.var['U'],self.var['V']]].squeeze()
+        ds = ds[[self.var['U'], self.var['V']]].squeeze()
 
         mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
                  self.var['U']].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
         mask = mask.values
         # create a new parcels field that's going to be interpolated during simulation
-        self.fieldset.add_field(Field('mask', data=mask, lon=ds[self.dim['lon']].values, lat=ds[self.dim['lat']].values,
+        self.fieldset.add_field(Field('mask',
+                                      data=mask,
+                                      lon=ds[self.dim['lon']].values,
+                                      lat=ds[self.dim['lat']].values,
                                       depth=ds[self.dim['depth']].values,
-                                      transpose=True, mesh='spherical', interp_method='nearest'))
+                                      transpose=True,
+                                      mesh='spherical',
+                                      interp_method='nearest'))
 
     def __repr__(self):
         summary = ["<VelocityField.GLOBAL_ANALYSIS_FORECAST_PHY_001_024>"]

@@ -130,7 +130,7 @@ class FloatConfiguration:
         if name == 'default':
             set_default()
 
-        elif name == 'gse-experiment':
+        elif name == 'local-change' or name == 'gse-experiment':
             set_default()
 
             self.params = ConfigParam(key='area_cycle_duration',
@@ -198,7 +198,8 @@ class FloatConfiguration:
             self.update('profile_depth', df['CONFIG_ProfilePressure_dbar'])
             self.update('parking_depth', df['CONFIG_ParkPressure_dbar'])
             self.update('cycle_duration', df['CONFIG_CycleTime_hours'])
-            self.update('life_expectancy', df['CONFIG_MaxCycles_NUMBER'])
+            if 'CONFIG_MaxCycles_NUMBER' in df:
+                self.update('life_expectancy', df['CONFIG_MaxCycles_NUMBER'])
 
         else:
             raise ValueError("Please give me a known configuration name ('default', 'gse-experiment') or a json file to load from !")

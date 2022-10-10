@@ -16,12 +16,11 @@ Checkout the documentation at: https://euroargodev.github.io/VirtualFleet
  
 ### Usage
 
-[![Binder](https://img.shields.io/static/v1.svg?logo=Jupyter&label=Binder&message=Click+here+to+try+VirtualFleet+online+!&color=blue&style=for-the-badge)](https://mybinder.org/v2/gh/euroargodev/binder-sandbox/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252Feuroargodev%252FVirtualFleet%26urlpath%3Dlab%252Ftree%252FVirtualFleet%252Fexamples%252Ftry_it-CustomPlans.ipynb%26branch%3Dpackaging)
-
 Import the usual suspects:
 ```python
 from virtualargofleet import VelocityField, VirtualFleet, FloatConfiguration
 import numpy as np
+from datetime import timedelta
 ```
 
 Define velocity field to use:
@@ -43,17 +42,66 @@ tim = np.array(['2019-01-01' for i in range(nfloats)], dtype='datetime64')
 
 Define Argo floats mission parameters:
 ```python
-cfg = FloatConfiguration('default')
+cfg = FloatConfiguration('default')  # Standard Argo  
+cfg = FloatConfiguration([6902919, 98])  # or extract a specific Argo float cycle configuration   
 # cfg.update('parking_depth', 500)
 cfg
 ```
 
-Define and simulate the virtual fleet:
+Define the virtual fleet:
 ```python
 VFleet = virtualfleet(lat=lat, lon=lon, time=tim, vfield=VELfield, mission=cfg.mission)
-VFleet.simulate(duration=365, step=5, record=1, output_file='output.nc')
+```
+and execute a simulation: 
+```python
+VFleet.simulate(duration=timedelta(days=365), 
+                step=timedelta(minutes=5), 
+                record=timedelta(hours=1), 
+                output_file='output.nc')
 ```
 
+### What's new ?
+The last release 0.3 introduces a couple of new features but also breaking changes in the API.
+
+#### New features
+- An **Argo float configuration manager**. This was designed to make easier the access, management and backup of the virtual floats mission configuration parameters.
+```python
+    cfg = FloatConfiguration('default')  # Internally defined
+    cfg = FloatConfiguration('cfg_file.json')  # From json file
+    cfg = FloatConfiguration([6902919, 132])  # From Euro-Argo Fleet API
+    cfg.update('parking_depth', 500)  # Update one parameter value
+    cfg.params  # Return the list of parameters
+    cfg.mission # Return the configuration as a dictionary, to be pass on a VirtualFleet instance 
+    cfg.to_json("cfg_file.json") # Save to file for later re-use
+```      
+- **New Argo virtual floats type**: this new float type can change their mission parameters when they enter a specific geographic area (a rectangular domain). In order to select these floats, you have to add to load the specific FloatConfiguration instance ``local-change`, like this:
+```python
+    cfg = FloatConfiguration('local-change')  # Internally define new float parameters area_*
+    >> <FloatConfiguration><local-change>
+          - area_cycle_duration (Maximum length of float complete cycle in AREA): 120.0 [hours]
+          - area_parking_depth (Drifting depth in AREA): 1000.0 [m]
+          - area_xmax (AREA Eastern bound): -48.0 [deg_longitude]
+          - area_xmin (AREA Western bound): -75.0 [deg_longitude]
+          - area_ymax (AREA Northern bound): 45.5 [deg_latitude]
+          - area_ymin (AREA Southern bound): 33.0 [deg_latitude]
+          - cycle_duration (Maximum length of float complete cycle): 240.0 [hours]
+          - life_expectancy (Maximum number of completed cycle): 200 [cycle]
+          - parking_depth (Drifting depth): 1000.0 [m]
+          - profile_depth (Maximum profile depth): 2000.0 [m]
+          - vertical_speed (Vertical profiling speed): 0.09 [m/s]
+    cfg.update('cycle_duration', 120)  # Update default parameters for your own experiment
+```
+  Passing this specific ``FloatConfiguration`` to a new VirtualFleet instance will automatically select the appropriate Argo float parcel kernels. This new float type was developed for the [EA-RISE WP2.3 Gulf-Stream experiment](https://github.com/euroargodev/VirtualFleet_GulfStream).
+
+- All Argo float types (_default_ and _local-change_) now come with a proper cycle number property. This makes much easier the tracking of the float profiles.
+
+- **Post-processing utilities**:
+  - An Argo profile index extractor from the simulation netcdf output. It is not trivial to extract the position of virtual float profiles from the trajectory file of the simulation output. We made this easier with the ``simu2index`` and ``simu2csv`` functions.
+  - A function to identify virtual floats with their real WMO from the deployment plan. This could be handful if the deployment plan is actually based on real floats with WMO. 
+
+#### Breaking changes
+
+- Options in the VirtualFleet instantiation
 
 ### Why Virtual Fleet?
 

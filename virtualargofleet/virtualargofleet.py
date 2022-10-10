@@ -141,7 +141,7 @@ class VirtualFleet:
         return self.show_deployment()
 
     def simulate(self, **kwargs):
-        """Execute Virtual Fleet simulation
+        """Execute a Virtual Fleet simulation
 
         Inputs
         ------
