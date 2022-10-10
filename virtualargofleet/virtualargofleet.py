@@ -50,6 +50,9 @@ class VirtualFleet:
             # self.time = np.array([np.datetime64(t) for t in self.time.dt.strftime('%Y-%m-%d').array])
         # print(self.time[0], type(self.time[0]))
 
+        if 'vfield' in kwargs:
+            raise ValueError("The 'vfield' option is deprecated. You can use the 'fieldset' option to pass on the Ocean Parcels fieldset.")
+
         # Velocity/Hydrodynamic field:
         fieldset = kwargs["fieldset"]
 
@@ -91,6 +94,7 @@ class VirtualFleet:
             depth=self.depth,
             time=self.time,
         )
+
         if isglobal:
             # combine Argo vertical movement kernel with Advection kernel + boundaries
             self.kernels = (
