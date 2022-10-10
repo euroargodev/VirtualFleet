@@ -48,7 +48,7 @@ class VelocityFieldProto(ABC):
 
 
 class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
-    """Velocity Field Helper for GLOBAL-ANALYSIS-FORECAST-PHY-001-024 product.
+    """Velocity Field Helper for CMEMS/GLOBAL-ANALYSIS-FORECAST-PHY-001-024 product.
 
     Reference
     ---------
@@ -93,7 +93,11 @@ class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
                 'halo_north', self.fieldset.U.grid.lat[-1])
             self.fieldset.add_periodic_halo(zonal=True, meridional=True)
 
-        # create mask for grounding management
+        # Create mask to manage grounding:
+        self.add_mask()
+
+    def add_mask(self):
+        """Create mask for grounding management """
         mask_file = glob.glob(self.field['U'])[0]
         ds = xr.open_dataset(mask_file)
         ds = eval("ds.isel("+self.dim['time']+"=0)")
@@ -102,6 +106,7 @@ class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
         mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
                  self.var['U']].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
         mask = mask.values
+
         # create a new parcels field that's going to be interpolated during simulation
         self.fieldset.add_field(Field('mask',
                                       data=mask,
