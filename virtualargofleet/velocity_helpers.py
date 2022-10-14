@@ -66,21 +66,30 @@ class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
         isglobal : bool, default False
             Set to 1 if field is global, 0 otherwise
         """
-        filenames = {'U': src, 'V': src}
         variables = {'U': 'uo', 'V': 'vo'}
         dimensions = {'time': 'time', 'depth': 'depth', 'lat': 'latitude', 'lon': 'longitude'}
+        if not isinstance(src, xr.core.dataset.Dataset):
+            filenames = {'U': src, 'V': src}
+            self.field = filenames  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
+        else:
+            self.field = src  # Xarray dataset
 
-        self.field = filenames  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
         self.var = variables  # Dictionary mapping 'U' and 'V' to netcdf velocity variable names
         self.dim = dimensions  # Dictionary mapping 'time', 'depth', 'lat' and 'lon' to netcdf velocity variable names
         self.isglobal = isglobal
 
         # define parcels fieldset
-        self.fieldset = FieldSet.from_netcdf(
-            self.field, self.var, self.dim,
-            allow_time_extrapolation=True,
-            time_periodic=False,
-            deferred_load=True)
+        if not isinstance(src, xr.core.dataset.Dataset):
+            self.fieldset = FieldSet.from_netcdf(
+                self.field, self.var, self.dim,
+                allow_time_extrapolation=True,
+                time_periodic=False,
+                deferred_load=True)
+        else:
+            self.fieldset = FieldSet.from_xarray_dataset(
+                self.field, self.var, self.dim,
+                allow_time_extrapolation=True,
+                time_periodic=False)
 
         if self.isglobal:
             self.fieldset.add_constant(
@@ -98,10 +107,14 @@ class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
 
     def add_mask(self):
         """Create mask for grounding management """
-        mask_file = glob.glob(self.field['U'])[0]
-        ds = xr.open_dataset(mask_file)
-        ds = eval("ds.isel("+self.dim['time']+"=0)")
-        ds = ds[[self.var['U'], self.var['V']]].squeeze()
+        if not isinstance(self.field, xr.core.dataset.Dataset):
+            mask_file = glob.glob(self.field['U'])[0]
+            ds = xr.open_dataset(mask_file)
+            ds = eval("ds.isel("+self.dim['time']+"=0)")
+            ds = ds[[self.var['U'], self.var['V']]].squeeze()
+        else:
+            ds = eval("self.field.isel("+self.dim['time']+"=0)")
+            ds = ds[[self.var['U'], self.var['V']]].squeeze()
 
         mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
                  self.var['U']].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])

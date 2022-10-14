@@ -171,14 +171,12 @@ class VirtualFleet:
             if isinstance(kwargs["step"], datetime.timedelta)
             else timedelta(hours=kwargs["step"])
         )
-        dt_out = (
-            kwargs["record"]
-            if isinstance(kwargs["record"], datetime.timedelta)
-            else timedelta(hours=kwargs["record"])
-        )
-        output_file = kwargs["output_file"] if "output_file" in kwargs else ""
-        output_folder = kwargs["output_folder"] if "output_folder" in kwargs else "."
-        output_path = os.path.join(output_folder, output_file)
+        # dt_out = (
+        #     kwargs["record"]
+        #     if isinstance(kwargs["record"], datetime.timedelta)
+        #     else timedelta(hours=kwargs["record"])
+        # )
+        dt_out = kwargs["record"]
 
         verbose_progress = (
             kwargs["verbose_progress"]
@@ -186,17 +184,26 @@ class VirtualFleet:
             else True
         )
 
-        if os.path.exists(output_path) or output_path[0] == ".":
-            temp_name = next(tempfile._get_candidate_names()) + ".nc"
-            while os.path.exists(temp_name):
+        output_file = kwargs["output_file"] if "output_file" in kwargs else ""
+        output_folder = kwargs["output_folder"] if "output_folder" in kwargs else "."
+        if output_folder is not None:
+            output_path = os.path.join(output_folder, output_file)
+
+            if os.path.exists(output_path) or output_path[0] == ".":
                 temp_name = next(tempfile._get_candidate_names()) + ".nc"
-            output_path = os.path.join(output_folder, temp_name)
-            log.debug(
-                "Empty 'output_file' or file already exists, simulation will be saved in : "
-                + output_path
-            )
+                while os.path.exists(temp_name):
+                    temp_name = next(tempfile._get_candidate_names()) + ".nc"
+                output_path = os.path.join(output_folder, temp_name)
+                log.debug(
+                    "Empty 'output_file' or file already exists, simulation will be saved in : "
+                    + output_path
+                )
+            else:
+                log.debug("Simulation will be saved in : " + output_path)
         else:
-            log.debug("Simulation will be saved in : " + output_path)
+            log.debug("Simulation will NOT be saved on file !")
+            output_path = None
+
         self.run_params = {
             "duration": duration,
             "step": dt_run,
@@ -225,11 +232,12 @@ class VirtualFleet:
         )
         log.debug("ending pset.execute")
 
-        log.debug("starting export")
-        output_file.export()
-        log.debug("ending export")
+        if output_folder is not None:
+            log.debug("starting export")
+            output_file.export()
+            log.debug("ending export")
 
-        output_file.close()
+            output_file.close()
 
         # Add more variables to the output file:
         # ncout = self.run_params["output_file"]
