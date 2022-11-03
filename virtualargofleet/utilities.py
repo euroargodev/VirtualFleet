@@ -1,4 +1,6 @@
 import collections
+import warnings
+
 import numpy as np
 import xarray as xr
 from tqdm import tqdm
@@ -195,11 +197,19 @@ class FloatConfiguration:
             cyc = name[1]
             df = get_float_config(wmo, cyc)
             set_default()
-            self.update('profile_depth', df['CONFIG_ProfilePressure_dbar'])
-            self.update('parking_depth', df['CONFIG_ParkPressure_dbar'])
-            self.update('cycle_duration', df['CONFIG_CycleTime_hours'])
-            if 'CONFIG_MaxCycles_NUMBER' in df:
-                self.update('life_expectancy', df['CONFIG_MaxCycles_NUMBER'])
+            di = {'CONFIG_ProfilePressure_dbar': 'profile_depth',
+                  'CONFIG_ParkPressure_dbar': 'parking_depth',
+                  'CONFIG_CycleTime_hours': 'cycle_duration',
+                  'CONFIG_MaxCycles_NUMBER': 'life_expectancy'
+                  }
+            for code in di.keys():
+                if code in df:
+                    self.update(di[code], df[code])
+                else:
+                    msg = "%s not found for this profile, fall back on default value: %s" % \
+                          (code, self._params_dict[di[code]])
+                    log.warning(msg)
+                    warnings.warn(msg)
 
         else:
             raise ValueError("Please give me a known configuration name ('default', 'gse-experiment') or a json file to load from !")
@@ -219,7 +229,7 @@ class FloatConfiguration:
     @params.setter
     def params(self, param):
         if not isinstance(param, ConfigParam):
-            raise ValueError("param must a 'ConfigParam' instance")
+            raise ValueError("param must be a 'ConfigParam' instance")
         if param.key not in self.params:
             self._params_dict[param.key] = param
             self._params_dict = collections.OrderedDict(sorted(self._params_dict.items()))
