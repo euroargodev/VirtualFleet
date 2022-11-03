@@ -112,10 +112,10 @@ class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
         if not isinstance(self.field, xr.core.dataset.Dataset):
             mask_file = glob.glob(self.field['U'])[0]
             ds = xr.open_dataset(mask_file)
-            ds = eval("ds.isel("+self.dim['time']+"=0)")
+            ds = ds[{self.dim['time']: 0}]
             ds = ds[[self.var['U'], self.var['V']]].squeeze()
         else:
-            ds = eval("self.field.isel("+self.dim['time']+"=0)")
+            ds = self.field[{self.dim['time']: 0}]
             ds = ds[[self.var['U'], self.var['V']]].squeeze()
 
         mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
@@ -177,10 +177,14 @@ class VelocityField_MEDSEA_ANALYSISFORECAST_PHY_006_013(VelocityFieldProto):
 
     def add_mask(self):
         """Create mask for grounding management """
-        mask_file = glob.glob(self.field['U'])[0]
-        ds = xr.open_dataset(mask_file)
-        ds = eval("ds.isel("+self.dim['time']+"=0)")
-        ds = ds[[self.var['U'], self.var['V']]].squeeze()
+        if not isinstance(self.field, xr.core.dataset.Dataset):
+            mask_file = glob.glob(self.field['U'])[0]
+            ds = xr.open_dataset(mask_file)
+            ds = ds[{self.dim['time']: 0}]
+            ds = ds[[self.var['U'], self.var['V']]].squeeze()
+        else:
+            ds = self.field[{self.dim['time']: 0}]
+            ds = ds[[self.var['U'], self.var['V']]].squeeze()
 
         mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
                  self.var['U']].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
@@ -265,10 +269,10 @@ class VelocityField_MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012(VelocityFieldProto):
         if not isinstance(self.field, xr.core.dataset.Dataset):
             mask_file = glob.glob(self.field['U'])[0]
             ds = xr.open_dataset(mask_file)
-            ds = eval("ds.isel("+self.dim['time']+"=0)")
+            ds = ds[{self.dim['time']: 0}]
             ds = ds[[self.var['U'], self.var['V']]].squeeze()
         else:
-            ds = eval("self.field.isel("+self.dim['time']+"=0)")
+            ds = self.field[{self.dim['time']: 0}]
             ds = ds[[self.var['U'], self.var['V']]].squeeze()
 
         mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
