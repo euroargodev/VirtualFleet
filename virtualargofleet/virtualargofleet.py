@@ -236,7 +236,6 @@ class VirtualFleet:
             log.debug("starting export")
             output_file.export()
             log.debug("ending export")
-
             output_file.close()
 
         # Add more variables to the output file:
