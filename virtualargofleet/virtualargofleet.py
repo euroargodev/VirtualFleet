@@ -232,11 +232,11 @@ class VirtualFleet:
         )
         log.debug("ending pset.execute")
 
-        if output_folder is not None:
-            log.debug("starting export")
-            output_file.export()
-            log.debug("ending export")
-            output_file.close()
+        # if output_folder is not None:
+        #     log.debug("starting export")
+        #     output_file.export()
+        #     log.debug("ending export")
+        #     output_file.close()
 
         # Add more variables to the output file:
         # ncout = self.run_params["output_file"]
