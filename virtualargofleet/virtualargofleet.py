@@ -190,9 +190,9 @@ class VirtualFleet:
             output_path = os.path.join(output_folder, output_file)
 
             if os.path.exists(output_path) or output_path[0] == ".":
-                temp_name = next(tempfile._get_candidate_names()) + ".nc"
+                temp_name = next(tempfile._get_candidate_names()) + ".zarr"
                 while os.path.exists(temp_name):
-                    temp_name = next(tempfile._get_candidate_names()) + ".nc"
+                    temp_name = next(tempfile._get_candidate_names()) + ".zarr"
                 output_path = os.path.join(output_folder, temp_name)
                 log.debug(
                     "Empty 'output_file' or file already exists, simulation will be saved in : "
