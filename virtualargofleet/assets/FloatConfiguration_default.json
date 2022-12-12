@@ -1,0 +1,52 @@
+{
+    "name": "default",
+    "version": "1.0",
+    "created": "20221212151119",
+    "data": {
+        "cycle_duration": {
+            "value": 240.0,
+            "meta": {
+                "description": "Maximum length of float complete cycle",
+                "unit": "hours",
+                "dtype": "float",
+                "techkey": "CONFIG_CycleTime_hours"
+            }
+        },
+        "life_expectancy": {
+            "value": 200,
+            "meta": {
+                "description": "Maximum number of completed cycle",
+                "unit": "cycle",
+                "dtype": "int",
+                "techkey": "CONFIG_MaxCycles_NUMBER"
+            }
+        },
+        "parking_depth": {
+            "value": 1000.0,
+            "meta": {
+                "description": "Drifting depth",
+                "unit": "m",
+                "dtype": "float",
+                "techkey": "CONFIG_ParkPressure_dbar"
+            }
+        },
+        "profile_depth": {
+            "value": 2000.0,
+            "meta": {
+                "description": "Maximum profile depth",
+                "unit": "m",
+                "dtype": "float",
+                "techkey": "CONFIG_ProfilePressure_dbar"
+            }
+        },
+        "vertical_speed": {
+            "value": 0.09,
+            "meta": {
+                "description": "Vertical profiling speed",
+                "unit": "m/s",
+                "dtype": "float",
+                "techkey": ""
+            }
+        }
+    }
+}

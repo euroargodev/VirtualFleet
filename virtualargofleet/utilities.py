@@ -11,8 +11,11 @@ import pandas as pd
 import logging
 import json
 import urllib.request
+import pkg_resources
+
 
 log = logging.getLogger("virtualfleet.utils")
+path2data = pkg_resources.resource_filename("virtualargofleet", "assets/")
 
 
 class ConfigParam:
@@ -74,12 +77,13 @@ class FloatConfiguration:
     Examples
     --------
     >>> cfg = FloatConfiguration('default')  # Internally defined
-    >>> cfg = FloatConfiguration('gse-experiment')  # Internally defined
-    >>> cfg = FloatConfiguration('cfg_file.json')  # From json file
+    >>> cfg = FloatConfiguration('local-change')  # Internally defined
+    >>> cfg = FloatConfiguration('cfg_file.json')  # From any json file
     >>> cfg = FloatConfiguration([6902919, 132])  # From Euro-Argo Fleet API
     >>> cfg.update('parking_depth', 500)  # Update one parameter value
     >>> cfg.params  # Return the list of parameters
     >>> cfg.mission # Return the configuration as a dictionary
+    >>> cfg.tech # Return the configuration as a dictionary using Argo technical keys
     >>> cfg.to_json("cfg_file.json") # Save to file for later re-use
     >>> cfg
 
@@ -94,90 +98,8 @@ class FloatConfiguration:
             Name of a known configuration to load
         """
         self._params_dict = {}
-        def set_default():
-            self.params = ConfigParam(key='profile_depth',
-                                      value=2000.,
-                                      unit='m',
-                                      description='Maximum profile depth',
-                                      techkey='CONFIG_ProfilePressure_dbar',
-                                      dtype=float)
 
-            self.params = ConfigParam(key='parking_depth',
-                                      value=1000.,
-                                      unit='m',
-                                      description='Drifting depth',
-                                      techkey='CONFIG_ParkPressure_dbar',
-                                      dtype=float)
-
-            self.params = ConfigParam(key='vertical_speed',
-                                      value=0.09,
-                                      unit='m/s',
-                                      description='Vertical profiling speed',
-                                      dtype=float)
-
-            self.params = ConfigParam(key='cycle_duration',
-                                      value=10 * 24.,
-                                      unit='hours',
-                                      description='Maximum length of float complete cycle',
-                                      techkey='CONFIG_CycleTime_hours',
-                                      dtype=float)
-
-            self.params = ConfigParam(key='life_expectancy',
-                                      value=200,
-                                      unit='cycle',
-                                      description='Maximum number of completed cycle',
-                                      techkey='CONFIG_MaxCycles_NUMBER',
-                                      dtype=int)
-
-        if name == 'default':
-            set_default()
-
-        elif name == 'local-change' or name == 'gse-experiment':
-            set_default()
-
-            self.params = ConfigParam(key='area_cycle_duration',
-                                      value=5 * 24,
-                                      unit='hours',
-                                      description='Maximum length of float complete cycle in AREA',
-                                      techkey='CONFIG_CycleTime_hours',
-                                      dtype=float)
-
-            self.params = ConfigParam(key='area_parking_depth',
-                                      value=1000.,
-                                      unit='m',
-                                      description='Drifting depth in AREA',
-                                      techkey='CONFIG_ParkPressure_dbar',
-                                      dtype=float)
-
-            self.params = ConfigParam(key='area_xmin',
-                                      value=-75,
-                                      unit='deg_longitude',
-                                      description='AREA Western bound',
-                                      techkey='',
-                                      dtype=float)
-
-            self.params = ConfigParam(key='area_xmax',
-                                      value=-48,
-                                      unit='deg_longitude',
-                                      description='AREA Eastern bound',
-                                      techkey='',
-                                      dtype=float)
-
-            self.params = ConfigParam(key='area_ymin',
-                                      value=33.,
-                                      unit='deg_latitude',
-                                      description='AREA Southern bound',
-                                      techkey='',
-                                      dtype=float)
-
-            self.params = ConfigParam(key='area_ymax',
-                                      value=45.5,
-                                      unit='deg_latitude',
-                                      description='AREA Northern bound',
-                                      techkey='',
-                                      dtype=float)
-
-        elif isinstance(name, str) and os.path.splitext(name)[-1] == ".json":
+        def load_from_json(name):
             # Load configuration from file
             with open(name, "r") as f:
                 js = json.load(f)
@@ -190,29 +112,47 @@ class FloatConfiguration:
                 meta['dtype'] = eval(meta['dtype'])
                 self.params = ConfigParam(key=key, value=value, **meta)
             name = js['name']
+            return name, data
+
+        if name == 'default':
+            name, data = load_from_json(os.path.join(path2data, 'FloatConfiguration_default.json'))
+
+        elif name == 'local-change':
+            name, data = load_from_json(os.path.join(path2data, 'FloatConfiguration_local_change.json'))
+
+        elif name == 'gse-experiment' or name == "gulf-stream":
+            name, data = load_from_json(os.path.join(path2data, 'FloatConfiguration_gulf_stream.json'))
+
+        elif isinstance(name, str) and os.path.splitext(name)[-1] == ".json":
+            name, data = load_from_json(name)
 
         elif isinstance(name, list):
+            # Load default configuration:
+            load_from_json(os.path.join(path2data, 'FloatConfiguration_default.json'))
+
             # Load configuration of one float cycle from EA API
             wmo = name[0]
             cyc = name[1]
+            name = "Float %i - Cycle %i" % (wmo, cyc)
             df = get_float_config(wmo, cyc)
-            set_default()
+
             di = {'CONFIG_ProfilePressure_dbar': 'profile_depth',
                   'CONFIG_ParkPressure_dbar': 'parking_depth',
                   'CONFIG_CycleTime_hours': 'cycle_duration',
                   'CONFIG_MaxCycles_NUMBER': 'life_expectancy'
                   }
+            # Over-write known parameters:
             for code in di.keys():
                 if code in df:
                     self.update(di[code], df[code])
                 else:
                     msg = "%s not found for this profile, fall back on default value: %s" % \
                           (code, self._params_dict[di[code]])
-                    log.warning(msg)
+                    # log.warning(msg)
                     warnings.warn(msg)
 
         else:
-            raise ValueError("Please give me a known configuration name ('default', 'gse-experiment') or a json file to load from !")
+            raise ValueError("Please give me a known configuration name ('default', 'local-change', 'gulf-stream') or a json file to load from !")
 
         self.name = name
 
@@ -224,6 +164,7 @@ class FloatConfiguration:
 
     @property
     def params(self):
+        """Return the list of parameters"""
         return sorted([self._params_dict[p].key for p in self._params_dict.keys()])
 
     @params.setter
@@ -242,19 +183,11 @@ class FloatConfiguration:
 
     @property
     def mission(self):
-        """Return a dictionary with key/value of all parameters"""
+        """Return Float configuration as a dictionary"""
         mission = {}
         for key in self._params_dict.keys():
             mission[key] = self._params_dict[key].value
         return mission
-
-    # def load_from_float(self):
-    #     """Should be able to read simple parameters from a real float file"""
-    #     pass
-
-    # def to_netcdf(self):
-    #     """Should be able to save on file a float configuration"""
-    #     pass
 
     def to_json(self, file_name=None):
         """Return or save json dump of configuration"""
@@ -276,17 +209,16 @@ class FloatConfiguration:
     #     """Should be able to read from file a float configuration"""
     #     pass
 
-    # def from_ea(self, wmo, cyc):
-    #     """Should be able to read from the euro-argo fleet monitoring API"""
-    #     pass
 
     @property
     def tech(self):
-        summary = ["<FloatConfiguration.Technical><%s>" % self.name]
-        for p in self._params_dict.keys():
-            if self._params_dict[p].meta['techkey'] != '':
-                summary.append("- %s: %s" % (self._params_dict[p].meta['techkey'], self._params_dict[p].value))
-        return "\n".join(summary)
+        """Return Float configuration as a dictionary using Argo technical keys"""
+        mission = {}
+        for key in self._params_dict.keys():
+            if self._params_dict[key].meta['techkey'] != '':
+                techkey = self._params_dict[key].meta['techkey']
+                mission[techkey] = self._params_dict[key].value
+        return mission
 
 
 def get_splitdates(t, N = 1):
