@@ -16,6 +16,7 @@ from .app_parcels import (
 )
 import logging
 
+
 log = logging.getLogger("virtualfleet")
 
 
@@ -49,6 +50,20 @@ class VirtualFleet:
         #     self.time = self.time.array
             # self.time = np.array([np.datetime64(t) for t in self.time.dt.strftime('%Y-%m-%d').array])
         # print(self.time[0], type(self.time[0]))
+
+        if kwargs['mission']['parking_depth'] < 0 or kwargs['mission']['parking_depth'] > 6000:
+            raise ValueError('Parking depth must be in [0-6000] db')
+
+        if kwargs['mission']['profile_depth'] < 0 or kwargs['mission']['profile_depth'] > 6000:
+            raise ValueError('Profile depth must be in [0-6000] db')
+
+        if kwargs['mission']['cycle_duration'] < 0:
+            raise ValueError('Cycle duration must be positive')
+
+        if kwargs['mission']['vertical_speed'] < 0:
+            raise ValueError('Vertical speed must be positive')
+        if kwargs['mission']['vertical_speed'] > 1:
+            warnings.warn("%f m/s is pretty fast for an Argo float ! Typical speed is 0.09 m/s" % kwargs['mission']['vertical_speed'])
 
         if 'vfield' in kwargs:
             raise ValueError("The 'vfield' option is deprecated. You can use the 'fieldset' option to pass on the Ocean Parcels fieldset.")
@@ -143,102 +158,94 @@ class VirtualFleet:
         )
         return self.show_deployment()
 
-    def simulate(self, **kwargs):
+    def simulate(self, step=timedelta(minutes=5), record=timedelta(hours=1), output=False, verbose_progress=True, **kwargs):
         """Execute a Virtual Fleet simulation
 
         Inputs
         ------
         duration: timedelta,
+            Length of the simulation
             Eg: timedelta(days=365)
-        step: timedelta
+
+        step: timedelta, default timedelta(minutes=5)
             Time step for the computation
-            Eg: timedelta(minutes=5)
-        record: timedelta
+
+        record: timedelta, default timedelta(hours=1)
             Time step for writing the output
-            Eg: timedelta(hours=1)
+
+        output: bool, default=False
+            Should the simulation trajectories be saved on file or not
+
         output_file: str
             Name of the netcdf file where to store simulation results
+
         output_folder: str
             Name of folder where to store 'output_file'
         """
+        def get_an_output_filename(output_folder):
+            temp_name = next(tempfile._get_candidate_names()) + ".zarr"
+            while os.path.exists(os.path.join(output_folder, temp_name)):
+                temp_name = next(tempfile._get_candidate_names()) + ".zarr"
+            return temp_name
+
+
         duration = (
             kwargs["duration"]
             if isinstance(kwargs["duration"], datetime.timedelta)
             else timedelta(hours=kwargs["duration"])
         )
-        dt_run = (
-            kwargs["step"]
-            if isinstance(kwargs["step"], datetime.timedelta)
-            else timedelta(hours=kwargs["step"])
+        step = (
+            step
+            if isinstance(step, datetime.timedelta)
+            else timedelta(hours=step)
         )
-        # dt_out = (
-        #     kwargs["record"]
-        #     if isinstance(kwargs["record"], datetime.timedelta)
-        #     else timedelta(hours=kwargs["record"])
-        # )
-        dt_out = kwargs["record"]
-
-        verbose_progress = (
-            kwargs["verbose_progress"]
-            if "verbose_progress" in kwargs
-            else True
+        record = (
+            record
+            if isinstance(record, datetime.timedelta)
+            else timedelta(hours=record)
         )
+        if step > record:
+            raise ValueError('The computation time step cannot be larger than the recording period')
+        if np.remainder(record, step) > timedelta(0):
+            raise ValueError('The recording period must be a multiple of the computation time step')
 
-        output_file = kwargs["output_file"] if "output_file" in kwargs else ""
-        output_folder = kwargs["output_folder"] if "output_folder" in kwargs else "."
-        if output_folder is not None:
-            output_path = os.path.join(output_folder, output_file)
-
-            if os.path.exists(output_path) or output_path[0] == ".":
-                temp_name = next(tempfile._get_candidate_names()) + ".zarr"
-                while os.path.exists(temp_name):
-                    temp_name = next(tempfile._get_candidate_names()) + ".zarr"
-                output_path = os.path.join(output_folder, temp_name)
-                log.debug(
-                    "Empty 'output_file' or file already exists, simulation will be saved in : "
-                    + output_path
-                )
-            else:
-                log.debug("Simulation will be saved in : " + output_path)
-        else:
-            log.debug("Simulation will NOT be saved on file !")
+        if not output:
+            output_msg = "Simulation will NOT be saved on file !"
             output_path = None
+        else:
+            output_file = kwargs["output_file"] if "output_file" in kwargs else None
+            output_folder = kwargs["output_folder"] if "output_folder" in kwargs else "."
+            if output_folder is None:
+                output_folder = "."
+            if output_file is None:
+                output_file = get_an_output_filename(output_folder)
+            output_path = os.path.join(output_folder, output_file)
+            output_msg = "Simulation will be saved in : " + output_path
 
-        self.run_params = {
-            "duration": duration,
-            "step": dt_run,
-            "record": dt_out,
-            "output_file": output_path,
-        }
+        warnings.warn(output_msg)
+        log.debug(output_msg)
 
-        # Now execute the kernels for X days, saving data every Y minutes
+        # Now execute kernels
         log.debug(
             "Starting Virtual Fleet simulation of %i days, with data recording every %f hours"
-            % (self.run_params["duration"].days, self.run_params["record"].seconds/3600)
+            % (duration.days, record.seconds/3600)
         )
-        output_file = self.pset.ParticleFile(
-            name=self.run_params["output_file"], outputdt=self.run_params["record"]
-        )
+        opts = {'runtime': duration,
+                'dt': step,
+                'verbose_progress': verbose_progress,
+                'recovery': {ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
+                             ErrorCode.ErrorThroughSurface: DeleteParticleKernel}
+                }
+        if output:
+            opts['output_file'] = self.pset.ParticleFile(name=output_path, outputdt=record)
 
         log.debug("starting pset.execute")
         self.pset.execute(
             self.kernels,
-            runtime=self.run_params["duration"],
-            dt=self.run_params["step"],
-            output_file=output_file,
-            verbose_progress=verbose_progress,
-            recovery={ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
-                      ErrorCode.ErrorThroughSurface: DeleteParticleKernel},
+            **opts
         )
         log.debug("ending pset.execute")
-
-        # if output_folder is not None:
-        #     log.debug("starting export")
-        #     output_file.export()
-        #     log.debug("ending export")
-        #     output_file.close()
 
         # Add more variables to the output file:
         # ncout = self.run_params["output_file"]
         # ds = xr.open_dataset(ncout)
-
