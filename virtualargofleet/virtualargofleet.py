@@ -1,11 +1,12 @@
 import warnings
-from parcels import ParticleSet, AdvectionRK4, ErrorCode
+from parcels import ParticleSet, FieldSet, AdvectionRK4, ErrorCode
 import datetime
 from datetime import timedelta
 import os
 import tempfile
 import pandas as pd
 import numpy as np
+import logging
 from .app_parcels import (
     ArgoParticle,
     ArgoParticle_exp,
@@ -14,7 +15,7 @@ from .app_parcels import (
     ArgoFloatKernel_exp,
     PeriodicBoundaryConditionKernel,
 )
-import logging
+from .velocity_helpers import VelocityFieldProto
 
 
 log = logging.getLogger("virtualfleet")
@@ -32,8 +33,10 @@ class VirtualFleet:
         Parameters
         ----------
         lat, lon, depth, time:
-            Numpy arrays describing where Argo floats are deployed. Depth is optional, if not provided it will be set to 1m.
+            Numpy arrays describing where Argo floats are deployed.
+            Depth is optional, if not provided it will be set to 1m.
         fieldset: :class:`parcels.fieldset`
+            Velocity field
         mission: dict
             Dictionary with Argo float parameters {'parking_depth': parking_depth, 'profile_depth': profile_depth, 'vertical_speed': vertical_speed, 'cycle_duration': cycle_duration}
         isglobal: False
@@ -46,10 +49,6 @@ class VirtualFleet:
         else:
             self.depth = kwargs["depth"]
         self.time = kwargs["time"]
-        # if isinstance(self.time, pd.core.series.Series):
-        #     self.time = self.time.array
-            # self.time = np.array([np.datetime64(t) for t in self.time.dt.strftime('%Y-%m-%d').array])
-        # print(self.time[0], type(self.time[0]))
 
         if kwargs['mission']['parking_depth'] < 0 or kwargs['mission']['parking_depth'] > 6000:
             raise ValueError('Parking depth must be in [0-6000] db')
@@ -66,10 +65,15 @@ class VirtualFleet:
             warnings.warn("%f m/s is pretty fast for an Argo float ! Typical speed is 0.09 m/s" % kwargs['mission']['vertical_speed'])
 
         if 'vfield' in kwargs:
-            raise ValueError("The 'vfield' option is deprecated. You can use the 'fieldset' option to pass on the Ocean Parcels fieldset.")
+            raise ValueError("The 'vfield' option is deprecated. You can use the 'fieldset' "
+                             "option to pass on the Ocean Parcels fieldset.")
 
         # Velocity/Hydrodynamic field:
         fieldset = kwargs["fieldset"]
+        if isinstance(fieldset, VelocityFieldProto):
+            fieldset = fieldset.fieldset
+        if not isinstance(fieldset, FieldSet):
+            raise TypeError("The `fieldset` option must be a `FieldSet` Parcels instance")
 
         # Forward mission parameters to the simulation through fieldset
         mission = kwargs["mission"]
@@ -120,17 +124,26 @@ class VirtualFleet:
         else:
             self.kernels = FloatKernel + self.pset.Kernel(AdvectionRK4)
 
-        self.run_params = None  # Will be set by .simulate() method
+        self.simulated = False  # Will be set to True if self.simulate() is used
+        self.simulation_parameters = None
 
     def __repr__(self):
         summary = ["<VirtualFleet>"]
         summary.append("%i floats in the deployment plan" % self.pset.size)
-        if self.run_params:
+        if self.simulated:
             summary.append("A simulation of %i days, with data recording every %f hours has been performed"
-                           % (self.run_params["duration"].days, self.run_params["record"].seconds/3600))
-            summary.append("Simluation results in: %s" % self.run_params['output_file'])
+                           % (self.simulation_parameters["duration"].days,
+                              self.simulation_parameters["record"].seconds/3600))
+            if self.simulation_parameters['output_path'] is not None:
+                summary.append("Simulation trajectories saved in: %s" % self.simulation_parameters['output_path'])
+            else:
+                summary.append("Simulation trajectories not saved on disk. Last positions available with the `ParticleSet` property of this instance")
         else:
             summary.append("No simulation performed")
+
+        # self.simulation_parameters = {'duration': duration, 'step': step, 'record': record, 'output_path': output_path}
+
+
         return "\n".join(summary)
 
     @property
@@ -142,6 +155,16 @@ class VirtualFleet:
         :class:`parcels.particleset.particlesetsoa.ParticleSetSOA`
         """
         return self.pset
+
+    @property
+    def fieldset(self):
+        """Container class for storing velocity FieldSet
+
+        Returns
+        -------
+        :class:`parcels.fieldset.FieldSet`
+        """
+        return self.pset.fieldset
 
     def show_deployment(self):
         """Method to show where Argo Floats have been deployed
@@ -188,7 +211,6 @@ class VirtualFleet:
                 temp_name = next(tempfile._get_candidate_names()) + ".zarr"
             return temp_name
 
-
         duration = (
             kwargs["duration"]
             if isinstance(kwargs["duration"], datetime.timedelta)
@@ -209,9 +231,10 @@ class VirtualFleet:
         if np.remainder(record, step) > timedelta(0):
             raise ValueError('The recording period must be a multiple of the computation time step')
 
+        # Handle output
         if not output:
-            output_msg = "Simulation will NOT be saved on file !"
             output_path = None
+            output_msg = "Simulation will NOT be saved on file !"
         else:
             output_file = kwargs["output_file"] if "output_file" in kwargs else None
             output_folder = kwargs["output_folder"] if "output_folder" in kwargs else "."
@@ -245,6 +268,10 @@ class VirtualFleet:
             **opts
         )
         log.debug("ending pset.execute")
+
+        # Internal recording of the simulation:
+        self.simulated = True
+        self.simulation_parameters = {'duration': duration, 'step': step, 'record': record, 'output_path': output_path}
 
         # Add more variables to the output file:
         # ncout = self.run_params["output_file"]
