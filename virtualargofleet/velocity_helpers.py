@@ -25,21 +25,46 @@ def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *ar
     Example
     -------
     >>> from virtualargofleet import VelocityField
-    >>> src = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"  # from Datarmor
-    >>> VELfield = VelocityField(model='GLOBAL_ANALYSIS_FORECAST_PHY_001_024', src="%s/2019*.nc" % src)
+
+    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+    >>> filenames = {'U': root + "/20201210*.nc",
+    >>>              'V': root + "/20201210*.nc"}
+    >>> variables = {'U':'uo','V':'vo'}
+    >>> dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
+    >>> VELfield = VelocityField(model='custom', src=filenames, variables=variables, dimensions=dimensions)
+
+    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+    >>> ds = xr.open_mfdataset(glob.glob("%s/20201210*.nc" % root))
+    >>> VELfield = VelocityField(model='GLOBAL_ANALYSIS_FORECAST_PHY_001_024', src=ds)
+
+    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+    >>> VELfield = VelocityField(model='GLORYS12V1', src="%s/20201210*.nc" % root)
+
+    >>> VELfield.fieldset
     >>> VELfield.plot()
 
     """
-    if model in ['GLOBAL_ANALYSIS_FORECAST_PHY_001_024', 'PSY4QV3R1', 'GLORYS12V1']:
-        V = VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(*args, **kwargs)
+    if model in ['PSY4QV3R1', 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', 'GLORYS12V1']:
+        V = VelocityField_PSY4QV3R1(**kwargs)
+        V.name = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024' if model == 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024' else V.name
         V.name = 'PSY4QV3R1' if model == 'PSY4QV3R1' else V.name
+        V.name = 'GLORYS12V1' if model == 'GLORYS12V1' else V.name
         return V
+
     elif model in ['MEDSEA_ANALYSISFORECAST_PHY_006_013']:
-        return VelocityField_MEDSEA_ANALYSISFORECAST_PHY_006_013(*args, **kwargs)
+        V = VelocityField_PSY4QV3R1(**kwargs)
+        V.name = "MEDSEA_ANALYSISFORECAST_PHY_006_013"
+        return V
+
     elif model in ['MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012', 'ARMOR3D']:
-        return VelocityField_MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012(*args, **kwargs)
+        V = VelocityField_PSY4QV3R1(**kwargs)
+        V.name = "ARMOR3D.MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012"
+        V.name = 'ARMOR3D' if model == 'ARMOR3D' else V.name
+        return V
+
     elif model.lower() in ['custom']:
         return VelocityField_CUSTOM(*args, **kwargs)
+
     else:
         raise ValueError('Unknown model')
 
@@ -109,44 +134,56 @@ class VelocityFieldProto(ABC):
 class VelocityField_CUSTOM(VelocityFieldProto):
     name = "CUSTOM"
 
-    def __init__(self, src,
-                 filenames: dict,
+    def __init__(self,
+                 src,
                  variables: dict,
                  dimensions: dict,
                  isglobal: bool = False,
                  **kwargs):
 
-        if 'U' not in filenames:
-            raise ValueError("'filenames' dictionary must have a 'U' key")
-        if 'V' not in filenames:
-            raise ValueError("'filenames' dictionary must have a 'V' key")
         if 'U' not in variables:
             raise ValueError("'variables' dictionary must have a 'U' key")
         if 'V' not in variables:
             raise ValueError("'variables' dictionary must have a 'V' key")
 
+        if isinstance(src, xr.core.dataset.Dataset):
+            # If the source data is a Xarray dataset, we ensure to have all the required variables and coordinates:
+
+            for v in variables:
+                if variables[v] not in src.data_vars:
+                    raise ValueError("'src' xarray DataSet must have a '%s' variable for %s" % (variables[v], v))
+
+            for dim in dimensions:
+                if dimensions[dim] not in src.coords:
+                    raise ValueError("'src' xarray DataSet must have a '%s' coordinate for %s" % (dimensions[dim], dim))
+
+        elif isinstance(src, dict):
+            if 'U' not in src:
+                raise ValueError("'src' as a dictionary must have a 'U' key")
+            if 'V' not in src:
+                raise ValueError("'src' as a dictionary must have a 'V' key")
+        else:
+            raise ValueError("'src' must be a dictionary of a xarray Dataset")
+
         if 'name' in kwargs:
             self.name = kwargs['name']
-
-        if not isinstance(src, xr.core.dataset.Dataset):
-            self.field = filenames  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
-        else:
-            self.field = src  # Xarray dataset
 
         self.var = variables  # Dictionary mapping 'U' and 'V' to netcdf velocity variable names
         self.dim = dimensions  # Dictionary mapping 'time', 'depth', 'lat' and 'lon' to netcdf velocity variable names
         self.isglobal = isglobal
 
         # Define parcels fieldset
-        if not isinstance(self.field, xr.core.dataset.Dataset):
+        if not isinstance(src, xr.core.dataset.Dataset):
+            self.field = src  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
             self.fieldset = FieldSet.from_netcdf(
-                self.field, self.var, self.dim,
+                src, self.var, self.dim,
                 allow_time_extrapolation=True,
                 time_periodic=False,
                 deferred_load=True)
         else:
+            self.field = src  # Xarray dataset
             self.fieldset = FieldSet.from_xarray_dataset(
-                self.field, self.var, self.dim,
+                src, self.var, self.dim,
                 allow_time_extrapolation=True,
                 time_periodic=False)
 
@@ -157,7 +194,7 @@ class VelocityField_CUSTOM(VelocityFieldProto):
         self.add_mask()
 
 
-class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
+def VelocityField_PSY4QV3R1(**kwargs):
     """Velocity Field Helper for CMEMS/GLOBAL-ANALYSIS-FORECAST-PHY-001-024 product.
 
     Reference
@@ -165,136 +202,20 @@ class VelocityField_GLOBAL_ANALYSIS_FORECAST_PHY_001_024(VelocityFieldProto):
     https://resources.marine.copernicus.eu/product-detail/GLOBAL_ANALYSIS_FORECAST_PHY_001_024/DATA-ACCESS
 
     """
-    name = "GLOBAL_ANALYSIS_FORECAST_PHY_001_024"
-
-    def __init__(self, src, isglobal: bool = False, **kwargs):
-        """
-
-        Parameters
-        ----------
-        src: pattern
-            Pattern to list netcdf source files
-        isglobal : bool, default False
-            Set to 1 if field is global, 0 otherwise
-        """
-        variables = {'U': 'uo', 'V': 'vo'}
-        dimensions = {'time': 'time', 'depth': 'depth', 'lat': 'latitude', 'lon': 'longitude'}
-        if not isinstance(src, xr.core.dataset.Dataset):
-            filenames = {'U': src, 'V': src}
-            self.field = filenames  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
-        else:
-            self.field = src  # Xarray dataset
-
-        self.var = variables  # Dictionary mapping 'U' and 'V' to netcdf velocity variable names
-        self.dim = dimensions  # Dictionary mapping 'time', 'depth', 'lat' and 'lon' to netcdf velocity variable names
-        self.isglobal = isglobal
-
-        # define parcels fieldset
-        if not isinstance(src, xr.core.dataset.Dataset):
-            self.fieldset = FieldSet.from_netcdf(
-                self.field, self.var, self.dim,
-                allow_time_extrapolation=True,
-                time_periodic=False,
-                deferred_load=True)
-        else:
-            self.fieldset = FieldSet.from_xarray_dataset(
-                self.field, self.var, self.dim,
-                allow_time_extrapolation=True,
-                time_periodic=False)
-
-        # Possible handle a global field:
-        self.set_global()
-
-        # Create mask to manage grounding:
-        self.add_mask()
-
-
-class VelocityField_MEDSEA_ANALYSISFORECAST_PHY_006_013(VelocityFieldProto):
-    """Velocity Field Helper for CMEMS/MEDSEA_ANALYSISFORECAST_PHY_006_013 product.
-
-    Reference
-    ---------
-    https://resources.marine.copernicus.eu/product-detail/MEDSEA_ANALYSISFORECAST_PHY_006_013/DATA-ACCESS
-
-    """
-    name = "MEDSEA_ANALYSISFORECAST_PHY_006_013"
-
-    def __init__(self, src, **kwargs):
-        """
-
-        Parameters
-        ----------
-        src: pattern
-            Pattern to list netcdf source files
-        isglobal : bool, default False
-            Set to 1 if field is global, 0 otherwise
-        """
-        filenames = {'U': src, 'V': src}
-        variables = {'U': 'uo', 'V': 'vo'}
-        dimensions = {'time': 'time', 'depth': 'depth', 'lat': 'lat', 'lon': 'lon'}
-
-        self.field = filenames  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
-        self.var = variables  # Dictionary mapping 'U' and 'V' to netcdf velocity variable names
-        self.dim = dimensions  # Dictionary mapping 'time', 'depth', 'lat' and 'lon' to netcdf velocity variable names
-
-        # define parcels fieldset
-        self.fieldset = FieldSet.from_netcdf(
-            self.field, self.var, self.dim,
-            allow_time_extrapolation=True,
-            time_periodic=False,
-            deferred_load=True)
-
-        # Create mask to manage grounding:
-        self.add_mask()
-
-
-class VelocityField_MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012(VelocityFieldProto):
-    """Velocity Field Helper for CMEMS/ARMOR3D product.
-
-    Reference
-    ---------
-    https://resources.marine.copernicus.eu/product-detail/MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012/DATA-ACCESS
-
-    """
-    name = "ARMOR3D.MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012"
-
-    def __init__(self, src, isglobal: bool = False, **kwargs):
-        """
-
-        Parameters
-        ----------
-        src: pattern
-            Pattern to list netcdf source files
-        isglobal : bool, default False
-            Set to 1 if field is global, 0 otherwise
-        """
-        variables = {'U': 'ugo', 'V': 'vgo'}
-        dimensions = {'time': 'time', 'depth': 'depth', 'lat': 'latitude', 'lon': 'longitude'}
-        if not isinstance(src, xr.core.dataset.Dataset):
-            filenames = {'U': src, 'V': src}
-            self.field = filenames  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
-        else:
-            self.field = src  # Xarray dataset
-
-        self.var = variables  # Dictionary mapping 'U' and 'V' to netcdf velocity variable names
-        self.dim = dimensions  # Dictionary mapping 'time', 'depth', 'lat' and 'lon' to netcdf velocity variable names
-        self.isglobal = isglobal
-
-        # define parcels fieldset
-        if not isinstance(src, xr.core.dataset.Dataset):
-            self.fieldset = FieldSet.from_netcdf(
-                self.field, self.var, self.dim,
-                allow_time_extrapolation=True,
-                time_periodic=False,
-                deferred_load=True)
-        else:
-            self.fieldset = FieldSet.from_xarray_dataset(
-                self.field, self.var, self.dim,
-                allow_time_extrapolation=True,
-                time_periodic=False)
-
-        # Possible handle a global field:
-        self.set_global()
-
-        # Create mask to manage grounding:
-        self.add_mask()
+    if 'src' not in kwargs:
+        raise ValueError("You must provide a 'src' dictionary or xarray dataset.")
+    elif isinstance(kwargs['src'], xr.core.dataset.Dataset):
+        src = kwargs['src']
+    else:
+        src = {'U': kwargs['src'],
+               'V': kwargs['src']}
+    variables = {'U': 'uo',
+                 'V': 'vo'}
+    dimensions = {'time': 'time',
+                  'depth': 'depth',
+                  'lat': 'latitude',
+                  'lon': 'longitude'}
+    isglobal = kwargs['isglobal'] if 'isglobal' in kwargs else False
+    V = VelocityField_CUSTOM(src=src, variables=variables, dimensions=dimensions, isglobal=isglobal)
+    V.name = 'PSY4QV3R1'
+    return V
