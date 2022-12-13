@@ -10,65 +10,6 @@ from abc import ABC
 from .app_parcels import ArgoParticle
 
 
-def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args, **kwargs):
-    """Thin layer above Parcels to manage velocity fields definition for known products
-
-    .. warning::
-
-        This is so thin, it may be removed in the future
-
-    Parameters
-    ----------
-    model: str
-        Model string definition
-
-    Example
-    -------
-    >>> from virtualargofleet import VelocityField
-
-    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
-    >>> filenames = {'U': root + "/20201210*.nc",
-    >>>              'V': root + "/20201210*.nc"}
-    >>> variables = {'U':'uo','V':'vo'}
-    >>> dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
-    >>> VELfield = VelocityField(model='custom', src=filenames, variables=variables, dimensions=dimensions)
-
-    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
-    >>> ds = xr.open_mfdataset(glob.glob("%s/20201210*.nc" % root))
-    >>> VELfield = VelocityField(model='GLOBAL_ANALYSIS_FORECAST_PHY_001_024', src=ds)
-
-    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
-    >>> VELfield = VelocityField(model='GLORYS12V1', src="%s/20201210*.nc" % root)
-
-    >>> VELfield.fieldset
-    >>> VELfield.plot()
-
-    """
-    if model in ['PSY4QV3R1', 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', 'GLORYS12V1']:
-        V = VelocityField_PSY4QV3R1(**kwargs)
-        V.name = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024' if model == 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024' else V.name
-        V.name = 'PSY4QV3R1' if model == 'PSY4QV3R1' else V.name
-        V.name = 'GLORYS12V1' if model == 'GLORYS12V1' else V.name
-        return V
-
-    elif model in ['MEDSEA_ANALYSISFORECAST_PHY_006_013']:
-        V = VelocityField_PSY4QV3R1(**kwargs)
-        V.name = "MEDSEA_ANALYSISFORECAST_PHY_006_013"
-        return V
-
-    elif model in ['MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012', 'ARMOR3D']:
-        V = VelocityField_PSY4QV3R1(**kwargs)
-        V.name = "ARMOR3D.MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012"
-        V.name = 'ARMOR3D' if model == 'ARMOR3D' else V.name
-        return V
-
-    elif model.lower() in ['custom']:
-        return VelocityField_CUSTOM(*args, **kwargs)
-
-    else:
-        raise ValueError('Unknown model')
-
-
 class VelocityFieldProto(ABC):
     name = "?"
 
@@ -194,6 +135,63 @@ class VelocityField_CUSTOM(VelocityFieldProto):
         self.add_mask()
 
 
+def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args, **kwargs):
+    """Thin layer above Parcels to manage velocity fields definition for known products
+
+    .. warning::
+
+        This is so thin, it may be removed in the future
+
+    Parameters
+    ----------
+    model: str
+        Model string definition
+
+    Example
+    -------
+    >>> from virtualargofleet import VelocityField
+
+    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+    >>> filenames = {'U': root + "/20201210*.nc",
+    >>>              'V': root + "/20201210*.nc"}
+    >>> variables = {'U':'uo','V':'vo'}
+    >>> dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
+    >>> VELfield = VelocityField(model='custom', src=filenames, variables=variables, dimensions=dimensions)
+
+    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+    >>> ds = xr.open_mfdataset(glob.glob("%s/20201210*.nc" % root))
+    >>> VELfield = VelocityField(model='GLOBAL_ANALYSIS_FORECAST_PHY_001_024', src=ds)
+
+    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+    >>> VELfield = VelocityField(model='GLORYS12V1', src="%s/20201210*.nc" % root)
+
+    >>> VELfield.fieldset
+    >>> VELfield.plot()
+
+    """
+    if model in ['PSY4QV3R1', 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', 'GLORYS12V1']:
+        V = VelocityField_PSY4QV3R1(**kwargs)
+        V.name = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024' if model == 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024' else V.name
+        V.name = 'PSY4QV3R1' if model == 'PSY4QV3R1' else V.name
+        V.name = 'GLORYS12V1' if model == 'GLORYS12V1' else V.name
+        return V
+
+    elif model in ['MEDSEA_ANALYSISFORECAST_PHY_006_013']:
+        V = VelocityField_MEDSEA_ANALYSISFORECAST_PHY_006_013(**kwargs)
+        return V
+
+    elif model in ['MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012', 'ARMOR3D']:
+        V = VelocityField_ARMOR3D(**kwargs)
+        V.name = 'ARMOR3D.MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012' if "MULTIOBS" in model else V.name
+        return V
+
+    elif model.lower() in ['custom']:
+        return VelocityField_CUSTOM(*args, **kwargs)
+
+    else:
+        raise ValueError('Unknown model')
+
+
 def VelocityField_PSY4QV3R1(**kwargs):
     """Velocity Field Helper for CMEMS/GLOBAL-ANALYSIS-FORECAST-PHY-001-024 product.
 
@@ -218,4 +216,57 @@ def VelocityField_PSY4QV3R1(**kwargs):
     isglobal = kwargs['isglobal'] if 'isglobal' in kwargs else False
     V = VelocityField_CUSTOM(src=src, variables=variables, dimensions=dimensions, isglobal=isglobal)
     V.name = 'PSY4QV3R1'
+    return V
+
+
+def VelocityField_MEDSEA_ANALYSISFORECAST_PHY_006_013(**kwargs):
+    """Velocity Field Helper for CMEMS/MEDSEA_ANALYSISFORECAST_PHY_006_013 product.
+
+    Reference
+    ---------
+    https://resources.marine.copernicus.eu/product-detail/MEDSEA_ANALYSISFORECAST_PHY_006_013/DATA-ACCESS
+
+    """
+    if 'src' not in kwargs:
+        raise ValueError("You must provide a 'src' dictionary or xarray dataset.")
+    elif isinstance(kwargs['src'], xr.core.dataset.Dataset):
+        src = kwargs['src']
+    else:
+        src = {'U': kwargs['src'],
+               'V': kwargs['src']}
+    variables = {'U': 'uo',
+                 'V': 'vo'}
+    dimensions = {'time': 'time',
+                  'depth': 'depth',
+                  'lat': 'lat',
+                  'lon': 'lon'}
+    V = VelocityField_CUSTOM(src=src, variables=variables, dimensions=dimensions, isglobal=False)
+    V.name = 'MEDSEA_ANALYSISFORECAST_PHY_006_013'
+    return V
+
+
+def VelocityField_ARMOR3D(**kwargs):
+    """Velocity Field Helper for CMEMS/ARMOR3D product.
+
+    Reference
+    ---------
+    https://resources.marine.copernicus.eu/product-detail/MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012/DATA-ACCESS
+
+    """
+    if 'src' not in kwargs:
+        raise ValueError("You must provide a 'src' dictionary or xarray dataset.")
+    elif isinstance(kwargs['src'], xr.core.dataset.Dataset):
+        src = kwargs['src']
+    else:
+        src = {'U': kwargs['src'],
+               'V': kwargs['src']}
+    variables = {'U': 'ugo',
+                 'V': 'vgo'}
+    dimensions = {'time': 'time',
+                  'depth': 'depth',
+                  'lat': 'latitude',
+                  'lon': 'longitude'}
+    isglobal = kwargs['isglobal'] if 'isglobal' in kwargs else False
+    V = VelocityField_CUSTOM(src=src, variables=variables, dimensions=dimensions, isglobal=isglobal)
+    V.name = 'ARMOR3D'
     return V
