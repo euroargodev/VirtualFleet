@@ -6,8 +6,11 @@ from parcels import FieldSet, ParticleSet, Field
 import xarray as xr
 import glob
 from abc import ABC
-
+import logging
 from .app_parcels import ArgoParticle
+
+
+log = logging.getLogger("virtualfleet.velocity")
 
 
 class VelocityFieldProto(ABC):
@@ -33,13 +36,14 @@ class VelocityFieldProto(ABC):
             - ``self.var`` with ``U`` and ``V`` keys
         """
         if self.fieldset:
-            if not isinstance(self.field, xr.core.dataset.Dataset):
-                mask_file = glob.glob(self.field['U'])[0]
-                ds = xr.open_dataset(mask_file)
-                ds = ds[{self.dim['time']: 0}]
+            if isinstance(self.field, xr.core.dataset.Dataset):
+                ds = self.field[{self.dim['time']: 0}]
                 ds = ds[[self.var['U'], self.var['V']]].squeeze()
             else:
-                ds = self.field[{self.dim['time']: 0}]
+                mask_file = glob.glob(self.field['U'])[0]
+                # log.debug('mask_file: %s' % mask_file)
+                ds = xr.open_dataset(mask_file)
+                ds = ds[{self.dim['time']: 0}]
                 ds = ds[[self.var['U'], self.var['V']]].squeeze()
 
             mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
@@ -89,11 +93,9 @@ class VelocityField_CUSTOM(VelocityFieldProto):
 
         if isinstance(src, xr.core.dataset.Dataset):
             # If the source data is a Xarray dataset, we ensure to have all the required variables and coordinates:
-
             for v in variables:
                 if variables[v] not in src.data_vars:
                     raise ValueError("'src' xarray DataSet must have a '%s' variable for %s" % (variables[v], v))
-
             for dim in dimensions:
                 if dimensions[dim] not in src.coords:
                     raise ValueError("'src' xarray DataSet must have a '%s' coordinate for %s" % (dimensions[dim], dim))
@@ -103,8 +105,9 @@ class VelocityField_CUSTOM(VelocityFieldProto):
                 raise ValueError("'src' as a dictionary must have a 'U' key")
             if 'V' not in src:
                 raise ValueError("'src' as a dictionary must have a 'V' key")
+
         else:
-            raise ValueError("'src' must be a dictionary of a xarray Dataset")
+            raise ValueError("'src' must be a dictionary or a xarray Dataset")
 
         if 'name' in kwargs:
             self.name = kwargs['name']

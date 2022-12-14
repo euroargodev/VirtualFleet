@@ -1,4 +1,5 @@
 import warnings
+import parcels
 from parcels import ParticleSet, FieldSet, AdvectionRK4, ErrorCode
 import datetime
 from datetime import timedelta
@@ -6,7 +7,9 @@ import os
 import tempfile
 import pandas as pd
 import numpy as np
+import xarray as xr
 import logging
+import copy
 from .app_parcels import (
     ArgoParticle,
     ArgoParticle_exp,
@@ -16,9 +19,12 @@ from .app_parcels import (
     PeriodicBoundaryConditionKernel,
 )
 from .velocity_helpers import VelocityFieldProto
+from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo
+from packaging import version
+import time
 
 
-log = logging.getLogger("virtualfleet")
+log = logging.getLogger("virtualfleet.virtualfleet")
 
 
 class VirtualFleet:
@@ -28,7 +34,7 @@ class VirtualFleet:
 
     """
 
-    def __init__(self, isglobal=False, **kwargs):
+    def __init__(self, isglobal: bool=False, **kwargs):
         """
         Parameters
         ----------
@@ -41,14 +47,14 @@ class VirtualFleet:
             Dictionary with Argo float parameters {'parking_depth': parking_depth, 'profile_depth': profile_depth, 'vertical_speed': vertical_speed, 'cycle_duration': cycle_duration}
         isglobal: False
         """
+        self._isglobal = isglobal
+
         # Deployment plan:
-        self.lat = kwargs["lat"]
-        self.lon = kwargs["lon"]
+        self._plan = {'lat': kwargs["lat"], 'lon': kwargs["lon"], 'depth': None, 'time': kwargs["time"]}
         if "depth" not in kwargs:
-            self.depth = np.full(self.lat.shape, 1.0)
+            self._plan['depth'] = np.full(self._plan['lat'].shape, 1.0)
         else:
-            self.depth = kwargs["depth"]
-        self.time = kwargs["time"]
+            self._plan['depth'] = kwargs["depth"]
 
         if kwargs['mission']['parking_depth'] < 0 or kwargs['mission']['parking_depth'] > 6000:
             raise ValueError('Parking depth must be in [0-6000] db')
@@ -104,42 +110,60 @@ class VirtualFleet:
         )
         fieldset.add_constant("verbose_events", verbose_events)
 
-        # Define parcels :class:`parcels.particleset.particlesetsoa.ParticleSetSOA`
-        self.pset = ParticleSet(
-            fieldset=fieldset,
-            pclass=Particle,
-            lon=self.lon,
-            lat=self.lat,
-            depth=self.depth,
-            time=self.time,
-        )
-
-        if isglobal:
-            # combine Argo vertical movement kernel with Advection kernel + boundaries
-            self.kernels = (
-                FloatKernel
-                + self.pset.Kernel(AdvectionRK4)
-                + self.pset.Kernel(PeriodicBoundaryConditionKernel)
-            )
-        else:
-            self.kernels = FloatKernel + self.pset.Kernel(AdvectionRK4)
+        # Define Ocean parcels elements
+        self._parcels = {'fieldset': fieldset,
+                         'Particle': Particle,
+                         'FloatKernel': FloatKernel,
+                         'ParticleSet': None,
+                         'kernels': None}
+        self.__init_ParticleSet().__init_kernels()  # Will modify the 'ParticleSet' and 'kernels' of self._parcels
 
         self.simulated = False  # Will be set to True if self.simulate() is used
         self.simulation_parameters = None
 
+    def __init_ParticleSet(self):
+        P = ParticleSet(
+            fieldset=self._parcels['fieldset'],
+            pclass=self._parcels['Particle'],
+            lon=self._plan['lon'],
+            lat=self._plan['lat'],
+            depth=self._plan['depth'],
+            time=self._plan['time'],
+            pid_orig=np.arange(self._plan['lon'].size),
+        )
+        self._parcels['ParticleSet'] = P
+        return self
+
+    def __init_kernels(self):
+        if self._isglobal:
+            # combine Argo vertical movement kernel with Advection kernel + boundaries
+            K = (
+                    self._parcels['FloatKernel']
+                    + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
+                    + self._parcels['ParticleSet'].Kernel(PeriodicBoundaryConditionKernel)
+            )
+        else:
+            K = self._parcels['FloatKernel'] + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
+        self._parcels['kernels'] = K
+        return self
+
     def __repr__(self):
         summary = ["<VirtualFleet>"]
-        summary.append("%i floats in the deployment plan" % self.pset.size)
+        summary.append("- %i floats in the deployment plan" % self._parcels['ParticleSet'].size)
         if self.simulated:
-            summary.append("A simulation of %i days, with data recording every %f hours has been performed"
-                           % (self.simulation_parameters["duration"].days,
-                              self.simulation_parameters["record"].seconds/3600))
+            summary.append("- A simulation of %s with data recording every %s has been performed"
+                           % (strfdelta(self.simulation_parameters["duration"].total_seconds(),
+                                        inputtype='s'),
+                              strfdelta(self.simulation_parameters["record"].total_seconds(),
+                                        fmt='{H:02}h {M:02}m', inputtype='s')))
             if self.simulation_parameters['output_path'] is not None:
-                summary.append("Simulation trajectories saved in: %s" % self.simulation_parameters['output_path'])
+                summary.append("- Simulation trajectories saved in: %s" % self.simulation_parameters['output_path'])
             else:
-                summary.append("Simulation trajectories not saved on disk. Last positions available with the `ParticleSet` property of this instance")
+                summary.append("- Simulation trajectories not saved on disk. Last positions available with the `ParticleSet` property of this instance")
+            summary.append("- Simulation executed in %s on %s" % (strfdelta(self.simulation_parameters['execution_wall_time']),
+                                                   self.simulation_parameters['execution_system']['hostname']))
         else:
-            summary.append("No simulation performed")
+            summary.append("- No simulation performed")
 
         # self.simulation_parameters = {'duration': duration, 'step': step, 'record': record, 'output_path': output_path}
 
@@ -154,7 +178,7 @@ class VirtualFleet:
         -------
         :class:`parcels.particleset.particlesetsoa.ParticleSetSOA`
         """
-        return self.pset
+        return self._parcels['ParticleSet']
 
     @property
     def fieldset(self):
@@ -164,24 +188,23 @@ class VirtualFleet:
         -------
         :class:`parcels.fieldset.FieldSet`
         """
-        return self.pset.fieldset
+        return self._parcels['ParticleSet'].fieldset
+        # return self._parcels['fieldset']
 
-    def show_deployment(self):
-        """Method to show where Argo Floats have been deployed
+    def plot_positions(self):
+        """Method to show where are Argo Floats
 
         Using parcels psel builtin show function for now
         """
-        self.pset.show()
+        self._parcels['ParticleSet'].show()
 
-    def plotfloat(self):
-        warnings.warn(
-            "'plotfloat' has been replaced by 'show_deployment'",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.show_deployment()
-
-    def simulate(self, step=timedelta(minutes=5), record=timedelta(hours=1), output=False, verbose_progress=True, **kwargs):
+    def simulate(self,
+                 step=timedelta(minutes=5),
+                 record=timedelta(hours=1),
+                 output=False,
+                 verbose_progress=True,
+                 restart=False,
+                 **kwargs):
         """Execute a Virtual Fleet simulation
 
         Inputs
@@ -206,10 +229,30 @@ class VirtualFleet:
             Name of folder where to store 'output_file'
         """
         def get_an_output_filename(output_folder):
-            temp_name = next(tempfile._get_candidate_names()) + ".zarr"
+            if version.parse(parcels.__version__) >= version.parse("2.4.0"):
+                ext = ".zarr"
+            else:
+                ext = ".nc"
+            temp_name = next(tempfile._get_candidate_names()) + ext
             while os.path.exists(os.path.join(output_folder, temp_name)):
-                temp_name = next(tempfile._get_candidate_names()) + ".zarr"
+                temp_name = next(tempfile._get_candidate_names()) + ext
             return temp_name
+
+        if self.simulated:
+            log.warning("A simulation has already been performed with this VirtualFleet")
+
+        if not restart:
+            # Start a new simulation, from scratch
+            # We need to reinitialize the 'ParticleSet' of self._parcels
+            log.debug('start simulation from scratch')
+            self.__init_ParticleSet()#.__init_kernels()
+        else:
+            log.debug('restart simulation where it was')
+        # print("self._parcels['fieldset']", hex(id(self._parcels['fieldset'])))
+        # print("self._parcels['ParticleSet'].fieldset", hex(id(self._parcels['ParticleSet'].fieldset)))
+        # print("self._parcels['kernels']", hex(id(self._parcels['kernels'])))
+        # print("self._parcels['ParticleSet']", hex(id(self._parcels['ParticleSet'])))
+        # print("self._parcels['ParticleSet'].collection", hex(id(self._parcels['ParticleSet'].collection)))
 
         duration = (
             kwargs["duration"]
@@ -246,10 +289,10 @@ class VirtualFleet:
             output_msg = "Simulation will be saved in : " + output_path
 
         warnings.warn(output_msg)
-        log.debug(output_msg)
+        log.info(output_msg)
 
         # Now execute kernels
-        log.debug(
+        log.info(
             "Starting Virtual Fleet simulation of %i days, with data recording every %f hours"
             % (duration.days, record.seconds/3600)
         )
@@ -257,22 +300,64 @@ class VirtualFleet:
                 'dt': step,
                 'verbose_progress': verbose_progress,
                 'recovery': {ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
-                             ErrorCode.ErrorThroughSurface: DeleteParticleKernel}
+                             ErrorCode.ErrorThroughSurface: DeleteParticleKernel},
+                'output_file': None,
                 }
         if output:
-            opts['output_file'] = self.pset.ParticleFile(name=output_path, outputdt=record)
+            # log.info("Creating ParticleFile")e
+            opts['output_file'] = self._parcels['ParticleSet'].ParticleFile(name=output_path, outputdt=record)
+            # log.info("Parcels temporary files will be saved in: %s" % opts['output_file'].tempwritedir_base)
+        log.debug(opts)
 
-        log.debug("starting pset.execute")
-        self.pset.execute(
-            self.kernels,
-            **opts
-        )
-        log.debug("ending pset.execute")
+        log.info("starting ParticleSet execution")
+        execution_start, process_start = time.time(), time.process_time()
+        P = self._parcels['ParticleSet']
+        P.execute(self._parcels['kernels'], **opts)
+        log.info("ending ParticleSet execution")
+
+        if output:
+            # Close the ParticleFile object by exporting and then deleting the temporary npy files
+            # log.info("starting ParticleFile export/close/clean from %s" % opts['output_file'].tempwritedir_base) # Parcels<2.4.0
+            log.info("starting ParticleFile export/close/clean from %s" % opts['output_file'].fname)
+            opts['output_file'].close(delete_tempfiles=True)
+            log.info("ending ParticleFile export/close/clean to %s" % opts['output_file'].fname)
 
         # Internal recording of the simulation:
+        execution_end, process_end = time.time(), time.process_time()
         self.simulated = True
-        self.simulation_parameters = {'duration': duration, 'step': step, 'record': record, 'output_path': output_path}
+        self.simulation_parameters = {'duration': duration,
+                                      'step': step,
+                                      'record': record,
+                                      'output_path': output_path,
+                                      'opts': opts,
+                                      'execution_wall_time': pd.Timedelta(execution_end - execution_start, 's'),
+                                      'execution_cpu_time': pd.Timedelta(process_end - process_start, 's'),
+                                      'execution_date': pd.to_datetime("now", utc=True).strftime("%Y%m%d-%H%M%S"),
+                                      'execution_system': getSystemInfo()}
 
-        # Add more variables to the output file:
-        # ncout = self.run_params["output_file"]
-        # ds = xr.open_dataset(ncout)
+
+    def to_index(self, file_name=None):
+        """Return simulated profile index dataframe
+
+        Return a pandas.Dataframe index of profiles.
+        If the ``file_name`` option is provided, an Argo profile index csv file is writen.
+
+        Parameters
+        ----------
+        file_name: str, default: None
+            Name of the index file to write
+        """
+        if not self.simulated or self.simulation_parameters['output_path'] is None:
+            raise ValueError("You must execute a simulation with trajectory recording to get a virtual profile index")
+        else:
+            simu_path = self.simulation_parameters['output_path']
+        engine = 'zarr' if '.zarr' in simu_path else 'netcdf4'
+
+        if file_name:
+            return simu2csv(simu_path, index_file=file_name, df=None, engine=engine)
+        else:
+            # engine = 'netcdf4' if "zarr" not in simu_path else 'zarr'
+            # ds = xr.open_dataset(simu_path, engine=engine)
+            ds = xr.open_dataset(simu_path, engine=engine)  # Let xarray guess how to open this simulation (nc or zarr)
+            return simu2index(ds)
+

@@ -12,6 +12,11 @@ import logging
 import json
 import urllib.request
 import pkg_resources
+from string import Formatter
+import platform
+import socket
+import psutil
+from packaging import version
 
 
 log = logging.getLogger("virtualfleet.utils")
@@ -243,37 +248,43 @@ def simu2index(ds, N = 1):
     A profile is identified if the last obs of a cycle_number sequence is in cycle_phase 3 or 4.
     A profile is identified if the last obs of a cycle_phase==3 sequence is separated by N days from the next sequence.
     """
-    ds_list = []
+    trajdim = 'trajectory' if version.parse(ds.attrs['parcels_version']) >= version.parse("2.4.0") else 'traj'
 
+    ds_list = []
     if 'cycle_number' in ds.data_vars:
-        for traj in tqdm(ds['traj'], total=len(ds['traj'])):
-            for cyc, grp in ds.sel(traj=traj).groupby(group='cycle_number'):
+        for traj in tqdm(ds[trajdim], total=len(ds[trajdim])):
+            for cyc, grp in ds.loc[{trajdim: traj}].groupby(group='cycle_number'):
                 ds_cyc = grp.isel(obs=-1)
                 if ds_cyc['cycle_phase'] in [3, 4]:
-                    ds_cyc['traj_id'] = xr.DataArray(np.full_like((1,), fill_value=traj.data), dims='obs')
+                    ds_cyc['traj_id'] = xr.DataArray(np.full_like((1,), fill_value=traj.data))
                     ds_list.append(ds_cyc)
+
     else:
-        for traj in tqdm(ds['traj'], total=len(ds['traj'])):
-            for iphase, grp in ds.sel(traj=traj).groupby(group='cycle_phase'):
+        warnings.warn("This is an old trajectory file, results not guaranteed !")
+        for traj in tqdm(ds[trajdim], total=len(ds[trajdim])):
+            for iphase, grp in ds.loc[{trajdim: traj}].groupby(group='cycle_phase'):
                 if iphase == 3:
                     sub_grp = splitonprofiles(grp, N=N)
                     sub_grp['cycle_number'] = xr.DataArray(np.arange(1, len(sub_grp['obs']) + 1), dims='obs')
                     sub_grp['traj_id'] = xr.DataArray(np.full_like(sub_grp['obs'], fill_value=traj.data), dims='obs')
                     ds_list.append(sub_grp)
 
-    ds_profiles = xr.concat(ds_list, dim='obs')
-    if 'wmo' not in ds_profiles.data_vars:
-        ds_profiles['wmo'] = ds_profiles['traj_id'] + 9000000
-    df = ds_profiles.to_dataframe()
-    df = df.rename({'time': 'date', 'lat': 'latitude', 'lon': 'longitude', 'z': 'min_depth'}, axis='columns')
-    df = df[['date', 'latitude', 'longitude', 'wmo', 'cycle_number', 'traj_id']]
-    df['wmo'] = df['wmo'].astype('int')
-    df['traj_id'] = df['traj_id'].astype('int')
-    df['latitude'] = np.fix(df['latitude'] * 1000).astype('int') / 1000
-    df['longitude'] = np.fix(df['longitude'] * 1000).astype('int') / 1000
-    df = df.reset_index(drop=True)
-
-    return df
+    if len(ds_list) > 0:
+        ds_profiles = xr.concat(ds_list, dim='obs')
+        if 'wmo' not in ds_profiles.data_vars:
+            ds_profiles['wmo'] = ds_profiles['traj_id'] + 9000000
+        df = ds_profiles.to_dataframe()
+        df = df.rename({'time': 'date', 'lat': 'latitude', 'lon': 'longitude', 'z': 'min_depth'}, axis='columns')
+        df = df[['date', 'latitude', 'longitude', 'wmo', 'cycle_number', 'traj_id']]
+        df['wmo'] = df['wmo'].astype('int')
+        df['cycle_number'] = df['cycle_number'].astype('int')
+        df['traj_id'] = df['traj_id'].astype('int')
+        df['latitude'] = np.fix(df['latitude'] * 1000).astype('int') / 1000
+        df['longitude'] = np.fix(df['longitude'] * 1000).astype('int') / 1000
+        df = df.reset_index(drop=True)
+        return df
+    else:
+        raise ValueError('No virtual floats reaches the final cycling phase, hence no profiles to index')
 
 
 def simu2index_par(ds):
@@ -338,7 +349,7 @@ def simu2index_par(ds):
     return df
 
 
-def simu2csv(simu_file, index_file=None, df=None):
+def simu2csv(simu_file, index_file=None, df=None, engine='netcdf4'):
     """Save simulation results profile index to file, as Argo index
 
     Argo profile index can be loaded with argopy.
@@ -358,7 +369,8 @@ def simu2csv(simu_file, index_file=None, df=None):
         Path to Argo profile index
     """
     if index_file is None:
-        index_file = simu_file.replace(".nc", "_ar_index_prof.txt")
+        file_name, file_extension = os.path.splitext(index_file)
+        index_file = simu_file.replace(file_extension, "_ar_index_prof.txt")
 
     txt_header = """# Title : Profile directory file of a VirtualFleet simulation
 # Description : Profiles from simulation result file: {}
@@ -374,7 +386,7 @@ def simu2csv(simu_file, index_file=None, df=None):
 
     if df is None:
         log.debug("Computing profile index from simulation file: %s" % simu_file)
-        ds = xr.open_dataset(simu_file, engine='netcdf4')
+        ds = xr.open_dataset(simu_file, engine=engine)
         ardf = simu2index(ds)
         # try:
         #     ardf = simu2index_par(xr.open_dataset(simu_file))
@@ -488,3 +500,69 @@ def get_float_config(wmo, cyc=None):
         df = df.loc[cyc]
 
     return df
+
+
+def strfdelta(tdelta, fmt='{D:02}d {H:02}h {M:02}m {S:02}s', inputtype='timedelta'):
+    """Convert a datetime.timedelta object or a regular number to a custom-
+    formatted string, just like the stftime() method does for datetime.datetime
+    objects.
+
+    The fmt argument allows custom formatting to be specified.  Fields can
+    include seconds, minutes, hours, days, and weeks.  Each field is optional.
+
+    Some examples:
+        '{D:02}d {H:02}h {M:02}m {S:02}s' --> '05d 08h 04m 02s' (default)
+        '{W}w {D}d {H}:{M:02}:{S:02}'     --> '4w 5d 8:04:02'
+        '{D:2}d {H:2}:{M:02}:{S:02}'      --> ' 5d  8:04:02'
+        '{H}h {S}s'                       --> '72h 800s'
+
+    The inputtype argument allows tdelta to be a regular number instead of the
+    default, which is a datetime.timedelta object.  Valid inputtype strings:
+        's', 'seconds',
+        'm', 'minutes',
+        'h', 'hours',
+        'd', 'days',
+        'w', 'weeks'
+    """
+
+    # Convert tdelta to integer seconds.
+    if inputtype == 'timedelta':
+        remainder = int(tdelta.total_seconds())
+    elif inputtype in ['s', 'seconds']:
+        remainder = int(tdelta)
+    elif inputtype in ['m', 'minutes']:
+        remainder = int(tdelta)*60
+    elif inputtype in ['h', 'hours']:
+        remainder = int(tdelta)*3600
+    elif inputtype in ['d', 'days']:
+        remainder = int(tdelta)*86400
+    elif inputtype in ['w', 'weeks']:
+        remainder = int(tdelta)*604800
+
+    f = Formatter()
+    desired_fields = [field_tuple[1] for field_tuple in f.parse(fmt)]
+    possible_fields = ('W', 'D', 'H', 'M', 'S')
+    constants = {'W': 604800, 'D': 86400, 'H': 3600, 'M': 60, 'S': 1}
+    values = {}
+    for field in possible_fields:
+        if field in desired_fields and field in constants:
+            values[field], remainder = divmod(remainder, constants[field])
+    return f.format(fmt, **values)
+
+
+def getSystemInfo():
+    """Return system information as a dict"""
+    try:
+        info = {}
+        info['platform']=platform.system()
+        info['platform-release']=platform.release()
+        info['platform-version']=platform.version()
+        info['architecture']=platform.machine()
+        info['hostname']=socket.gethostname()
+        info['ip-address']=socket.gethostbyname(socket.gethostname())
+        # info['mac-address']=':'.join(re.findall('..', '%012x' % uuid.getnode()))
+        info['processor']=platform.processor()
+        info['ram']=str(round(psutil.virtual_memory().total / (1024.0 **3)))+" GB"
+        return info
+    except Exception as e:
+        logging.exception(e)
