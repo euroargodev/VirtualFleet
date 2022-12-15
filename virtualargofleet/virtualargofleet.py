@@ -1,3 +1,4 @@
+import numbers
 import warnings
 import parcels
 from parcels import ParticleSet, FieldSet, AdvectionRK4, ErrorCode
@@ -122,7 +123,7 @@ class VirtualFleet:
 
     def __init_ParticleSet(self):
         pid_orig = np.arange(self._plan['lon'].size)
-        print(pid_orig)
+        # print(pid_orig)
         P = ParticleSet(
             fieldset=self._parcels['fieldset'],
             pclass=self._parcels['Particle'],
@@ -203,7 +204,7 @@ class VirtualFleet:
                  duration,
                  step=timedelta(minutes=5),
                  record=timedelta(hours=1),
-                 output=False,
+                 output=True,
                  verbose_progress=True,
                  restart=False,
                  **kwargs):
@@ -232,13 +233,13 @@ class VirtualFleet:
         """
         def _validate(td, name='?', fallback='hours'):
             if not isinstance(td, datetime.timedelta):
-                if isinstance(td, float):
-                    if fallback=='hours':
-                        td = timedelta(hours=td)
-                    elif fallback=='days':
-                        td = timedelta(days=td)
-                    elif fallback=='minutes':
-                        td = timedelta(minutes=td)
+                if isinstance(td, numbers.Number):
+                    if fallback == 'hours':
+                        td = timedelta(hours=float(td))
+                    elif fallback == 'days':
+                        td = timedelta(days=float(td))
+                    elif fallback == 'minutes':
+                        td = timedelta(minutes=float(td))
                 else:
                     raise ValueError("'%s' must be a datetime.timedelta or a numeric value for %s" % (name, fallback))
             return td
@@ -341,6 +342,14 @@ class VirtualFleet:
         self.simulations_set.add(this_run_params)
         return self
 
+    @property
+    def output(self):
+        """Return absolute path to the last simulation trajectory output file"""
+        if self.simulations_set.N > 0:
+            output_path = self.simulations_set.last['output_path']
+        else:
+            output_path = None
+        return os.path.abspath(output_path)
 
     def to_index(self, file_name=None):
         """Return last simulated profile index dataframe

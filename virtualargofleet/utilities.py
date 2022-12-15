@@ -392,7 +392,7 @@ def simu2index_par(ds):
     return df
 
 
-def simu2csv(simu_file, index_file=None, df=None, engine='netcdf4'):
+def simu2csv(simu_file, index_file=None, df=None, engine=None):
     """Save simulation results profile index to file, as Argo index
 
     Argo profile index can be loaded with argopy.
@@ -429,6 +429,7 @@ def simu2csv(simu_file, index_file=None, df=None, engine='netcdf4'):
 
     if df is None:
         log.debug("Computing profile index from simulation file: %s" % simu_file)
+        engine = 'zarr' if '.zarr' in simu_file else 'netcdf4'
         ds = xr.open_dataset(simu_file, engine=engine)
         ardf = simu2index(ds)
         # try:
