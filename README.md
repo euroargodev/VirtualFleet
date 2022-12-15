@@ -50,7 +50,7 @@ In this later case, the ``VelocityField`` class will take care of creating a Par
 
 ### Deployment plan
 
-Then, you need to define a deployment plan for your virtual fleet. **The VirtualFleet simulator expects a set of arrays with the latitude, longitude and time of virtual floats to deploy**. Depth is set by default to the surface, but this can modify if required.
+Then, you need to define a deployment plan for your virtual fleet. **The VirtualFleet simulator expects a dictionary with arrays for the latitude, longitude and time of virtual floats to deploy**. Depth is set by default to the surface, but this can be provided if necessary.
 
 Example:
 ```python
@@ -61,6 +61,9 @@ nfloats = 10
 lat = np.linspace(30, 38, nfloats)
 lon = np.full_like(lat, -60)
 tim = np.array(['2019-01-01' for i in range(nfloats)], dtype='datetime64')
+
+# Define the deployment plan as a dictionary:
+my_plan = {'lat': lat, 'lon': lon, 'time': tim}
 ```
 
 ### Argo floats mission parameters
@@ -103,12 +106,12 @@ cfg = FloatConfiguration("myconfig.json")
 
 You now have all the requirements:
 - [x] A velocity fieldset, from a ``VelocityField`` instance
-- [x] A deployment plan, from the ``lat/lon/time`` arrays
+- [x] A deployment plan, from the dictionary with ``lat/lon/time`` arrays
 - [x] A float mission configuration, from the ``FloatConfiguration`` instance
 
 So, let's create a virtual fleet:
 ```python
-VFleet = virtualfleet(lat=lat, lon=lon, time=tim, fieldset=VELfield.fieldset, mission=cfg.mission)
+VFleet = virtualfleet(plan=my_plan, fieldset=VELfield.fieldset, mission=cfg.mission)
 >>> <VirtualFleet>
 - 10 floats in the deployment plan
 - No simulation performed
@@ -216,12 +219,12 @@ The last release 0.3 introduces a couple of new features but also breaking chang
 
 - Internal refactoring, with proper submodule assignment.
 - Options in the VirtualFleet
-  - instantiation option ``vfield`` has been replaced by ``fieldset`` and now must take a Parcels fieldset instance.
+  - instantiation option ``vfield`` has been replaced by ``fieldset`` and now must take a Parcels fieldset or a ``VelocityField`` instance.
   - simulate method have been renamed to be more explicit and now takes timedelta as values, instead of mixed integer units. 
 
 
 ***
-"Virtual Fleet" is part of the Euro-ArgoRISE project. This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement no 824131. Call INFRADEV-03-2018-2019: Individual support to ESFRI and other world-class research infrastructures.
+"Virtual Fleet" was created by the Euro-ArgoRISE project. This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement no 824131. Call INFRADEV-03-2018-2019: Individual support to ESFRI and other world-class research infrastructures.
 <div>
 <a href="https://www.euro-argo.eu/EU-Projects/Euro-Argo-RISE-2019-2022">
 <img src="https://user-images.githubusercontent.com/59824937/146353317-56b3e70e-aed9-40e0-9212-3393d2e0ddd9.png" height="100">
