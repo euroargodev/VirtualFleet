@@ -12,8 +12,17 @@ fleet of Argo floats.
 
 # Documentation
 
-Checkout the documentation at: https://euroargodev.github.io/VirtualFleet
-
+* [Why Virtual Fleet?](#why-virtual-fleet-)
+* [Usage](#usage)
+  + [Velocity field](#velocity-field)
+  + [Deployment plan](#deployment-plan)
+  + [Argo floats mission parameters](#argo-floats-mission-parameters)
+  + [Simulate a virtual fleet](#simulate-a-virtual-fleet)
+  + [Analyse simulation](#analyse-simulation)
+* [What's new ?](#what-s-new--)
+    - [New features](#new-features)
+    - [Breaking changes](#breaking-changes)
+  
 ## Why Virtual Fleet?
 
 The optimisation of the Argo array is quite complex to determine in specific regions, where the local ocean dynamic shifts away from *standard* large scale open ocean. These regions are typically the Boundary Currents where turbulence is more significant than anywhere else, and Polar regions where floats can temporarily evolve under sea-ice. **Virtual Fleet** aims to help the Argo program to optimise floats deployment and programming in such regions.
@@ -235,4 +244,4 @@ This software is developed by:
 <img src="https://www.umr-lops.fr/var/storage/images/_aliases/logo_main/medias-ifremer/medias-lops/logos/logo-lops-2/1459683-4-fre-FR/Logo-LOPS-2.png" height="75">
 <a href="https://wwz.ifremer.fr"><img src="https://user-images.githubusercontent.com/59824937/146353099-bcd2bd4e-d310-4807-aee2-9cf24075f0c3.jpg" height="75"></a>
 <img src="https://github.com/euroargodev/euroargodev.github.io/raw/master/img/logo/ArgoFrance-logo_banner-color.png" height="75">
-</div>
+</div>_
