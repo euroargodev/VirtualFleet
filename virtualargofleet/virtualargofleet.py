@@ -19,9 +19,11 @@ from .app_parcels import (
     PeriodicBoundaryConditionKernel,
 )
 from .velocity_helpers import VelocityFieldProto
-from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo, SimulationSet
+from .utilities import SimulationSet, FloatConfiguration
+from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo
 from packaging import version
 import time
+from typing import Union
 
 
 log = logging.getLogger("virtualfleet.virtualfleet")
@@ -33,56 +35,72 @@ class VirtualFleet:
     This class should make it easier to process and analyse a simulation.
 
     """
-
-    def __init__(self, isglobal: bool=False, **kwargs):
+    def __init__(self,
+                 plan: dict,
+                 fieldset: Union[FieldSet, VelocityFieldProto],
+                 mission: Union[dict, FloatConfiguration],
+                 isglobal: bool=False,
+                 **kwargs):
         """
         Parameters
         ----------
-        lat, lon, depth, time:
-            Numpy arrays describing where Argo floats are deployed.
+        plan: dict
+            A dictionary with the deployment plan coordinates as keys: 'lat', 'lon', 'time', ['depth']
+            Each value are Numpy arrays describing where Argo floats are deployed.
             Depth is optional, if not provided it will be set to 1m.
-        fieldset: :class:`parcels.fieldset`
-            Velocity field
-        mission: dict
-            Dictionary with Argo float parameters {'parking_depth': parking_depth, 'profile_depth': profile_depth, 'vertical_speed': vertical_speed, 'cycle_duration': cycle_duration}
+        fieldset: :class:`parcels.fieldset` or :class:`VelocityFieldProto`
+            A velocity field
+        mission: dict or :class:`FloatConfiguration`
+            A dictionary with at least the Argo float mission parameters: 'parking_depth', 'profile_depth', 'vertical_speed' and 'cycle_duration'
         isglobal: False
+
         """
-        self._isglobal = isglobal
+        self._isglobal = bool(isglobal)
 
         # Deployment plan:
-        self._plan = {'lat': kwargs["lat"], 'lon': kwargs["lon"], 'depth': None, 'time': kwargs["time"]}
-        if "depth" not in kwargs:
-            self._plan['depth'] = np.full(self._plan['lat'].shape, 1.0)
-        else:
-            self._plan['depth'] = kwargs["depth"]
+        for key in ['lat', 'lon', 'time']:
+            if key not in plan:
+                raise ValueError("The 'plan' argument must have a '%s' key" % key)
+        default_plan = {'lat': None, 'lon': None, 'depth': None, 'time': None}
+        self.deployment_plan = {**default_plan, **plan}
+        if self.deployment_plan['depth'] is None:
+            self.deployment_plan['depth'] = np.full(self.deployment_plan['lat'].shape, 1.0)
 
-        if kwargs['mission']['parking_depth'] < 0 or kwargs['mission']['parking_depth'] > 6000:
+        # Mission parameters:
+        if isinstance(mission, FloatConfiguration):  # be nice when we forget to set the correct input
+            mission = mission.mission
+        if not isinstance(mission, dict):
+            raise TypeError("The `mission` argument must be a dictionary or a `FloatConfiguration` instance")
+
+        for key in ['parking_depth', 'profile_depth', 'cycle_duration', 'vertical_speed']:
+            if key not in mission:
+                raise ValueError("The 'mission' argument must have a '%s' key" % key)
+
+        if mission['parking_depth'] < 0 or mission['parking_depth'] > 6000:
             raise ValueError('Parking depth must be in [0-6000] db')
 
-        if kwargs['mission']['profile_depth'] < 0 or kwargs['mission']['profile_depth'] > 6000:
+        if mission['profile_depth'] < 0 or mission['profile_depth'] > 6000:
             raise ValueError('Profile depth must be in [0-6000] db')
 
-        if kwargs['mission']['cycle_duration'] < 0:
+        if mission['cycle_duration'] < 0:
             raise ValueError('Cycle duration must be positive')
 
-        if kwargs['mission']['vertical_speed'] < 0:
+        if mission['vertical_speed'] < 0:
             raise ValueError('Vertical speed must be positive')
-        if kwargs['mission']['vertical_speed'] > 1:
-            warnings.warn("%f m/s is pretty fast for an Argo float ! Typical speed is 0.09 m/s" % kwargs['mission']['vertical_speed'])
+        if mission['vertical_speed'] > 1:
+            warnings.warn("%f m/s is pretty fast for an Argo float ! Typical speed is 0.09 m/s" % mission['vertical_speed'])
 
         if 'vfield' in kwargs:
             raise ValueError("The 'vfield' option is deprecated. You can use the 'fieldset' "
                              "option to pass on the Ocean Parcels fieldset.")
 
         # Velocity/Hydrodynamic field:
-        fieldset = kwargs["fieldset"]
-        if isinstance(fieldset, VelocityFieldProto):
+        if isinstance(fieldset, VelocityFieldProto):  # be nice when we forget to set the correct input
             fieldset = fieldset.fieldset
         if not isinstance(fieldset, FieldSet):
-            raise TypeError("The `fieldset` option must be a `FieldSet` Parcels instance")
+            raise TypeError("The `fieldset` argument must be a `FieldSet` Parcels or `VelocityField` instance")
 
         # Forward mission parameters to the simulation through fieldset
-        mission = kwargs["mission"]
         fieldset.add_constant("parking_depth", mission["parking_depth"])
         fieldset.add_constant("profile_depth", mission["profile_depth"])
         fieldset.add_constant("v_speed", mission["vertical_speed"])
@@ -122,15 +140,15 @@ class VirtualFleet:
         self.simulations_set = SimulationSet()
 
     def __init_ParticleSet(self):
-        pid_orig = np.arange(self._plan['lon'].size)
+        pid_orig = np.arange(self.deployment_plan['lon'].size)
         # print(pid_orig)
         P = ParticleSet(
             fieldset=self._parcels['fieldset'],
             pclass=self._parcels['Particle'],
-            lon=self._plan['lon'],
-            lat=self._plan['lat'],
-            depth=self._plan['depth'],
-            time=self._plan['time'],
+            lon=self.deployment_plan['lon'],
+            lat=self.deployment_plan['lat'],
+            depth=self.deployment_plan['depth'],
+            time=self.deployment_plan['time'],
             pid_orig=pid_orig,
         )
         self._parcels['ParticleSet'] = P
