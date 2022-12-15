@@ -123,13 +123,28 @@ VFleet.simulate(duration=timedelta(days=2))
 - Last simulation meta-data:
 	- Duration: 02d 00h 00m 00s
 	- Data recording every: 01h 00m
-	- Simulation trajectories were not saved on file
-	- Execution time: 00d 00h 00m 01s
+	- Trajectory file: ./v24co0jc.zarr
+	- Execution time: 00d 00h 00m 04s
 	- Executed on: laptop_guillaume_boulot.lan
 ```
 By default, virtual floats positions are saved hourly along their trajectories.
 
 The simulated floats trajectories will be saved in the current directory as a [zarr file](https://zarr.readthedocs.io/). You can control where to save trajectories with the ``output_folder`` and ``output_file`` options, or set the ``output`` option to `False` to not save results at all.
+
+Note that you can continue the simulation where it was using the ``restart`` option:
+```python
+VFleet.simulate(duration=timedelta(days=3), restart=True)
+>>> <VirtualFleet>
+- 10 floats in the deployment plan
+- Number of simulation(s): 2
+- Last simulation meta-data:
+	- Duration: 03d 00h 00m 00s
+	- Data recording every: 01h 00m
+	- Trajectory file: ./ns6hj1__.zarr
+	- Execution time: 00d 00h 00m 06s
+	- Executed on: laptop_guillaume_boulot.lan
+```
+In this scenario, a new output file is created and trajectories start from where the previous simulation left virtual floats. 
 
 
 ### Analyse simulation
