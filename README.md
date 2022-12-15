@@ -43,8 +43,8 @@ However, to make things easier, we provide a convenient utility class ``Velocity
 
 You can provide the path to velocity netcdf files, like this: 
 ```python
-src = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
-VELfield = VelocityField(model='GLORYS12V1', src="%s/2019*.nc" % src)
+root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+VELfield = VelocityField(model='GLORYS12V1', src="%s/2019*.nc" % root)
 ```
 or you can use your own velocity fields definition for Parcels:
 ```python
@@ -56,6 +56,12 @@ dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longit
 VELfield = VelocityField(model='custom', src=filenames, variables=variables, dimensions=dimensions)
 ```
 In this later case, the ``VelocityField`` class will take care of creating a Parcels ``fieldset`` with the appropriate land/sea mask and circular wrapper if the field is global. 
+
+Currently, VirtualFleet supports the following ``model`` options to the ``VelocityField`` helper: 
+- GLORYS12V1, PSY4QV3R1, GLOBAL_ANALYSIS_FORECAST_PHY_001_024 
+- MEDSEA_ANALYSISFORECAST_PHY_006_013
+- ARMOR3D, MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012
+- custom if you want to set your own model definition
 
 ### Deployment plan
 
