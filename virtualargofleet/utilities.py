@@ -226,6 +226,49 @@ class FloatConfiguration:
         return mission
 
 
+class SimulationSet:
+    """Convenient class to manage a collection of simulations meta-data
+
+    This class is used by VirtualFleet instances to keep track of all calls to the 'simulate' method.
+
+    In the future, this could be used to computed aggregated statistics from several simulations.
+
+    Examples
+    --------
+    >>> s = SimulationSet()
+    >>> s.add({'execution_time': 1.8, 'platform': 'Darwin', 'output_path': 'trajectories_part1.zarr'})
+    >>> s.add({'execution_time': 2.4, 'platform': 'Darwin', 'output_path': 'trajectories_part2.zarr'})
+    >>> s.N
+    >>> s.last
+    """
+
+    def __init__(self):
+        self.simulated = False
+        self.runs = []
+
+    def __repr__(self):
+        summary = ["<VirtualFleet.SimulationSet>"]
+        summary.append("Executed: %s" % self.simulated)
+        summary.append("Number of simulation(s): %i" % self.N)
+        return "\n".join(summary)
+
+    def add(self, params):
+        """Add a new set of parameters to the simulation set"""
+        self.simulated = True
+        self.runs.append(params)
+        return self
+
+    @property
+    def N(self):
+        """Return the number of simulations in the set"""
+        return len(self.runs)
+
+    @property
+    def last(self):
+        """Return meta-data from the last simulation in the set"""
+        return self.runs[-1]
+
+
 def get_splitdates(t, N = 1):
     """Given a list of dates, return index of dates before a date change larger than N days"""
     dt = np.diff(t).astype('timedelta64[D]')

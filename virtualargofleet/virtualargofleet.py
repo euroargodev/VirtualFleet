@@ -18,7 +18,7 @@ from .app_parcels import (
     PeriodicBoundaryConditionKernel,
 )
 from .velocity_helpers import VelocityFieldProto
-from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo
+from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo, SimulationSet
 from packaging import version
 import time
 
@@ -117,10 +117,12 @@ class VirtualFleet:
                          'kernels': None}
         self.__init_ParticleSet().__init_kernels()  # Will modify the 'ParticleSet' and 'kernels' of self._parcels
 
-        self.simulated = False  # Will be set to True if self.simulate() is used
-        self.simulation_parameters = None
+        # Init the internal class to hold all simulation metadata:
+        self.simulations_set = SimulationSet()
 
     def __init_ParticleSet(self):
+        pid_orig = np.arange(self._plan['lon'].size)
+        print(pid_orig)
         P = ParticleSet(
             fieldset=self._parcels['fieldset'],
             pclass=self._parcels['Particle'],
@@ -128,7 +130,7 @@ class VirtualFleet:
             lat=self._plan['lat'],
             depth=self._plan['depth'],
             time=self._plan['time'],
-            pid_orig=np.arange(self._plan['lon'].size),
+            pid_orig=pid_orig,
         )
         self._parcels['ParticleSet'] = P
         return self
@@ -149,24 +151,24 @@ class VirtualFleet:
     def __repr__(self):
         summary = ["<VirtualFleet>"]
         summary.append("- %i floats in the deployment plan" % self._parcels['ParticleSet'].size)
-        if self.simulated:
-            summary.append("- A simulation of %s with data recording every %s has been performed"
-                           % (strfdelta(self.simulation_parameters["duration"].total_seconds(),
-                                        inputtype='s'),
-                              strfdelta(self.simulation_parameters["record"].total_seconds(),
-                                        fmt='{H:02}h {M:02}m', inputtype='s')))
-            if self.simulation_parameters['output_path'] is not None:
-                summary.append("- Simulation trajectories saved in: %s" % self.simulation_parameters['output_path'])
+        if self.simulations_set.simulated:
+            # summary.append("A simulation has been performed:")
+            summary.append("- Number of simulation(s): %i" % self.simulations_set.N)
+            last_sim = self.simulations_set.last
+            summary.append("- Last simulation meta-data:")
+            summary.append("\t- Duration: %s" % strfdelta(last_sim["duration"].total_seconds(), inputtype='s'))
+            summary.append("\t- Data recording every: %s"
+                           % strfdelta(last_sim["record"].total_seconds(), fmt='{H:02}h {M:02}m', inputtype='s')
+                           )
+            if last_sim['output_path'] is not None:
+                summary.append("\t- Trajectory file: %s" % last_sim['output_path'])
             else:
-                summary.append("- Simulation trajectories not saved on disk. Last positions available with the `ParticleSet` property of this instance")
-            summary.append("- Simulation executed in %s on %s" % (strfdelta(self.simulation_parameters['execution_wall_time']),
-                                                   self.simulation_parameters['execution_system']['hostname']))
+                summary.append("\t- Simulation trajectories were not saved on file")
+            summary.append("\t- Execution time: %s" % strfdelta(last_sim['execution_wall_time']))
+            summary.append("\t- Executed on: %s" % last_sim['execution_system']['hostname'])
+            # summary.append(self.simulations_set.__repr__())
         else:
             summary.append("- No simulation performed")
-
-        # self.simulation_parameters = {'duration': duration, 'step': step, 'record': record, 'output_path': output_path}
-
-
         return "\n".join(summary)
 
     @property
@@ -198,6 +200,7 @@ class VirtualFleet:
         self._parcels['ParticleSet'].show()
 
     def simulate(self,
+                 duration,
                  step=timedelta(minutes=5),
                  record=timedelta(hours=1),
                  output=False,
@@ -227,6 +230,19 @@ class VirtualFleet:
         output_folder: str
             Name of folder where to store 'output_file'
         """
+        def _validate(td, name='?', fallback='hours'):
+            if not isinstance(td, datetime.timedelta):
+                if isinstance(td, float):
+                    if fallback=='hours':
+                        td = timedelta(hours=td)
+                    elif fallback=='days':
+                        td = timedelta(days=td)
+                    elif fallback=='minutes':
+                        td = timedelta(minutes=td)
+                else:
+                    raise ValueError("'%s' must be a datetime.timedelta or a numeric value for %s" % (name, fallback))
+            return td
+
         def get_an_output_filename(output_folder):
             # This older version support should be removed
             if version.parse(parcels.__version__) >= version.parse("2.4.0"):
@@ -238,7 +254,7 @@ class VirtualFleet:
                 temp_name = next(tempfile._get_candidate_names()) + ext
             return temp_name
 
-        if self.simulated:
+        if self.simulations_set.simulated:
             log.warning("A simulation has already been performed with this VirtualFleet")
 
         if not restart:
@@ -254,21 +270,10 @@ class VirtualFleet:
         # print("self._parcels['ParticleSet']", hex(id(self._parcels['ParticleSet'])))
         # print("self._parcels['ParticleSet'].collection", hex(id(self._parcels['ParticleSet'].collection)))
 
-        duration = (
-            kwargs["duration"]
-            if isinstance(kwargs["duration"], datetime.timedelta)
-            else timedelta(hours=kwargs["duration"])
-        )
-        step = (
-            step
-            if isinstance(step, datetime.timedelta)
-            else timedelta(hours=step)
-        )
-        record = (
-            record
-            if isinstance(record, datetime.timedelta)
-            else timedelta(hours=record)
-        )
+        duration = _validate(duration, name='duration', fallback='days')
+        step = _validate(step, name='duration', fallback='minutes')
+        record = _validate(record, name='duration', fallback='hours')
+
         if step > record:
             raise ValueError('The computation time step cannot be larger than the recording period')
         if np.remainder(record, step) > timedelta(0):
@@ -323,8 +328,7 @@ class VirtualFleet:
 
         # Internal recording of the simulation:
         execution_end, process_end = time.time(), time.process_time()
-        self.simulated = True
-        self.simulation_parameters = {'duration': duration,
+        this_run_params = {'duration': duration,
                                       'step': step,
                                       'record': record,
                                       'output_path': output_path,
@@ -332,11 +336,14 @@ class VirtualFleet:
                                       'execution_wall_time': pd.Timedelta(execution_end - execution_start, 's'),
                                       'execution_cpu_time': pd.Timedelta(process_end - process_start, 's'),
                                       'execution_date': pd.to_datetime("now", utc=True).strftime("%Y%m%d-%H%M%S"),
-                                      'execution_system': getSystemInfo()}
+                                      'execution_system': getSystemInfo()
+                           }
+        self.simulations_set.add(this_run_params)
+        return self
 
 
     def to_index(self, file_name=None):
-        """Return simulated profile index dataframe
+        """Return last simulated profile index dataframe
 
         Return a pandas.Dataframe index of profiles.
         If the ``file_name`` option is provided, an Argo profile index csv file is writen.
@@ -346,17 +353,19 @@ class VirtualFleet:
         file_name: str, default: None
             Name of the index file to write
         """
-        if not self.simulated or self.simulation_parameters['output_path'] is None:
-            raise ValueError("You must execute a simulation with trajectory recording to get a virtual profile index")
+        if self.simulations_set.N > 0:
+            output_path = self.simulations_set.last['output_path']
         else:
-            simu_path = self.simulation_parameters['output_path']
-        engine = 'zarr' if '.zarr' in simu_path else 'netcdf4'
+            output_path = None
+        if not self.simulations_set.simulated or output_path is None:
+            raise ValueError("You must execute a simulation with trajectory recording to get a virtual profile index")
+
+        # How to open the trajectory file:
+        engine = 'zarr' if '.zarr' in output_path else 'netcdf4'
 
         if file_name:
-            return simu2csv(simu_path, index_file=file_name, df=None, engine=engine)
+            return simu2csv(output_path, index_file=file_name, df=None, engine=engine)
         else:
-            # engine = 'netcdf4' if "zarr" not in simu_path else 'zarr'
-            # ds = xr.open_dataset(simu_path, engine=engine)
-            ds = xr.open_dataset(simu_path, engine=engine)  # Let xarray guess how to open this simulation (nc or zarr)
+            ds = xr.open_dataset(output_path, engine=engine)
             return simu2index(ds)
 
