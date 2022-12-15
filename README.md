@@ -10,11 +10,15 @@ fleet of Argo floats.
 **Virtual Fleet** uses [Parcels](http://oceanparcels.org/) to simulate Argo floats and to compute trajectories.
 **Virtual Fleet** provides methods to easily set up a deployment plan, float parameters and to analyse trajectories.
 
-### Documentation
+# Documentation
 
 Checkout the documentation at: https://euroargodev.github.io/VirtualFleet
+
+## Why Virtual Fleet?
+
+The optimisation of the Argo array is quite complex to determine in specific regions, where the local ocean dynamic shifts away from *standard* large scale open ocean. These regions are typically the Boundary Currents where turbulence is more significant than anywhere else, and Polar regions where floats can temporarily evolve under sea-ice. **Virtual Fleet** aims to help the Argo program to optimise floats deployment and programming in such regions.
  
-### Usage
+## Usage
 
 Import the usual suspects:
 ```python
@@ -23,13 +27,32 @@ import numpy as np
 from datetime import timedelta
 ```
 
-Define velocity field to use:
+### Velocity field
+First, you need to define the velocity field to be used by the virtual fleet. **The VirtualFleet simulator can take any Parcels ``fieldset`` as input**.
+
+However, to make things easier, we provide a convenient utility class ``VelocityField`` to be used for some standard pre-defined velocity fields. Create a ``VelocityField`` instance and then use it as input to the VirtualFleet simulator.
+
+You can provide the path to velocity netcdf files, like this: 
 ```python
 src = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
-VELfield = VelocityField(model='GLOBAL_ANALYSIS_FORECAST_PHY_001_024', src="%s/2019*.nc" % src)
+VELfield = VelocityField(model='GLORYS12V1', src="%s/2019*.nc" % src)
 ```
+or you can use your own velocity fields definition for Parcels:
+```python
+root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+filenames = {'U': root + "/20201210*.nc",
+              'V': root + "/20201210*.nc"}
+variables = {'U':'uo','V':'vo'}
+dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
+VELfield = VelocityField(model='custom', src=filenames, variables=variables, dimensions=dimensions)
+```
+In this later case, the ``VelocityField`` class will take care of creating a Parcels ``fieldset`` with the appropriate land/sea mask and circular wrapper if the field is global. 
 
-Define a deployment plan:
+### Deployment plan
+
+Then, you need to define a deployment plan for your virtual fleet. **The VirtualFleet simulator expects a set of arrays with the latitude, longitude and time of virtual floats to deploy**. Depth is set by default to the surface, but this can modify if required.
+
+Example:
 ```python
 # Number of floats we want to simulate:
 nfloats = 10
@@ -40,27 +63,102 @@ lon = np.full_like(lat, -60)
 tim = np.array(['2019-01-01' for i in range(nfloats)], dtype='datetime64')
 ```
 
-Define Argo floats mission parameters:
+### Argo floats mission parameters
+
+You also need to define what are the float's mission configuration parameters. **The VirtualFleet simulator takes a simple dictionary with parameters as input**. But, again, VirtualFleet provides the convenient utility class ``FloatConfiguration`` to make things easier.
+
+You can start with the *default* configuration like this:
 ```python
-cfg = FloatConfiguration('default')  # Standard Argo  
-cfg = FloatConfiguration([6902919, 98])  # or extract a specific Argo float cycle configuration   
-# cfg.update('parking_depth', 500)
-cfg
+cfg = FloatConfiguration('default')  # Standard Argo float mission
+>>> <FloatConfiguration><default>
+- cycle_duration (Maximum length of float complete cycle): 240.0 [hours]
+- life_expectancy (Maximum number of completed cycle): 200 [cycle]
+- parking_depth (Drifting depth): 1000.0 [m]
+- profile_depth (Maximum profile depth): 2000.0 [m]
+- vertical_speed (Vertical profiling speed): 0.09 [m/s]
+```
+or you can use a specific float cycle mission (data are retrieved from the [Euro-Argo meta-data API](https://fleetmonitoring.euro-argo.eu/swagger-ui.html)):
+```python
+cfg = FloatConfiguration([6902920, 98])  # or extract a specific Argo float cycle configuration   
+>>> <FloatConfiguration><Float 6902920 - Cycle 98>
+- cycle_duration (Maximum length of float complete cycle): 240.0 [hours]
+- life_expectancy (Maximum number of completed cycle): 500 [cycle]
+- parking_depth (Drifting depth): 1000.0 [m]
+- profile_depth (Maximum profile depth): 2000.0 [m]
+- vertical_speed (Vertical profiling speed): 0.09 [m/s]
 ```
 
-Define the virtual fleet:
+Float configurations can be saved in json files:
+```python
+cfg.to_json("myconfig.json")
+```
+This can be useful for later re-use:
+```python
+cfg = FloatConfiguration("myconfig.json")
+```
+
+[Examples of such json files can be found in here](./virtualargofleet/assets).
+
+### Simulate a virtual fleet
+
+You now have all the requirements:
+- [x] A velocity fieldset, from a ``VelocityField`` instance
+- [x] A deployment plan, from the ``lat/lon/time`` arrays
+- [x] A float mission configuration, from the ``FloatConfiguration`` instance
+
+So, let's create a virtual fleet:
 ```python
 VFleet = virtualfleet(lat=lat, lon=lon, time=tim, fieldset=VELfield.fieldset, mission=cfg.mission)
-```
-and execute a simulation: 
-```python
-VFleet.simulate(duration=timedelta(days=365), 
-                step=timedelta(minutes=5), 
-                record=timedelta(hours=1), 
-                output_file='output.nc')
+>>> <VirtualFleet>
+- 10 floats in the deployment plan
+- No simulation performed
 ```
 
-### What's new ?
+To execute the simulation, we use the ``simulate`` method by providing at least the total simulation duration time as a timedelta (or number of days):
+```python
+VFleet.simulate(duration=timedelta(days=2))
+>>> <VirtualFleet>
+- 10 floats in the deployment plan
+- Number of simulation(s): 1
+- Last simulation meta-data:
+	- Duration: 02d 00h 00m 00s
+	- Data recording every: 01h 00m
+	- Simulation trajectories were not saved on file
+	- Execution time: 00d 00h 00m 01s
+	- Executed on: laptop_guillaume_boulot.lan
+```
+By default, virtual floats positions are saved hourly along their trajectories.
+
+The simulated floats trajectories will be saved in the current directory as a [zarr file](https://zarr.readthedocs.io/). You can control where to save trajectories with the ``output_folder`` and ``output_file`` options, or set the ``output`` option to `False` to not save results at all.
+
+
+### Analyse simulation
+
+In order to look at the virtual floats trajectories you can read data directly from the output file:
+```python
+ds = xr.open_zarr(VFleet.output)
+```
+
+You can quickly plot the last position of the floats:
+```python
+VFleet.plot_positions()
+```
+
+You can extract a profile index from the trajectory file, after the VFleet simulation:
+```python
+VFleet.to_index()
+# VFleet.to_index("simulation_profile_index.txt")  # Create an Argo-like profile index
+```
+or from any trajectory file:
+```python
+from virtualargofleet.utilities import simu2index, simu2csv
+df = simu2index(xr.open_zarr("trajectory_output.zarr"))
+# or to create the index file:
+simu2csv("trajectory_output.zarr", index_file="output_ar_index_prof.txt")
+```
+
+
+## What's new ?
 The last release 0.3 introduces a couple of new features but also breaking changes in the API.
 
 #### New features
@@ -106,9 +204,6 @@ The last release 0.3 introduces a couple of new features but also breaking chang
   - instantiation option ``vfield`` has been replaced by ``fieldset`` and now must take a Parcels fieldset instance.
   - simulate method have been renamed to be more explicit and now takes timedelta as values, instead of mixed integer units. 
 
-### Why Virtual Fleet?
-
-The optimisation of the Argo array is quite complex to determine in specific regions, where the local ocean dynamic shifts away from *standard* large scale open ocean. These regions are typically the Western Boundary Currents where turbulence is more significant than anywhere else, and Polar regions where floats can temporarily evolve under sea-ice. **Virtual Fleet** aims to help the Argo program to optimise floats deployment and programming in such regions.
 
 ***
 "Virtual Fleet" is part of the Euro-ArgoRISE project. This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement no 824131. Call INFRADEV-03-2018-2019: Individual support to ESFRI and other world-class research infrastructures.
