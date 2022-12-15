@@ -1,6 +1,6 @@
 |<img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture_tight.png" alt="VirtualFleet logo" width="400"><br>``Virtual Fleet`` is a Python package to make and analyse simulations of virtual Argo float trajectories.|
 |:---------:|
-|[![Gitter](https://badges.gitter.im/Argo-floats/virtual-fleet.svg)](https://gitter.im/Argo-floats/virtual-fleet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) ![Documentation](https://img.shields.io/static/v1?label=Doc&message=github.io&color=<COLOR>&logo=readthedocs) <br> 
+|[![Gitter](https://badges.gitter.im/Argo-floats/virtual-fleet.svg)](https://gitter.im/Argo-floats/virtual-fleet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 ![parcels](https://img.shields.io/static/v1?labelColor=000&label=Parcels&message=ParticleSet&color=11aed5&logo=) ![parcels](https://img.shields.io/static/v1?labelColor=000&label=Parcels&message=kernels&color=aa11d5&logo=)|
 
 Using a 3D velocity fields, program your own Argo floats behaviour, set-up a
@@ -82,7 +82,9 @@ You also need to define what are the float's mission configuration parameters. *
 You can start with the *default* configuration like this:
 ```python
 cfg = FloatConfiguration('default')  # Standard Argo float mission
->>> <FloatConfiguration><default>
+```
+```
+<FloatConfiguration><default>
 - cycle_duration (Maximum length of float complete cycle): 240.0 [hours]
 - life_expectancy (Maximum number of completed cycle): 200 [cycle]
 - parking_depth (Drifting depth): 1000.0 [m]
@@ -91,8 +93,10 @@ cfg = FloatConfiguration('default')  # Standard Argo float mission
 ```
 or you can use a specific float cycle mission (data are retrieved from the [Euro-Argo meta-data API](https://fleetmonitoring.euro-argo.eu/swagger-ui.html)):
 ```python
-cfg = FloatConfiguration([6902920, 98])  # or extract a specific Argo float cycle configuration   
->>> <FloatConfiguration><Float 6902920 - Cycle 98>
+cfg = FloatConfiguration([6902920, 98])  # or extract a specific Argo float cycle configuration
+```
+```
+<FloatConfiguration><Float 6902920 - Cycle 98>
 - cycle_duration (Maximum length of float complete cycle): 240.0 [hours]
 - life_expectancy (Maximum number of completed cycle): 500 [cycle]
 - parking_depth (Drifting depth): 1000.0 [m]
@@ -121,7 +125,8 @@ You now have all the requirements:
 So, let's create a virtual fleet:
 ```python
 VFleet = virtualfleet(plan=my_plan, fieldset=VELfield.fieldset, mission=cfg.mission)
->>> <VirtualFleet>
+```
+```<VirtualFleet>
 - 10 floats in the deployment plan
 - No simulation performed
 ```
@@ -129,7 +134,8 @@ VFleet = virtualfleet(plan=my_plan, fieldset=VELfield.fieldset, mission=cfg.miss
 To execute the simulation, we use the ``simulate`` method by providing at least the total simulation duration time as a timedelta (or number of days):
 ```python
 VFleet.simulate(duration=timedelta(days=2))
->>> <VirtualFleet>
+```
+```<VirtualFleet>
 - 10 floats in the deployment plan
 - Number of simulation(s): 1
 - Last simulation meta-data:
@@ -146,7 +152,8 @@ The simulated floats trajectories will be saved in the current directory as a [z
 Note that you can continue the simulation where it was using the ``restart`` option:
 ```python
 VFleet.simulate(duration=timedelta(days=3), restart=True)
->>> <VirtualFleet>
+```
+```<VirtualFleet>
 - 10 floats in the deployment plan
 - Number of simulation(s): 2
 - Last simulation meta-data:
@@ -202,7 +209,7 @@ The last release 0.3 introduces a couple of new features but also breaking chang
 - **New Argo virtual floats type**: this new float type can change their mission parameters when they enter a specific geographic area (a rectangular domain). In order to select these floats, you have to add to load the specific FloatConfiguration instance ``local-change``, like this:
 ```python
     cfg = FloatConfiguration('local-change')  # Internally define new float parameters area_*
-    >> <FloatConfiguration><local-change>
+    >>> <FloatConfiguration><local-change>
           - area_cycle_duration (Maximum length of float complete cycle in AREA): 120.0 [hours]
           - area_parking_depth (Drifting depth in AREA): 1000.0 [m]
           - area_xmax (AREA Eastern bound): -48.0 [deg_longitude]
