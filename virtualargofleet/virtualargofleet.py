@@ -9,7 +9,6 @@ import pandas as pd
 import numpy as np
 import xarray as xr
 import logging
-import copy
 from .app_parcels import (
     ArgoParticle,
     ArgoParticle_exp,
@@ -229,6 +228,7 @@ class VirtualFleet:
             Name of folder where to store 'output_file'
         """
         def get_an_output_filename(output_folder):
+            # This older version support should be removed
             if version.parse(parcels.__version__) >= version.parse("2.4.0"):
                 ext = ".zarr"
             else:
@@ -316,8 +316,7 @@ class VirtualFleet:
         log.info("ending ParticleSet execution")
 
         if output:
-            # Close the ParticleFile object by exporting and then deleting the temporary npy files
-            # log.info("starting ParticleFile export/close/clean from %s" % opts['output_file'].tempwritedir_base) # Parcels<2.4.0
+            # Close the ParticleFile object (used to exporting and then deleting the temporary npy files in older versions)
             log.info("starting ParticleFile export/close/clean from %s" % opts['output_file'].fname)
             opts['output_file'].close(delete_tempfiles=True)
             log.info("ending ParticleFile export/close/clean to %s" % opts['output_file'].fname)
