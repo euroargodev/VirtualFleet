@@ -218,7 +218,7 @@ html_theme_options = {
     "use_repository_button": True,
     # "html_logo": "_static/repo_picture_tight.png",
     #  'canonical_url': '',
-    # 'analytics_id': 'UA-73130866-2',  # Provided by Google in your dashboard
+    'analytics_id': 'G-YVSMT7WG1C',
     'logo_only': True,
     # 'display_version': False,
     # 'prev_next_buttons_location': 'bottom',
