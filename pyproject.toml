@@ -13,4 +13,7 @@ fallback_version = "999"
 [project]
 dynamic = ["version"]
 name = "VirtualFleet"
-license = {text = "BSD 3-Clause License"}
+#license = {text = "BSD 3-Clause License"}
+license = "LICENSE"
+readme = "README.md"
+
