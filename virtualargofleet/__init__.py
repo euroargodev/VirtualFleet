@@ -9,7 +9,7 @@ import warnings
 if pack_version.parse(parcels.__version__) < pack_version.parse("2.4.0"):
     msg = "You're running Parcels %s but VirtualFleet no longer support Parcels versions " \
           "lower than 2.4.0, please upgrade." % pack_version.parse(parcels.__version__),
-    warnings.warn(msg)
+    warnings.warn(str(msg))
 
 #
 __all__ = (
