@@ -1,11 +1,16 @@
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=45",
     "wheel",
-    "setuptools_scm[toml]>=3.4",
+    "setuptools_scm[toml]>=6.2",
     "setuptools_scm_git_archive",
 ]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 fallback_version = "999"
+
+[project]
+dynamic = ["version"]
+name = "VirtualFleet"
+license = {text = "BSD 3-Clause License"}

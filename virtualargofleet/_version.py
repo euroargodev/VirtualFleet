@@ -1,6 +1,7 @@
-import subprocess
-import os
+from importlib.metadata import version, PackageNotFoundError
 try:
-    version = subprocess.check_output(['git', '-C', os.path.dirname(__file__), 'describe', '--tags']).decode('ascii').strip()
-except:
-    from virtualargofleet._version_setup import version as version  # noqa
+    __version__ = version("virtualfleet")
+except PackageNotFoundError:
+    # package is not installed
+    __version__ = '999'
+    pass
