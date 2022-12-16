@@ -16,6 +16,10 @@ sphinx-book-theme
 # sphinx-bootstrap-theme
 
 parcels
+cgen
+pymbolic
+Pydap
+
 xarray>=0.16.1
 scipy>=1.5
 scikit-learn>=0.23.2
