@@ -99,6 +99,14 @@ ENV/
 env.bak/
 venv.bak/
 
+# Sphinx documentation
+docs/_build/
+docs/_build/html
+docs/_build/doctrees
+docs/generated/
+docs/legacy/
+
+
 # Spyder project settings
 .spyderproject
 .spyproject

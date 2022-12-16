@@ -150,8 +150,8 @@ def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *ar
     model: str
         Model string definition
 
-    Example
-    -------
+    Examples
+    --------
     >>> from virtualargofleet import VelocityField
 
     >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"

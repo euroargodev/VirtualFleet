@@ -228,8 +228,8 @@ class VirtualFleet:
                  **kwargs):
         """Execute a Virtual Fleet simulation
 
-        Inputs
-        ------
+        Parameters
+        ----------
         duration: timedelta,
             Length of the simulation
             Eg: timedelta(days=365)
