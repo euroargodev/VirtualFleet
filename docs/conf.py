@@ -17,7 +17,6 @@ import sys
 import xarray
 import datetime
 import sphinx_autosummary_accessors
-from importlib.metadata import version
 
 from contextlib import suppress
 allowed_failures = set()
