@@ -47,9 +47,12 @@ or you can use your own velocity fields definition:
    root = "~/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
    filenames = {'U': root + "/20201210*.nc",
                  'V': root + "/20201210*.nc"}
-   variables = {'U':'uo','V':'vo'}
+   variables = {'U':'uo', 'V':'vo'}
    dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
-   VELfield = VelocityField(model='custom', src=filenames, variables=variables, dimensions=dimensions)
+   VELfield = VelocityField(model='custom',
+                            src=filenames,
+                            variables=variables,
+                            dimensions=dimensions)
 
 In this later case, the :class:`VelocityField` class will take care of creating a Parcels :class:`parcels.fieldset.FieldSet` with the appropriate land/sea mask and circular wrapper if the field is global.
 

@@ -139,16 +139,16 @@ class VelocityField_CUSTOM(VelocityFieldProto):
 
 
 def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args, **kwargs):
-    """Thin layer above Parcels to manage velocity fields definition for known products
-
-    .. warning::
-
-        This is so thin, it may be removed in the future
+    """Helper for velocity fields definition of known products
 
     Parameters
     ----------
     model: str
-        Model string definition
+        Model string definition, one in:
+            - 'PSY4QV3R1', 'GLORYS12V1', 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024',
+            - 'MEDSEA_ANALYSISFORECAST_PHY_006_013'
+            - 'MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012', 'ARMOR3D'
+            - 'custom'
 
     Examples
     --------
