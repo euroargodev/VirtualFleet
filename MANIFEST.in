@@ -4,11 +4,14 @@ include LICENSE
 
 graft virtualargofleet
 
+prune .github
 prune binder
 prune docs
+prune examples
 prune *.egg-info
 
 exclude *.yml
 exclude .coveragerc
+exclude .gitignore
 exclude CODE_OF_CONDUCT.md
 exclude HOW_TO_RELEASE

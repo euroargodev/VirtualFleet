@@ -1,13 +1,13 @@
-name: Build and Upload virtualfleet to PyPI
+name: Build and Upload to PyPI
 on:
-#  release:
-#    types: [created, edited]
+ release:
+   types: [created, edited]
   push:
     branches:
-      - packaging
-#    tags:
-#      - 'v*'
-#  workflow_dispatch:
+      - master
+   tags:
+     - 'v*'
+  workflow_dispatch:
 
 
 jobs:
@@ -57,10 +57,12 @@ jobs:
         name: Install Python
         with:
           python-version: 3.8
+
       - uses: actions/download-artifact@v3
         with:
           name: releases
           path: dist
+
       - name: List contents of built dist
         run: |
           ls -ltrh
@@ -71,7 +73,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install dist/virtualfleet*.whl
-#          python -m virtualfleet.util.print_versions
 
       - name: Publish package to TestPyPI
         if: github.event_name == 'push'
@@ -81,7 +82,8 @@ jobs:
           password: ${{ secrets.PYPITEST_TOKEN }}
           repository_url: https://test.pypi.org/legacy/
           verbose: true
-
+#          verify_metadata: false
+#          skip_existing: true
 
   upload-to-pypi:
     needs: test-built-dist
@@ -98,3 +100,4 @@ jobs:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
           verbose: true
+

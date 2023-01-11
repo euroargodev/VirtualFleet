@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+#
+cd /Users/gmaze/git/github/euroargodev/VirtualFleet
+pwd
+
+# Clean up previous build:
+rm -rf build dist virtualfleet.egg-info
+
+# Install dependencies:
+python -m pip install setuptools setuptools-scm wheel twine check-manifest
+
+# Build tarball and wheels:
+python -m build --sdist --wheel .
+
+# Check built artifacts:
+python -m twine check dist/*
+pwd
+if [ -f dist/virtualfleet-0.0.0.tar.gz ]; then
+  echo "❌ INVALID VERSION NUMBER"
+  exit 1
+else
+  echo "✅ Looks good"
+fi
