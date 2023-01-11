@@ -14,23 +14,30 @@ Documentation
 * :doc:`install`
 * :doc:`usage`
 * :doc:`why`
-* :doc:`examples`
+* :doc:`Examples <examples/examples>`
+
+**Help & reference**
+
+* :doc:`whats-new`
+* :doc:`api`
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
     :hidden:
     :caption: Getting Started
 
     install
     usage
     why
-    examples
 
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+    :caption: Examples
 
-**Help & reference**
-
-* :doc:`whats-new`
-* :doc:`api`
+    examples/examples
+    examples/earise
+    examples/recovery
 
 .. toctree::
     :maxdepth: 2
