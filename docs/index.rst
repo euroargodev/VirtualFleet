@@ -1,7 +1,7 @@
 VirtualFleet python library
 ===========================
 
-**virtualargofleet** is a python library dedicated to make and analyse trajectory simulations of virtual Argo floats.
+**virtualargofleet** is a python library dedicated to compute and analyse trajectory simulations of virtual Argo floats.
 
 |lifecycle| |License|  |Gitter|
 

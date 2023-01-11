@@ -1,7 +1,7 @@
-|<img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture_tight.png" alt="VirtualFleet logo" width="400"><br>``Virtual Fleet`` is a Python package to make and analyse simulations of virtual Argo float trajectories.|
-|:---------:|
-|[![Gitter](https://badges.gitter.im/Argo-floats/virtual-fleet.svg)](https://gitter.im/Argo-floats/virtual-fleet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-![parcels](https://img.shields.io/static/v1?labelColor=000&label=Parcels&message=ParticleSet&color=11aed5&logo=) ![parcels](https://img.shields.io/static/v1?labelColor=000&label=Parcels&message=kernels&color=aa11d5&logo=)|
+| <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture_tight.png" alt="VirtualFleet logo" width="400"><br>``Virtual Fleet`` is a Python package to compute and analyse simulations of virtual Argo float trajectories. |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+|                                             [![Gitter](https://badges.gitter.im/Argo-floats/virtual-fleet.svg)](https://gitter.im/Argo-floats/virtual-fleet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)                                              
+                   ![parcels](https://img.shields.io/static/v1?labelColor=000&label=Parcels&message=ParticleSet&color=11aed5&logo=) ![parcels](https://img.shields.io/static/v1?labelColor=000&label=Parcels&message=kernels&color=aa11d5&logo=)                   |
 
 Using a 3D velocity fields, program your own Argo floats behaviour, set-up a
 deployment plan and simulate trajectories (and sampling) of your virtual
