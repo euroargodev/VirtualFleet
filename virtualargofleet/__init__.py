@@ -20,8 +20,8 @@ except Exception:
     __version__ = '999'
 
 
-parcels_version = parcels.__version__.split("v")[1].split(".")
-if int(parcels_version[0]) <= 2 or int(parcels_version[1]) < 4:
+parcels_version = parcels.__version__.replace("v","").split(".")
+if int(parcels_version[0]) < 2 or (int(parcels_version[0]) == 2 and int(parcels_version[1]) < 4):
     msg = "You're running Parcels %s but VirtualFleet no longer support Parcels versions " \
           "lower than 2.4, please upgrade." % parcels.__version__,
     warnings.warn(str(msg))
