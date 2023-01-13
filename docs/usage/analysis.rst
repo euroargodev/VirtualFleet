@@ -6,7 +6,7 @@ Simulation analysis
 
 .. note::
 
-    This code assumes you named the named the :class:`VirtualFleet` instance ``VFleet`` like in ":ref:`execution`".
+    This code assumes you named the :class:`VirtualFleet` instance ``VFleet`` following the standard ":ref:`execution`".
 
 In order to look at the virtual floats trajectories you can read data directly from the output file:
 

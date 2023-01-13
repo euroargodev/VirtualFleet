@@ -18,6 +18,11 @@ VirtualFleet
     VirtualFleet
     VirtualFleet.simulate
     VirtualFleet.to_index
+    VirtualFleet.plot_positions
+    VirtualFleet.ParticleSet
+    VirtualFleet.fieldset
+    VirtualFleet.output
+
 
 FloatConfiguration
 ------------------

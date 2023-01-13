@@ -88,6 +88,8 @@ Currently, VirtualFleet supports the following values for the ``model`` options 
 -  ``custom`` if you want to set your own model definition
 
 
+.. _preparation_cfg:
+
 Argo floats mission parameters
 ------------------------------
 

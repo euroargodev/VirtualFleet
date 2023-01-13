@@ -19,6 +19,9 @@
     virtualargofleet.virtualargofleet.VirtualFleet.simulate
     virtualargofleet.virtualargofleet.VirtualFleet.plot_positions
     virtualargofleet.virtualargofleet.VirtualFleet.to_index
+    virtualargofleet.virtualargofleet.VirtualFleet.ParticleSet
+    virtualargofleet.virtualargofleet.VirtualFleet.fieldset
+    virtualargofleet.virtualargofleet.VirtualFleet.output
 
     virtualargofleet.utilities.simu2index
     virtualargofleet.utilities.simu2csv

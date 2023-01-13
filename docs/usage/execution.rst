@@ -29,9 +29,9 @@ and create a virtual fleet:
     - 10 floats in the deployment plan
     - No simulation performed
 
-.. note::
+.. warning::
 
-    This code assumes you named the deployment plan dictionary ``my_plan``, the velocity field instance ``VELfield`` and the float mission configuration instance ``cfg`` like in ":ref:`preparation`".
+    This code assumes you named the deployment plan dictionary ``my_plan``, the velocity field instance ``VELfield`` and the float mission configuration instance ``cfg`` following the standard ":ref:`preparation`".
 
 
 To execute the simulation, we use the :meth:`VirtualFleet.simulate` method by providing at least the total simulation duration time as a timedelta (or number of days):

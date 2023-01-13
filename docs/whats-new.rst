@@ -1,4 +1,4 @@
-.. currentmodule:: virtualfleet
+.. currentmodule:: virtualargofleet
 
 What's New
 ==========
@@ -7,13 +7,18 @@ What's New
 
 |pypi dwn|
 
-v0.3.0 (xx)
+v0.3.0 (XX Jan. 2023)
 ----------------------
-The last release 0.3 introduces a couple of new features but also breaking changes in the API.
+By `G. Maze <http://www.github.com/gmaze>`_ and `K. Balem <http://www.github.com/quai20>`_.
 
-#### New features
-- An **Argo float configuration manager**. This was designed to make easier the access, management and backup of the virtual floats mission configuration parameters.
-```python
+This last release is a major one. It introduces new features and breaking changes in the API.
+
+**New features**
+
+- An **Argo float configuration manager**. It was designed to make easier the access, management and backup of the virtual floats mission configuration parameters. All details are available on the API page :class:`FloatConfiguration` and the documentation page ":ref:`preparation_cfg`".
+
+.. code-block:: python
+
     cfg = FloatConfiguration('default')  # Internally defined
     cfg = FloatConfiguration('cfg_file.json')  # From json file
     cfg = FloatConfiguration([6902919, 132])  # From Euro-Argo Fleet API
@@ -21,11 +26,19 @@ The last release 0.3 introduces a couple of new features but also breaking chang
     cfg.params  # Return the list of parameters
     cfg.mission # Return the configuration as a dictionary, to be pass on a VirtualFleet instance
     cfg.to_json("cfg_file.json") # Save to file for later re-use
-```
-- **New Argo virtual floats type**: this new float type can change their mission parameters when they enter a specific geographic area (a rectangular domain). In order to select these floats, you have to add to load the specific FloatConfiguration instance ``local-change``, like this:
-```python
-    cfg = FloatConfiguration('local-change')  # Internally define new float parameters area_*
-    >>> <FloatConfiguration><local-change>
+
+- **New Argo virtual floats type**: this new float type can change their mission parameters when they enter a specific geographic area (a rectangular domain). In order to use these floats, you can load a FloatConfiguration instance with ``local-change``, like this:
+
+.. code-block:: python
+
+    cfg = FloatConfiguration('local-change')
+    cfg.update('cycle_duration', 120)  # Update default parameters for your own experiment
+
+where you will note the added properties ``area_*``:
+
+.. code-block:: none
+
+    <FloatConfiguration><local-change>
           - area_cycle_duration (Maximum length of float complete cycle in AREA): 120.0 [hours]
           - area_parking_depth (Drifting depth in AREA): 1000.0 [m]
           - area_xmax (AREA Eastern bound): -48.0 [deg_longitude]
@@ -37,22 +50,25 @@ The last release 0.3 introduces a couple of new features but also breaking chang
           - parking_depth (Drifting depth): 1000.0 [m]
           - profile_depth (Maximum profile depth): 2000.0 [m]
           - vertical_speed (Vertical profiling speed): 0.09 [m/s]
-    cfg.update('cycle_duration', 120)  # Update default parameters for your own experiment
-```
-  Passing this specific ``FloatConfiguration`` to a new VirtualFleet instance will automatically select the appropriate Argo float parcel kernels. This new float type was developed for the [EA-RISE WP2.3 Gulf-Stream experiment](https://github.com/euroargodev/VirtualFleet_GulfStream).
 
-- All Argo float types (_default_ and _local-change_) now come with a proper cycle number property. This makes much easier the tracking of the float profiles.
+Passing this specific ``FloatConfiguration`` instance to a VirtualFleet will automatically select the appropriate Argo float parcel kernels. This new float type was developed for the `EA-RISE WP2.3 Gulf-Stream experiment <https://github.com/euroargodev/VirtualFleet_GulfStream>`__.
 
-- **Post-processing utilities**:
-  - An Argo profile index extractor from the simulation netcdf output. It is not trivial to extract the position of virtual float profiles from the trajectory file of the simulation output. We made this easier with the ``simu2index`` and ``simu2csv`` functions.
-  - A function to identify virtual floats with their real WMO from the deployment plan. This could be handful if the deployment plan is actually based on real floats with WMO.
+- All Argo float types (``default`` and ``local-change``) now come with a proper cycle number property. This makes much easier the tracking of the float profiles.
 
-#### Breaking changes
+**Post-processing utilities**:
 
-- Internal refactoring, with proper submodule assignment.
-- Options in the VirtualFleet
-  - instantiation option ``vfield`` has been replaced by ``fieldset`` and now must take a Parcels fieldset or a ``VelocityField`` instance.
-  - simulate method have been renamed to be more explicit and now takes timedelta as values, instead of mixed integer units.
+- An Argo **profile index extractor** from the simulation netcdf output. It is not trivial to extract the position of virtual float profiles from the trajectory file of the simulation output. We made this easier with the :class:`utilities.simu2index` and :class:`utilities.simu2csv` functions. It also comes bundled with the :class:`VirtualFleet.to_index` method.
+- A function to **identify virtual floats with their real WMO** from the deployment plan. This could be handful if the deployment plan is actually based on real floats with WMO. :class:`utilities.set_WMO`
+- A function to **retrieve Argo float cycle configuration** using the `Euro-Argo meta-data API <https://fleetmonitoring.euro-argo.eu/swagger-ui.html>`__: :class:`utilities.get_float_config`.
+
+**Breaking changes**
+
+- Huge internal refactoring, with proper submodule assignment !
+- ``VelocityField`` now refers to :class:`VelocityField`, while the high-level function to work with known velocity fields is :meth:`Velocity`.
+- Options in :class:`VirtualFleet`:
+
+  - instantiation option named ``vfield`` has been replaced by ``fieldset`` and now must take a :class:`parcels.fieldset.FieldSet` or a :class:`VelocityField` instance.
+  - the simulate method have been renamed to be more explicit and now takes timedelta as values, instead of mixed/confusing integer units.
 
 
 v0.2.0 (30 Aug. 2021)

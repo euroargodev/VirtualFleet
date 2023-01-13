@@ -32,7 +32,7 @@ log = logging.getLogger("virtualfleet.virtualfleet")
 class VirtualFleet:
     """Argo Virtual Fleet simulator.
 
-    This class should make it easier to process and analyse a simulation.
+    This class makes it easy to process and analyse a simulation.
 
     """
     def __init__(self,
@@ -45,14 +45,15 @@ class VirtualFleet:
         Parameters
         ----------
         plan: dict
-            A dictionary with the deployment plan coordinates as keys: 'lat', 'lon', 'time', ['depth']
+            A dictionary with the deployment plan coordinates as keys: ``lat``, ``lon``, ``time``, [``depth``]
             Each value are Numpy arrays describing where Argo floats are deployed.
             Depth is optional, if not provided it will be set to 1m.
         fieldset: :class:`parcels.fieldset.FieldSet` or :class:`VelocityField`
             A velocity field
         mission: dict or :class:`FloatConfiguration`
-            A dictionary with at least the Argo float mission parameters: 'parking_depth', 'profile_depth', 'vertical_speed' and 'cycle_duration'
-        isglobal: False
+            A dictionary with at least the following Argo float mission parameters: ``parking_depth``, ``profile_depth``, ``vertical_speed`` and ``cycle_duration``
+        isglobal: bool, optional, default=False
+            A boolean indicating weather the velocity field is global or not
 
         """
         self._isglobal = bool(isglobal)
@@ -192,7 +193,7 @@ class VirtualFleet:
 
     @property
     def ParticleSet(self):
-        """Container class for storing particle and executing kernel over them.
+        """Internal instance of a ParticleSet
 
         Returns
         -------
@@ -202,7 +203,7 @@ class VirtualFleet:
 
     @property
     def fieldset(self):
-        """Container class for storing velocity FieldSet
+        """Internal instance of a FieldSet
 
         Returns
         -------
@@ -212,9 +213,9 @@ class VirtualFleet:
         # return self._parcels['fieldset']
 
     def plot_positions(self):
-        """Method to show where are Argo Floats
+        """Plot the last position of virtual Argo Floats
 
-        Using parcels psel builtin show function for now
+        Use :meth:`parcels.particleset.baseparticleset.BaseParticleSet.show`
         """
         self._parcels['ParticleSet'].show()
 
@@ -244,10 +245,14 @@ class VirtualFleet:
             Should the simulation trajectories be saved on file or not
 
         output_file: str
-            Name of the netcdf file where to store simulation results
+            Name of the zarr file where to store simulation results
 
         output_folder: str
-            Name of folder where to store 'output_file'
+            Name of folder where to store the 'output_file' zarr archive
+
+        Returns
+        -------
+        self
         """
         def _validate(td, name='?', fallback='hours'):
             if not isinstance(td, datetime.timedelta):
