@@ -4,11 +4,11 @@
 Preparation of a simulation
 ===========================
 
-In order to create a simulation of virtual Argo floats, you need to provide
+In order to create a simulation of virtual Argo floats, you need to provide the following:
 
--  A velocity field, as a :class:`parcels.fieldset.FieldSet` instance
--  A float deployment plan, as a dictionary with ``lat/lon/time`` arrays
--  Virtual floats mission configurations, as a dictionary
+-  a float deployment plan, as a dictionary with ``lat/lon/time`` arrays,
+-  a velocity field, as a :class:`parcels.fieldset.FieldSet` instance,
+-  and a virtual float mission configuration, as a dictionary.
 
 These requirements are explained below, together with VirtualFleet helpers to do it.
 
@@ -21,19 +21,39 @@ But first, let's import the usual suspects:
    from virtualargofleet import Velocity, FloatConfiguration
 
 
+Deployment plan
+---------------
+
+You need to define a deployment plan for your virtual fleet. **The VirtualFleet simulator expects a dictionary with arrays for the latitude, longitude and time of virtual floats to deploy**. Depth is set by default to the surface, but this can be provided if necessary.
+
+Example:
+
+.. code:: python
+
+   # Number of floats we want to simulate:
+   nfloats = 10
+
+   # Define space/time locations of deployments:
+   lat = np.linspace(30, 38, nfloats)
+   lon = np.full_like(lat, -60)
+   tim = np.array(['2019-01-01' for i in range(nfloats)], dtype='datetime64')
+
+   # Define the deployment plan as a dictionary:
+   my_plan = {'lat': lat, 'lon': lon, 'time': tim}
+
+
 Velocity field
 --------------
 
-First, you need to define the velocity field to be used by the virtual fleet.
+Then, you need to define the velocity field to be used by the virtual fleet.
 
-.. warning::
+.. note::
 
     The VirtualFleet simulator can take any Parcels :class:`parcels.fieldset.FieldSet` as input.
 
 However, to make things easier, we provide a convenient utility function :meth:`Velocity` to be used for some standard pre-defined velocity fields. It allows to easily create a :class:`VelocityField` instance that will be used as input to the VirtualFleet simulator.
 
-
-The 2 main ways to get a :class:`VelocityField` instance with :meth:`Velocity` are:
+The 2 main ways to get a :class:`VelocityField` instance with the :meth:`Velocity` function are:
 
 1/ Using a :class:`xarray.Dataset`:
 
@@ -60,34 +80,12 @@ The 2 main ways to get a :class:`VelocityField` instance with :meth:`Velocity` a
 
 In this later case, the function :meth:`Velocity` will take care of creating a :class:`parcels.fieldset.FieldSet` with the appropriate land/sea mask and circular wrapper if the field is global.
 
-
 Currently, VirtualFleet supports the following values for the ``model`` options of :meth:`Velocity`:
 
 -  ``GLORYS12V1``, ``PSY4QV3R1``, ``GLOBAL_ANALYSIS_FORECAST_PHY_001_024``
 -  ``MEDSEA_ANALYSISFORECAST_PHY_006_013``
 -  ``ARMOR3D``, ``MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012``
 -  ``custom`` if you want to set your own model definition
-
-
-Deployment plan
----------------
-
-Then, you need to define a deployment plan for your virtual fleet. **The VirtualFleet simulator expects a dictionary with arrays for the latitude, longitude and time of virtual floats to deploy**. Depth is set by default to the surface, but this can be provided if necessary.
-
-Example:
-
-.. code:: python
-
-   # Number of floats we want to simulate:
-   nfloats = 10
-
-   # Define space/time locations of deployments:
-   lat = np.linspace(30, 38, nfloats)
-   lon = np.full_like(lat, -60)
-   tim = np.array(['2019-01-01' for i in range(nfloats)], dtype='datetime64')
-
-   # Define the deployment plan as a dictionary:
-   my_plan = {'lat': lat, 'lon': lon, 'time': tim}
 
 
 Argo floats mission parameters
@@ -137,4 +135,4 @@ This can be useful for later re-use:
 
    cfg = FloatConfiguration("myconfig.json")
 
-`Examples of such json files can be found in here <./virtualargofleet/assets>`__.
+`Examples of such json files can be found in here <https://github.com/euroargodev/VirtualFleet/tree/master/virtualargofleet/assets>`__.

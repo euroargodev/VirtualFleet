@@ -43,6 +43,7 @@ Velocity/Field
     VelocityField.add_mask
     VelocityField.set_global
     VelocityField.plot
+    VelocityField.fieldset
 
 Utilities
 =========

@@ -6,9 +6,9 @@ Running a virtual fleet simulation
 
 You now have all the requirements fulfilled:
 
--  A velocity fieldset, from a :class:`VelocityField` instance
--  A deployment plan, from a dictionary with ``lat/lon/time`` arrays
--  A float mission configuration, from the :class:`FloatConfiguration` instance
+-  a deployment plan, from a dictionary with ``lat/lon/time`` arrays,
+-  a velocity fieldset (of class :class:`parcels.fieldset.FieldSet`), possibly from a :class:`VelocityField` instance,
+-  and a float mission configuration, possibly from a :class:`FloatConfiguration` instance.
 
 So let's import the usual suspects:
 

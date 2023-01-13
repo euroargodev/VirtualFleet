@@ -13,6 +13,7 @@
     virtualargofleet.velocity_helpers.VelocityField.add_mask
     virtualargofleet.velocity_helpers.VelocityField.set_global
     virtualargofleet.velocity_helpers.VelocityField.plot
+    virtualargofleet.velocity_helpers.VelocityField.fieldset
 
     virtualargofleet.virtualargofleet.VirtualFleet
     virtualargofleet.virtualargofleet.VirtualFleet.simulate

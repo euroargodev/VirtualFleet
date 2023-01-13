@@ -14,10 +14,10 @@ log = logging.getLogger("virtualfleet.velocity")
 
 
 class VelocityField(ABC):
-    """Generic class to manage a Virtual Fleet velocity field
+    """Class prototype to manage a Virtual Fleet velocity field
 
     This prototype provides useful methods to prepare a :class:`parcels.fieldset.FieldSet` for a VirtualFleet simulation.
-    A :class:`VelocityField` can be passed directly to a :class:`VirtualFleet` instance.
+    A :class:`VelocityField` instance can be passed directly to a :class:`.VirtualFleet` instance.
 
     You can use the :meth:`Velocity` function to instantiate such a class for known products.
 
@@ -25,13 +25,23 @@ class VelocityField(ABC):
     name = "?"
     """shortname ID for this velocity field"""
 
-    def __init__(self):
-        # List of instance properties required for this prototype methods to work:
-        self.dim
-        self.var
-        self.field
-        self.fieldset
-        self.isglobal
+    field = None
+    """Internal definition of the velocity fields; it can be a :class:`xarray.Dataset` or a dictionary with ``U`` 
+    and ``V`` as keys and list of corresponding files as values"""
+
+    fieldset = None
+    """Instance of :class:`parcels.fieldset.FieldSet` created using the ``field`` attribute"""
+
+    var = None
+    """Variable dictionary mapping of ``U`` and ``V`` on netcdf velocity variable names"""
+
+    dim = None
+    """Dimensions dictionary mapping of ``time``, ``depth``, ``lat`` and ``lon`` on netcdf velocity variable names"""
+
+    isglobal = None
+    """Boolean indicating weather the velocity field is global or not, used to add ``halo_*`` constants on the 
+    ``fieldset`` attribute"""
+
 
     def __repr__(self):
         summary = ["<VelocityField.%s>" % self.name]
