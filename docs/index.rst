@@ -12,13 +12,14 @@ Documentation
 **Getting Started**
 
 * :doc:`install`
-* :doc:`old_usage`
 * :doc:`Usage <usage/index>`
 * :doc:`Examples <examples/index>`
+
 
 **Help & reference**
 
 * :doc:`whats-new`
+* :doc:`what_is_argo`
 * :doc:`api`
 
 
@@ -45,6 +46,7 @@ The optimisation of the Argo array is quite complex to determine in specific reg
     :caption: Help & reference
 
     whats-new
+    what_is_argo
     api
 
 
