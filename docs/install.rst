@@ -10,7 +10,7 @@ Install the last release with pip:
 
     pip install virtualfleet
 
-you can also work with the latest version:
+you can also try to work with the latest dev. version:
 
 .. code-block:: text
 

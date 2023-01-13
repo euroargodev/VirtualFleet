@@ -22,7 +22,6 @@ Utilities
 .. autosummary::
     :toctree: generated/
 
-
     utilities.simu2index
     utilities.simu2csv
     utilities.set_WMO

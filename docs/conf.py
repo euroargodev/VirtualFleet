@@ -33,12 +33,10 @@ try:
 except ImportError:
     autodoc_mock_imports.append('cartopy')
 
-# argopy_src = os.path.abspath('..')
-# sys.path.insert(0, os.path.abspath('..'))
+# Add path to be able to load the virtualfleet module
 root = pathlib.Path(__file__).absolute().parent.parent
 os.environ["PYTHONPATH"] = str(root)
 sys.path.insert(0, str(root))
-
 import virtualargofleet  # noqa: E402
 print("virtualargofleet: %s, %s" % (virtualargofleet.__version__, virtualargofleet.__file__))
 
@@ -208,7 +206,6 @@ html_theme = 'sphinx_book_theme'
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
 html_logo = "_static/repo_picture_tight.png"
-# html_favicon = '_static/argopy.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -218,24 +215,30 @@ html_static_path = ['_static']
 html_theme_options = {
     "repository_url": "https://www.github.com/euroargodev/VirtualFleet",
     "use_repository_button": True,
-    # "html_logo": "_static/repo_picture_tight.png",
-    #  'canonical_url': '',
+    "use_edit_page_button": True,
+    "use_issues_button": True,
+    "use_download_button": True,
+    "use_sidenotes": True,
     'analytics_id': 'G-YVSMT7WG1C',
     'logo_only': True,
-    # 'display_version': False,
     # 'prev_next_buttons_location': 'bottom',
-    'show_navbar_depth': 2,
+    # 'show_navbar_depth': 3, # Max depth to display on the sidebar
+    # "show_toc_level": 2,
     # 'style_external_links': False,
     # 'vcs_pageview_mode': '',
     # 'style_nav_header_background': 'white',
     # # Toc options
     'collapse_navigation': False,
     # 'sticky_navigation': True,
-    'navigation_depth': 4,
+    # 'navigation_depth': 2,
     # 'includehidden': True,
     # 'titles_only': False,
 #    'launch_buttons': { "thebe": True},
 #     'extra_footer': "extra_footer",
+#     "announcement": (
+#             "⚠️The latest release refactored the software ! "
+#             "so double-check the documentation!⚠️"
+#         ),
 }
 
 # Sometimes the savefig directory doesn't exist and needs to be created

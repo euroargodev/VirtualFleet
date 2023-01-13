@@ -12,14 +12,22 @@ Documentation
 **Getting Started**
 
 * :doc:`install`
-* :doc:`usage`
-* :doc:`why`
-* :doc:`Examples <examples/examples>`
+* :doc:`Usage <usage/index>`
+* :doc:`Examples <examples/index>`
 
 **Help & reference**
 
 * :doc:`whats-new`
 * :doc:`api`
+
+
+.. _why:
+
+Why VirtualFleet ?
+==================
+
+The optimisation of the Argo array is quite complex to determine in specific regions, where the local ocean dynamic shifts away from *standard* large scale open ocean. These regions are typically the Boundary Currents where turbulence is more significant than anywhere else, and Polar regions where floats can temporarily evolve under sea-ice. **Virtual Fleet** aims to help the Argo program to optimise floats deployment and programming in such regions.
+
 
 .. toctree::
     :maxdepth: 2
@@ -27,17 +35,8 @@ Documentation
     :caption: Getting Started
 
     install
-    usage
-    why
-
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-    :caption: Examples
-
-    examples/examples
-    examples/earise
-    examples/recovery
+    usage/index
+    examples/index
 
 .. toctree::
     :maxdepth: 2

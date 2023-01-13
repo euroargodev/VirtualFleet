@@ -1,0 +1,121 @@
+.. currentmodule:: virtualargofleet
+
+Prepare the simulation
+======================
+
+First, let's import the usual suspects:
+
+.. code:: python
+
+   import numpy as np
+   from datetime import timedelta
+   from virtualargofleet import VelocityField, VirtualFleet, FloatConfiguration
+
+
+Velocity field
+--------------
+
+First, you need to define the velocity field to be used by the virtual fleet. The VirtualFleet simulator can take any Parcels :class:`parcels.fieldset.FieldSet` as input.
+
+However, to make things easier, we provide a convenient utility class :class:`VelocityField` to be used for some standard pre-defined velocity fields. Create a :class:`VelocityField` instance and then use it as input to the VirtualFleet simulator.
+
+You can provide the path to velocity netcdf files, like this:
+
+.. code:: python
+
+   root = "~/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+   VELfield = VelocityField(model='GLORYS12V1', src="%s/2019*.nc" % root)
+
+or you can use your own velocity fields definition:
+
+.. code:: python
+
+   root = "~/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+   filenames = {'U': root + "/20201210*.nc",
+                 'V': root + "/20201210*.nc"}
+   variables = {'U':'uo', 'V':'vo'}
+   dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
+   VELfield = VelocityField(model='custom',
+                            src=filenames,
+                            variables=variables,
+                            dimensions=dimensions)
+
+In this later case, the :class:`VelocityField` class will take care of creating a Parcels :class:`parcels.fieldset.FieldSet` with the appropriate land/sea mask and circular wrapper if the field is global.
+
+Currently, VirtualFleet supports the following ``model`` options to the :class:`VelocityField` helper:
+
+-  GLORYS12V1, PSY4QV3R1, GLOBAL_ANALYSIS_FORECAST_PHY_001_024
+-  MEDSEA_ANALYSISFORECAST_PHY_006_013
+-  ARMOR3D, MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012
+-  custom if you want to set your own model definition
+
+
+Deployment plan
+---------------
+
+Then, you need to define a deployment plan for your virtual fleet. **The VirtualFleet simulator expects a dictionary with arrays for the latitude, longitude and time of virtual floats to deploy**. Depth is set by default to the surface, but this can be provided if necessary.
+
+Example:
+
+.. code:: python
+
+   # Number of floats we want to simulate:
+   nfloats = 10
+
+   # Define space/time locations of deployments:
+   lat = np.linspace(30, 38, nfloats)
+   lon = np.full_like(lat, -60)
+   tim = np.array(['2019-01-01' for i in range(nfloats)], dtype='datetime64')
+
+   # Define the deployment plan as a dictionary:
+   my_plan = {'lat': lat, 'lon': lon, 'time': tim}
+
+
+Argo floats mission parameters
+------------------------------
+
+You also need to define what are the float's mission configuration parameters. **The VirtualFleet simulator takes a simple dictionary with parameters as input**. But, again, VirtualFleet provides the convenient utility class :class:`FloatConfiguration` to make things easier.
+
+You can start with a *default* configuration like this:
+
+.. code:: python
+
+   cfg = FloatConfiguration('default')
+
+.. code-block::
+
+   <FloatConfiguration><default>
+   - cycle_duration (Maximum length of float complete cycle): 240.0 [hours]
+   - life_expectancy (Maximum number of completed cycle): 200 [cycle]
+   - parking_depth (Drifting depth): 1000.0 [m]
+   - profile_depth (Maximum profile depth): 2000.0 [m]
+   - vertical_speed (Vertical profiling speed): 0.09 [m/s]
+
+or you can use a specific float cycle mission (data are retrieved from the `Euro-Argo meta-data API <https://fleetmonitoring.euro-argo.eu/swagger-ui.html>`__):
+
+.. code:: python
+
+   cfg = FloatConfiguration([6902920, 98])
+
+.. code-block::
+
+   <FloatConfiguration><Float 6902920 - Cycle 98>
+   - cycle_duration (Maximum length of float complete cycle): 240.0 [hours]
+   - life_expectancy (Maximum number of completed cycle): 500 [cycle]
+   - parking_depth (Drifting depth): 1000.0 [m]
+   - profile_depth (Maximum profile depth): 2000.0 [m]
+   - vertical_speed (Vertical profiling speed): 0.09 [m/s]
+
+Float configurations can be saved in json files:
+
+.. code:: python
+
+   cfg.to_json("myconfig.json")
+
+This can be useful for later re-use:
+
+.. code:: python
+
+   cfg = FloatConfiguration("myconfig.json")
+
+`Examples of such json files can be found in here <./virtualargofleet/assets>`__.
