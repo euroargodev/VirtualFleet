@@ -1,7 +1,7 @@
 .. currentmodule:: virtualargofleet
 
-Miscellaneous
-=============
+Miscellaneous figures
+=====================
 
 .. contents::
    :local:

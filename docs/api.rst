@@ -1,20 +1,48 @@
+.. currentmodule:: virtualargofleet
+
 #############
 API reference
 #############
 
 This page provides an auto-generated summary of VirtualFleet's API. For more details and examples, refer to the relevant chapters in the main part of the documentation.
 
-Top-levels helpers
+Top-levels classes
 ==================
 
-.. currentmodule:: virtualargofleet
+VirtualFleet
+------------
 
 .. autosummary::
     :toctree: generated/
 
-    VelocityField
     VirtualFleet
+    VirtualFleet.simulate
+    VirtualFleet.to_index
+
+FloatConfiguration
+------------------
+
+.. autosummary::
+    :toctree: generated/
+
     FloatConfiguration
+    FloatConfiguration.to_json
+    FloatConfiguration.update
+    FloatConfiguration.mission
+    FloatConfiguration.tech
+    FloatConfiguration.params
+
+Velocity/Field
+--------------
+
+.. autosummary::
+    :toctree: generated/
+
+    Velocity
+    VelocityField
+    VelocityField.add_mask
+    VelocityField.set_global
+    VelocityField.plot
 
 Utilities
 =========

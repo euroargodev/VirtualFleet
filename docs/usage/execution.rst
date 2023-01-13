@@ -1,7 +1,8 @@
 .. currentmodule:: virtualargofleet
+.. _execution:
 
-Run the virtual fleet simulation
-================================
+Running a virtual fleet simulation
+==================================
 
 You now have all the requirements fulfilled:
 
@@ -9,17 +10,29 @@ You now have all the requirements fulfilled:
 -  A deployment plan, from a dictionary with ``lat/lon/time`` arrays
 -  A float mission configuration, from the :class:`FloatConfiguration` instance
 
-So, let's create a virtual fleet:
+So let's import the usual suspects:
 
 .. code:: python
 
-   VFleet = virtualfleet(plan=my_plan, fieldset=VELfield.fieldset, mission=cfg.mission)
+   from datetime import timedelta
+   from virtualargofleet import VirtualFleet
+
+and create a virtual fleet:
+
+.. code:: python
+
+   VFleet = VirtualFleet(plan=my_plan, fieldset=VELfield.fieldset, mission=cfg.mission)
 
 .. code-block::
 
     <VirtualFleet>
     - 10 floats in the deployment plan
     - No simulation performed
+
+.. note::
+
+    This code assumes you named the deployment plan dictionary ``my_plan``, the velocity field instance ``VELfield`` and the float mission configuration instance ``cfg`` like in ":ref:`preparation`".
+
 
 To execute the simulation, we use the :meth:`VirtualFleet.simulate` method by providing at least the total simulation duration time as a timedelta (or number of days):
 

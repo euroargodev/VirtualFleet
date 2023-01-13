@@ -13,17 +13,33 @@ from .app_parcels import ArgoParticle
 log = logging.getLogger("virtualfleet.velocity")
 
 
-class VelocityFieldProto(ABC):
+class VelocityField(ABC):
+    """Generic class to manage a Virtual Fleet velocity field
+
+    This prototype provides useful methods to prepare a :class:`parcels.fieldset.FieldSet` for a VirtualFleet simulation.
+    A :class:`VelocityField` can be passed directly to a :class:`VirtualFleet` instance.
+
+    You can use the :meth:`Velocity` function to instantiate such a class for known products.
+
+    """
     name = "?"
+    """shortname ID for this velocity field"""
+
+    def __init__(self):
+        # List of instance properties required for this prototype methods to work:
+        self.dim
+        self.var
+        self.field
+        self.fieldset
+        self.isglobal
 
     def __repr__(self):
         summary = ["<VelocityField.%s>" % self.name]
         return "\n".join(summary)
 
     def plot(self):
-        """Show ParticleSet"""
-        temp_pset = ParticleSet(fieldset=self.fieldset,
-                                pclass=ArgoParticle, lon=0, lat=0, depth=0)
+        """Quick plot of the ParticleSet"""
+        temp_pset = ParticleSet(fieldset=self.fieldset, pclass=ArgoParticle, lon=0, lat=0, depth=0)
         temp_pset.show(field=self.fieldset.U, with_particles=False)
         # temp_pset.show(field = self.fieldset.V,with_particles = False)
 
@@ -76,7 +92,7 @@ class VelocityFieldProto(ABC):
             self.fieldset.add_periodic_halo(zonal=True, meridional=True)
 
 
-class VelocityField_CUSTOM(VelocityFieldProto):
+class VelocityField_CUSTOM(VelocityField):
     name = "CUSTOM"
 
     def __init__(self,
@@ -85,6 +101,7 @@ class VelocityField_CUSTOM(VelocityFieldProto):
                  dimensions: dict,
                  isglobal: bool = False,
                  **kwargs):
+        """Create a custom VelocityField for known products"""
 
         if 'U' not in variables:
             raise ValueError("'variables' dictionary must have a 'U' key")
@@ -139,38 +156,49 @@ class VelocityField_CUSTOM(VelocityFieldProto):
 
 
 def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args, **kwargs):
-    """Helper for velocity fields definition of known products
+    """Function to return a :class:`VelocityField` instance for known products
+
+    Note that you can provide a :class:`VelocityField` or :attr:`VelocityField.fieldset`
+    to a :class:`VirtualFleet` instance.
 
     Parameters
     ----------
     model: str
-        Model string definition, one in:
-            - 'PSY4QV3R1', 'GLORYS12V1', 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024',
-            - 'MEDSEA_ANALYSISFORECAST_PHY_006_013'
-            - 'MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012', 'ARMOR3D'
-            - 'custom'
+        Indicate which model to use by its string definition. Possible values are:
+            -  ``custom`` if you want to set your own model definition
+            -  ``GLORYS12V1``, ``PSY4QV3R1``, ``GLOBAL_ANALYSIS_FORECAST_PHY_001_024``
+            -  ``MEDSEA_ANALYSISFORECAST_PHY_006_013``
+            -  ``ARMOR3D``, ``MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012``
+
+    Returns
+    -------
+    :class:`VelocityField`
 
     Examples
     --------
-    >>> from virtualargofleet import VelocityField
+    Import the module and define the root folder to data:
 
+    >>> from virtualargofleet import Velocity
     >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+
+    And then define a velocity field with one of the following 3 methods:
+
+    1/ with a ``custom`` product:
+
     >>> filenames = {'U': root + "/20201210*.nc",
     >>>              'V': root + "/20201210*.nc"}
     >>> variables = {'U':'uo','V':'vo'}
     >>> dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
-    >>> VELfield = VelocityField(model='custom', src=filenames, variables=variables, dimensions=dimensions)
+    >>> VELfield = Velocity(model='custom', src=filenames, variables=variables, dimensions=dimensions)
 
-    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
+    2/ with a :class:`xarray.Dataset`:
+
     >>> ds = xr.open_mfdataset(glob.glob("%s/20201210*.nc" % root))
-    >>> VELfield = VelocityField(model='GLOBAL_ANALYSIS_FORECAST_PHY_001_024', src=ds)
+    >>> VELfield = Velocity(model='GLOBAL_ANALYSIS_FORECAST_PHY_001_024', src=ds)
 
-    >>> root = "/home/datawork-lops-oh/somovar/WP1/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
-    >>> VELfield = VelocityField(model='GLORYS12V1', src="%s/20201210*.nc" % root)
+    3/ with a file path pattern:
 
-    >>> VELfield.fieldset
-    >>> VELfield.plot()
-
+    >>> VELfield = Velocity(model='GLORYS12V1', src="%s/20201210*.nc" % root)
     """
     if model in ['PSY4QV3R1', 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', 'GLORYS12V1']:
         V = VelocityField_PSY4QV3R1(**kwargs)

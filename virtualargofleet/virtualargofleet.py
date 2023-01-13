@@ -18,7 +18,7 @@ from .app_parcels import (
     ArgoFloatKernel_exp,
     PeriodicBoundaryConditionKernel,
 )
-from .velocity_helpers import VelocityFieldProto
+from .velocity_helpers import VelocityField
 from .utilities import SimulationSet, FloatConfiguration
 from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo
 from packaging import version
@@ -30,14 +30,14 @@ log = logging.getLogger("virtualfleet.virtualfleet")
 
 
 class VirtualFleet:
-    """Argo Virtual Fleet simulator helper.
+    """Argo Virtual Fleet simulator.
 
     This class should make it easier to process and analyse a simulation.
 
     """
     def __init__(self,
                  plan: dict,
-                 fieldset: Union[FieldSet, VelocityFieldProto],
+                 fieldset: Union[FieldSet, VelocityField],
                  mission: Union[dict, FloatConfiguration],
                  isglobal: bool=False,
                  **kwargs):
@@ -48,7 +48,7 @@ class VirtualFleet:
             A dictionary with the deployment plan coordinates as keys: 'lat', 'lon', 'time', ['depth']
             Each value are Numpy arrays describing where Argo floats are deployed.
             Depth is optional, if not provided it will be set to 1m.
-        fieldset: :class:`parcels.fieldset` or :class:`VelocityFieldProto`
+        fieldset: :class:`parcels.fieldset.FieldSet` or :class:`VelocityField`
             A velocity field
         mission: dict or :class:`FloatConfiguration`
             A dictionary with at least the Argo float mission parameters: 'parking_depth', 'profile_depth', 'vertical_speed' and 'cycle_duration'
@@ -95,7 +95,7 @@ class VirtualFleet:
                              "option to pass on the Ocean Parcels fieldset.")
 
         # Velocity/Hydrodynamic field:
-        if isinstance(fieldset, VelocityFieldProto):  # be nice when we forget to set the correct input
+        if isinstance(fieldset, VelocityField):  # be nice when we forget to set the correct input
             fieldset = fieldset.fieldset
         if not isinstance(fieldset, FieldSet):
             raise TypeError("The `fieldset` argument must be a `FieldSet` Parcels or `VelocityField` instance")

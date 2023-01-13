@@ -1,32 +1,50 @@
 .. currentmodule:: virtualargofleet
+.. _preparation:
 
-Prepare the simulation
-======================
+Preparation of a simulation
+===========================
 
-First, let's import the usual suspects:
+In order to create a simulation of virtual Argo floats, you need to provide
+
+-  A velocity field, as a :class:`parcels.fieldset.FieldSet` instance
+-  A float deployment plan, as a dictionary with ``lat/lon/time`` arrays
+-  Virtual floats mission configurations, as a dictionary
+
+These requirements are explained below, together with VirtualFleet helpers to do it.
+
+But first, let's import the usual suspects:
 
 .. code:: python
 
    import numpy as np
    from datetime import timedelta
-   from virtualargofleet import VelocityField, VirtualFleet, FloatConfiguration
+   from virtualargofleet import Velocity, FloatConfiguration
 
 
 Velocity field
 --------------
 
-First, you need to define the velocity field to be used by the virtual fleet. The VirtualFleet simulator can take any Parcels :class:`parcels.fieldset.FieldSet` as input.
+First, you need to define the velocity field to be used by the virtual fleet.
 
-However, to make things easier, we provide a convenient utility class :class:`VelocityField` to be used for some standard pre-defined velocity fields. Create a :class:`VelocityField` instance and then use it as input to the VirtualFleet simulator.
+.. warning::
 
-You can provide the path to velocity netcdf files, like this:
+    The VirtualFleet simulator can take any Parcels :class:`parcels.fieldset.FieldSet` as input.
+
+However, to make things easier, we provide a convenient utility function :meth:`Velocity` to be used for some standard pre-defined velocity fields. It allows to easily create a :class:`VelocityField` instance that will be used as input to the VirtualFleet simulator.
+
+
+The 2 main ways to get a :class:`VelocityField` instance with :meth:`Velocity` are:
+
+1/ Using a :class:`xarray.Dataset`:
 
 .. code:: python
 
    root = "~/data/GLOBAL-ANALYSIS-FORECAST-PHY-001-024"
-   VELfield = VelocityField(model='GLORYS12V1', src="%s/2019*.nc" % root)
+   ds = xr.open_mfdataset(glob.glob("%s/20201210*.nc" % root))
+   VELfield = Velocity(model='GLOBAL_ANALYSIS_FORECAST_PHY_001_024', src=ds)
 
-or you can use your own velocity fields definition:
+
+2/ Using a ``custom`` definition of the required arguments:
 
 .. code:: python
 
@@ -35,19 +53,20 @@ or you can use your own velocity fields definition:
                  'V': root + "/20201210*.nc"}
    variables = {'U':'uo', 'V':'vo'}
    dimensions = {'time': 'time', 'depth':'depth', 'lat': 'latitude', 'lon': 'longitude'}
-   VELfield = VelocityField(model='custom',
-                            src=filenames,
-                            variables=variables,
-                            dimensions=dimensions)
+   VELfield = Velocity(model='custom',
+                       src=filenames,
+                       variables=variables,
+                       dimensions=dimensions)
 
-In this later case, the :class:`VelocityField` class will take care of creating a Parcels :class:`parcels.fieldset.FieldSet` with the appropriate land/sea mask and circular wrapper if the field is global.
+In this later case, the function :meth:`Velocity` will take care of creating a :class:`parcels.fieldset.FieldSet` with the appropriate land/sea mask and circular wrapper if the field is global.
 
-Currently, VirtualFleet supports the following ``model`` options to the :class:`VelocityField` helper:
 
--  GLORYS12V1, PSY4QV3R1, GLOBAL_ANALYSIS_FORECAST_PHY_001_024
--  MEDSEA_ANALYSISFORECAST_PHY_006_013
--  ARMOR3D, MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012
--  custom if you want to set your own model definition
+Currently, VirtualFleet supports the following values for the ``model`` options of :meth:`Velocity`:
+
+-  ``GLORYS12V1``, ``PSY4QV3R1``, ``GLOBAL_ANALYSIS_FORECAST_PHY_001_024``
+-  ``MEDSEA_ANALYSISFORECAST_PHY_006_013``
+-  ``ARMOR3D``, ``MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012``
+-  ``custom`` if you want to set your own model definition
 
 
 Deployment plan

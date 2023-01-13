@@ -9,6 +9,11 @@
 
     virtualargofleet.velocity_helpers.VelocityFieldFacade
 
+    virtualargofleet.velocity_helpers.VelocityField
+    virtualargofleet.velocity_helpers.VelocityField.add_mask
+    virtualargofleet.velocity_helpers.VelocityField.set_global
+    virtualargofleet.velocity_helpers.VelocityField.plot
+
     virtualargofleet.virtualargofleet.VirtualFleet
     virtualargofleet.virtualargofleet.VirtualFleet.simulate
     virtualargofleet.virtualargofleet.VirtualFleet.plot_positions

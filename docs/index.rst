@@ -12,6 +12,7 @@ Documentation
 **Getting Started**
 
 * :doc:`install`
+* :doc:`old_usage`
 * :doc:`Usage <usage/index>`
 * :doc:`Examples <examples/index>`
 

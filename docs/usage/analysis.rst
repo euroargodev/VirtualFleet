@@ -1,7 +1,12 @@
 .. currentmodule:: virtualargofleet
+.. _analysis:
 
 Simulation analysis
 ===================
+
+.. note::
+
+    This code assumes you named the named the :class:`VirtualFleet` instance ``VFleet`` like in ":ref:`execution`".
 
 In order to look at the virtual floats trajectories you can read data directly from the output file:
 

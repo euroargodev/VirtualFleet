@@ -1,6 +1,7 @@
 from .virtualargofleet import VirtualFleet
 from .utilities import FloatConfiguration, ConfigParam
-from .velocity_helpers import VelocityFieldFacade as VelocityField
+from .velocity_helpers import VelocityFieldFacade as Velocity
+from .velocity_helpers import VelocityField
 
 import parcels
 import warnings
@@ -29,6 +30,7 @@ if int(parcels_version[0]) < 2 or (int(parcels_version[0]) == 2 and int(parcels_
 #
 __all__ = (
     # Classes:
+    "Velocity",
     "VelocityField",
     "VirtualFleet",
     "FloatConfiguration",
