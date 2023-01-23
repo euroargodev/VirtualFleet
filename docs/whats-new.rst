@@ -15,7 +15,7 @@ This last release is a major one. It introduces new features and breaking change
 
 **New features**
 
-- An **Argo float configuration manager**. It was designed to make easier the access, management and backup of the virtual floats mission configuration parameters. All details are available on the API page :class:`FloatConfiguration` and the documentation page ":ref:`preparation_cfg`".
+- New **Argo float configuration manager**. It was designed to make easier the access, management and backup of the virtual floats mission configuration parameters. All details are available on the API page :class:`FloatConfiguration` and the documentation page ":ref:`preparation_cfg`".
 
 .. code-block:: python
 
@@ -27,12 +27,12 @@ This last release is a major one. It introduces new features and breaking change
     cfg.mission # Return the configuration as a dictionary, to be pass on a VirtualFleet instance
     cfg.to_json("cfg_file.json") # Save to file for later re-use
 
-- **New Argo virtual floats type**: this new float type can change their mission parameters when they enter a specific geographic area (a rectangular domain). In order to use these floats, you can load a FloatConfiguration instance with ``local-change``, like this:
+- New **Argo virtual floats type**: this new float type can change their mission parameters when they enter a specific geographic area (a rectangular domain). In order to use these floats, you can load a :class:`FloatConfiguration` instance with the ``local-change`` name, like this:
 
 .. code-block:: python
 
     cfg = FloatConfiguration('local-change')
-    cfg.update('cycle_duration', 120)  # Update default parameters for your own experiment
+    cfg.update('area_cycle_duration', 120)  # Update default parameters for your own experiment
 
 where you will note the added properties ``area_*``:
 
@@ -51,15 +51,15 @@ where you will note the added properties ``area_*``:
           - profile_depth (Maximum profile depth): 2000.0 [m]
           - vertical_speed (Vertical profiling speed): 0.09 [m/s]
 
-Passing this specific ``FloatConfiguration`` instance to a VirtualFleet will automatically select the appropriate Argo float parcel kernels. This new float type was developed for the `EA-RISE WP2.3 Gulf-Stream experiment <https://github.com/euroargodev/VirtualFleet_GulfStream>`__.
+Passing this specific :class:`FloatConfiguration` instance to a :class:`VirtualFleet` will automatically select the appropriate Argo float parcel kernels (:class:`app_parcels.ArgoFloatKernel_exp`). This new float type was developed for the `EA-RISE WP2.3 Gulf-Stream experiment <https://github.com/euroargodev/VirtualFleet_GulfStream>`__.
 
 - All Argo float types (``default`` and ``local-change``) now come with a proper cycle number property. This makes much easier the tracking of the float profiles.
 
-**Post-processing utilities**:
+**Utilities**:
 
-- An Argo **profile index extractor** from the simulation netcdf output. It is not trivial to extract the position of virtual float profiles from the trajectory file of the simulation output. We made this easier with the :class:`utilities.simu2index` and :class:`utilities.simu2csv` functions. It also comes bundled with the :class:`VirtualFleet.to_index` method.
-- A function to **identify virtual floats with their real WMO** from the deployment plan. This could be handful if the deployment plan is actually based on real floats with WMO. :class:`utilities.set_WMO`
-- A function to **retrieve Argo float cycle configuration** using the `Euro-Argo meta-data API <https://fleetmonitoring.euro-argo.eu/swagger-ui.html>`__: :class:`utilities.get_float_config`.
+- :class:`utilities.simu2index`, :class:`utilities.simu2csv`: An Argo **profile index extractor** from the simulation netcdf output. It is not trivial to extract the position of virtual float profiles from the trajectory file of the simulation output. We made this easier with these functions. It also comes bundled with the :class:`VirtualFleet.to_index` method.
+- :class:`utilities.set_WMO`: A function to **identify virtual floats with their real WMO** from the deployment plan. This could be handful if the deployment plan is actually based on real floats with WMO.
+- :class:`utilities.get_float_config`: A function to **retrieve Argo float cycle configuration** using the `Euro-Argo meta-data API <https://fleetmonitoring.euro-argo.eu/swagger-ui.html>`__: .
 
 **Breaking changes**
 

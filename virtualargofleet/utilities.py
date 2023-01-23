@@ -75,7 +75,7 @@ class ConfigParam:
 class FloatConfiguration:
     """Float mission configuration manager
 
-    Create a default configuration and then possibly update parameter values or add new parameters
+    Create a default configuration and then possibly update parameter values or add new ones
 
     Can be used to create a virtual fleet, to save or load float configurations
 
@@ -197,7 +197,7 @@ class FloatConfiguration:
 
     @property
     def mission(self):
-        """Float configuration as a dictionary to be used by a VirtualFleet"""
+        """Return the float configuration as a dictionary to be used by a :class:`VirtualFleet`"""
         mission = {}
         for key in self._params_dict.keys():
             mission[key] = self._params_dict[key].value

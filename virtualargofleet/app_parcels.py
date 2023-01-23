@@ -26,7 +26,7 @@ class ArgoParticle(JITParticle):
     drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=False)
     """Elapsed time since the beginning of the drifting phase"""
     in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=False)
-    """Boolean indicating if the particle is in land (0) or water (1), used to detect grounding, based in fieldset.mask"""
+    """Boolean indicating if the virtual float is in land (0) or water (1), used to detect grounding, based on fieldset.mask"""
 
 
 def ArgoFloatKernel(particle, fieldset, time):

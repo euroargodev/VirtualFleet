@@ -138,3 +138,7 @@ This can be useful for later re-use:
    cfg = FloatConfiguration("myconfig.json")
 
 `Examples of such json files can be found in here <https://github.com/euroargodev/VirtualFleet/tree/master/virtualargofleet/assets>`__.
+
+The schematic below illustrate a virtual float cycle and the mission parameters to provide to a :class:`VirtualFleet` instance:
+
+.. image:: ../_static/VirtualFloat_Cycle_Schematic.png

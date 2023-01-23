@@ -69,6 +69,7 @@ Parcels Particles and kernels
     :toctree: generated/
 
     app_parcels.ArgoParticle
+    app_parcels.ArgoParticle.cycle_phase
     app_parcels.ArgoFloatKernel
     app_parcels.ArgoParticle_exp
     app_parcels.ArgoFloatKernel_exp
