@@ -18,8 +18,8 @@ Documentation
 
 **Help & reference**
 
-* :doc:`whats-new`
 * :doc:`what_is_argo`
+* :doc:`whats-new`
 * :doc:`api`
 
 
@@ -45,8 +45,8 @@ The optimisation of the Argo array is quite complex to determine in specific reg
     :hidden:
     :caption: Help & reference
 
-    whats-new
     what_is_argo
+    whats-new
     api
 
 

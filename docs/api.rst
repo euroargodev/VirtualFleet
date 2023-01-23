@@ -60,3 +60,16 @@ Utilities
     utilities.simu2csv
     utilities.set_WMO
     utilities.get_float_config
+
+
+Parcels Particles and kernels
+=============================
+
+.. autosummary::
+    :toctree: generated/
+
+    app_parcels.ArgoParticle
+    app_parcels.ArgoFloatKernel
+    app_parcels.ArgoParticle_exp
+    app_parcels.ArgoFloatKernel_exp
+

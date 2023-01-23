@@ -31,3 +31,8 @@
     virtualargofleet.utilities.FloatConfiguration
     virtualargofleet.utilities.FloatConfiguration.update
     virtualargofleet.utilities.FloatConfiguration.to_json
+
+    virtualargofleet.app_parcels.ArgoFloatKernel
+    virtualargofleet.app_parcels.ArgoFloatKernel_exp
+    virtualargofleet.app_parcels.ArgoParticle
+    virtualargofleet.app_parcels.ArgoParticle_exp

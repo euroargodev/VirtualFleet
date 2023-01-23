@@ -222,7 +222,7 @@ html_theme_options = {
     'analytics_id': 'G-YVSMT7WG1C',
     'logo_only': True,
     # 'prev_next_buttons_location': 'bottom',
-    # 'show_navbar_depth': 3, # Max depth to display on the sidebar
+    'show_navbar_depth': 1, # Max depth to display on the sidebar
     # "show_toc_level": 2,
     # 'style_external_links': False,
     # 'vcs_pageview_mode': '',
