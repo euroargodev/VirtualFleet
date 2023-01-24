@@ -104,7 +104,7 @@ class VirtualFleet:
         # Forward mission parameters to the simulation through fieldset
         fieldset.add_constant("parking_depth", mission["parking_depth"])
         fieldset.add_constant("profile_depth", mission["profile_depth"])
-        fieldset.add_constant("v_speed", mission["vertical_speed"])
+        fieldset.add_constant("vertical_speed", mission["vertical_speed"])
         fieldset.add_constant("cycle_duration", mission["cycle_duration"])
         fieldset.add_constant("life_expectancy", mission["life_expectancy"])
 
