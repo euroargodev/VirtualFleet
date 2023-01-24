@@ -34,7 +34,17 @@
 
     virtualargofleet.app_parcels.ArgoParticle
     virtualargofleet.app_parcels.ArgoFloatKernel
-    virtualargofleet.app_parcels.ArgoFloatKernel.cycle_phase
+    virtualargofleet.app_parcels.ArgoParticle.cycle_phase
+    virtualargofleet.app_parcels.ArgoParticle.cycle_number
+    virtualargofleet.app_parcels.ArgoParticle.cycle_age
+    virtualargofleet.app_parcels.ArgoParticle.drift_age
+    virtualargofleet.app_parcels.ArgoParticle.in_water
 
     virtualargofleet.app_parcels.ArgoParticle_exp
     virtualargofleet.app_parcels.ArgoFloatKernel_exp
+    virtualargofleet.app_parcels.ArgoParticle_exp.cycle_phase
+    virtualargofleet.app_parcels.ArgoParticle_exp.cycle_number
+    virtualargofleet.app_parcels.ArgoParticle_exp.cycle_age
+    virtualargofleet.app_parcels.ArgoParticle_exp.drift_age
+    virtualargofleet.app_parcels.ArgoParticle_exp.in_water
+    virtualargofleet.app_parcels.ArgoParticle_exp.in_area
