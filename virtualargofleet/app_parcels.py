@@ -35,7 +35,7 @@ class ArgoParticle(JITParticle):
 
 
 def ArgoFloatKernel(particle, fieldset, time):
-    """Default kernel that mimics an Argo float.
+    """Default kernel to simulate an Argo float cycle
 
     It only takes (particle, fieldset, time) as arguments.
 
@@ -166,7 +166,7 @@ class ArgoParticle_exp(ArgoParticle):
 
 
 def ArgoFloatKernel_exp(particle, fieldset, time):
-    """Argo float kernel that is able to temporarily change its mission parameters in a specific geographical area
+    """Argo float kernel to simulate an Argo float cycle with change of mission parameters in a specific geographical area
 
     Parameters
     ----------

@@ -20,6 +20,7 @@ But first, let's import the usual suspects:
    from datetime import timedelta
    from virtualargofleet import Velocity, FloatConfiguration
 
+.. _preparation_deployment:
 
 Deployment plan
 ---------------
@@ -41,6 +42,7 @@ Example:
    # Define the deployment plan as a dictionary:
    my_plan = {'lat': lat, 'lon': lon, 'time': tim}
 
+.. _preparation_velocity:
 
 Velocity field
 --------------
@@ -93,7 +95,9 @@ Currently, VirtualFleet supports the following values for the ``model`` options 
 Argo floats mission parameters
 ------------------------------
 
-You also need to define what are the float's mission configuration parameters. **The VirtualFleet simulator takes a simple dictionary with parameters as input**. But, again, VirtualFleet provides the convenient utility class :class:`FloatConfiguration` to make things easier.
+To define the float mission configuration parameters, **VirtualFleet takes a simple dictionary with parameters as input**. The virtual float cycle and the simplified associated mission parameters are illustrated :numref:`figure %s <cycle-schematic>`. The minimal set of parameters to provide is: ``parking_depth``, ``profile_depth``, ``vertical_speed``, ``cycle_duration`` and ``life_expectancy``.
+
+VirtualFleet provides the convenient utility class :class:`FloatConfiguration` to make things easier. It allows to simply load a default configuration and can be passed directly to a :class:`VirtualFleet` instance.
 
 You can start with a *default* configuration like this:
 
@@ -110,7 +114,7 @@ You can start with a *default* configuration like this:
    - profile_depth (Maximum profile depth): 2000.0 [m]
    - vertical_speed (Vertical profiling speed): 0.09 [m/s]
 
-or you can use a specific float cycle mission (data are retrieved from the `Euro-Argo meta-data API <https://fleetmonitoring.euro-argo.eu/swagger-ui.html>`__):
+or you can fetch online a specific float cycle mission (data are retrieved from the `Euro-Argo meta-data API <https://fleetmonitoring.euro-argo.eu/swagger-ui.html>`__):
 
 .. code:: python
 
@@ -131,14 +135,16 @@ Float configurations can be saved in json files:
 
    cfg.to_json("myconfig.json")
 
-This can be useful for later re-use:
+This can be useful for later re-use because you can load a configuration from such a file:
 
 .. code:: python
 
    cfg = FloatConfiguration("myconfig.json")
 
-`Examples of such json files can be found in here <https://github.com/euroargodev/VirtualFleet/tree/master/virtualargofleet/assets>`__.
+`Examples of such json files can be found in this folder <https://github.com/euroargodev/VirtualFleet/tree/master/virtualargofleet/assets>`__.
 
-The schematic below illustrate a virtual float cycle and the mission parameters to provide to a :class:`VirtualFleet` instance:
+Once you created a :class:`FloatConfiguration` instance, you can modify one or more of the parameter values with the ``update`` method like this:
 
-.. image:: ../_static/VirtualFloat_Cycle_Schematic.png
+.. code:: python
+
+    cfg.update('parking_depth', 500)

@@ -5,13 +5,13 @@ VirtualFleet python library
 
 |lifecycle| |License|  |Gitter|
 
-
 Documentation
--------------
+^^^^^^^^^^^^^
 
 **Getting Started**
 
 * :doc:`install`
+* :doc:`intro`
 * :doc:`Usage <usage/index>`
 * :doc:`Examples <examples/index>`
 
@@ -23,13 +23,6 @@ Documentation
 * :doc:`api`
 
 
-.. _why:
-
-Why VirtualFleet ?
-==================
-
-The optimisation of the Argo array is quite complex to determine in specific regions, where the local ocean dynamic shifts away from *standard* large scale open ocean. These regions are typically the Boundary Currents where turbulence is more significant than anywhere else, and Polar regions where floats can temporarily evolve under sea-ice. **Virtual Fleet** aims to help the Argo program to optimise floats deployment and programming in such regions.
-
 
 .. toctree::
     :maxdepth: 2
@@ -37,6 +30,7 @@ The optimisation of the Argo array is quite complex to determine in specific reg
     :caption: Getting Started
 
     install
+    intro
     usage/index
     examples/index
 

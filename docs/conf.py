@@ -172,6 +172,9 @@ autosummary_generate = True
 numpydoc_class_members_toctree = True
 numpydoc_show_class_members = False
 
+# Enable numref
+numfig = True
+
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
 add_module_names = False
