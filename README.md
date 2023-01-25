@@ -1,10 +1,10 @@
-|          <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture_tight.png" alt="VirtualFleet logo" width="400"><br>``Virtual Fleet`` is a Python package to compute and analyse simulations of virtual Argo float trajectories.           |
+|           <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/img/repo_picture_tight.png" alt="VirtualFleet logo" width="400"><br>``VirtualFleet`` is a Python package to compute and analyse simulations of virtual Argo float trajectories.           |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
 |[![](https://img.shields.io/readthedocs/virtualfleet?logo=readthedocs)](https://virtualfleet.readthedocs.io) [![Gitter](https://badges.gitter.im/Argo-floats/virtual-fleet.svg)](https://gitter.im/Argo-floats/virtual-fleet?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) |
 
 Using a 3D velocity fields, program your own Argo floats behaviour, set up a deployment plan and simulate trajectories (and sampling) of your virtual fleet of Argo floats.
 
-**VirtualFleet** uses [Parcels](http://oceanparcels.org/) to simulate Argo floats and to compute trajectories.  
+**VirtualFleet** uses [Parcels](http://oceanparcels.org/) as a Lagrangian framework to simulate Argo floats and to compute trajectories.  
 
 Check out the complete documentation here: https://virtualfleet.readthedocs.io
 
