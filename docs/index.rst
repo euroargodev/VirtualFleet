@@ -13,7 +13,7 @@ Documentation
 * :doc:`install`
 * :doc:`intro`
 * :doc:`Usage <usage/index>`
-* :doc:`Examples <examples/index>`
+* :doc:`Applications <applications/index>`
 
 
 **Help & reference**
@@ -32,7 +32,7 @@ Documentation
     install
     intro
     usage/index
-    examples/index
+    applications/index
 
 .. toctree::
     :maxdepth: 2
