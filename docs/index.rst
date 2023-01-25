@@ -1,9 +1,8 @@
 VirtualFleet python library
 ===========================
+|lifecycle| |License|  |Gitter|
 
 **virtualargofleet** is a python library dedicated to compute and analyse trajectory simulations of virtual Argo floats.
-
-|lifecycle| |License|  |Gitter|
 
 Documentation
 ^^^^^^^^^^^^^
@@ -22,7 +21,21 @@ Documentation
 * :doc:`whats-new`
 * :doc:`api`
 
+.. raw:: html
 
+   <br>
+
+
+This software is developed by:
+
+.. image:: https://github.com/euroargodev/euroargodev.github.io/raw/master/img/logo/logo-lops-big.png
+    :height: 75px
+
+.. image:: https://github.com/euroargodev/euroargodev.github.io/raw/master/img/logo/Logo_Ifremer.jpg
+    :height: 75px
+
+.. image:: https://github.com/euroargodev/euroargodev.github.io/raw/master/img/logo/ArgoFrance-logo_banner-color.png
+    :height: 75px
 
 .. toctree::
     :maxdepth: 2
@@ -42,7 +55,6 @@ Documentation
     what_is_argo
     whats-new
     api
-
 
 .. |Documentation| image:: https://img.shields.io/static/v1?label=&message=Read%20the%20documentation&color=blue&logo=read-the-docs&logoColor=white
    :target: https://virtualfleet.readthedocs.io
