@@ -7,8 +7,8 @@ What's New
 
 |pypi dwn|
 
-v0.3.0 (XX Jan. 2023)
-----------------------
+v0.3.0 (25 Jan. 2023)
+---------------------
 By `G. Maze <http://www.github.com/gmaze>`_ and `K. Balem <http://www.github.com/quai20>`_.
 
 This last release is a major one. It introduces new features and breaking changes in the API.
@@ -94,7 +94,7 @@ By `K. Balem <http://www.github.com/quai20>`_
 
 This is the first release of Virtual Fleet with a single kernel (type of virtual Argo float) available and all its parameters are set internally.
 
-.. |pypi dwn| image:: https://img.shields.io/pypi/dm/virtualfleet?label=Pypi%20downloads
+.. |pypi dwn| image:: https://img.shields.io/pypi/dm/VirtualFleet?label=Pypi%20downloads
    :target: //pypi.org/project/virtualfleet/
 .. |conda dwn| image:: https://img.shields.io/conda/dn/conda-forge/virtualfleet?label=Conda%20downloads
    :target: //anaconda.org/conda-forge/virtualfleet

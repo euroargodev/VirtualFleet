@@ -1,6 +1,8 @@
 VirtualFleet python library
 ===========================
-|lifecycle| |License|  |Gitter|
+|zenodo| |lifecycle| |Gitter|
+
+|License| |PyPI|
 
 **VirtualFleet** is a python library dedicated to compute and analyse trajectory simulations of virtual Argo floats.
 
@@ -54,6 +56,9 @@ This software is developed by:
     roadmap
     api
 
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7568985.svg
+   :target: https://doi.org/10.5281/zenodo.7568985
+
 .. |Documentation| image:: https://img.shields.io/static/v1?label=&message=Read%20the%20documentation&color=blue&logo=read-the-docs&logoColor=white
    :target: https://virtualfleet.readthedocs.io
 
@@ -67,3 +72,6 @@ This software is developed by:
 
 .. |lifecycle| image:: https://img.shields.io/badge/lifecycle-experimental-orange.svg
    :target: https://www.tidyverse.org/lifecycle/#experimental
+
+.. |PyPI| image:: https://img.shields.io/pypi/v/virtualfleet
+   :target: //pypi.org/project/virtualfleet/
