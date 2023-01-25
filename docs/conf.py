@@ -306,7 +306,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'virtualfleet', u'virtualfleet Documentation',
-     "virtualfleet Developers", 'virtualfleet', 'A Python package to make and analyse simulations of virtual Argo float trajectories',
+     "virtualfleet Developers", 'virtualfleet', 'A Python package to compute and analyse simulations of virtual Argo float trajectories',
      'Miscellaneous'),
 ]
 

@@ -41,7 +41,8 @@ class VirtualFleet:
                  mission: Union[dict, FloatConfiguration],
                  isglobal: bool=False,
                  **kwargs):
-        """
+        """Create an Argo Virtual Fleet simulator
+
         Parameters
         ----------
         plan: dict
@@ -193,7 +194,7 @@ class VirtualFleet:
 
     @property
     def ParticleSet(self):
-        """Internal instance of a ParticleSet
+        """Return ParticleSet
 
         Returns
         -------
@@ -203,7 +204,7 @@ class VirtualFleet:
 
     @property
     def fieldset(self):
-        """Internal instance of a FieldSet
+        """Return FieldSet
 
         Returns
         -------
@@ -231,14 +232,13 @@ class VirtualFleet:
 
         Parameters
         ----------
-        duration: timedelta,
+        duration: :class:`datetime.timedelta`,
             Length of the simulation
-            Eg: timedelta(days=365)
 
-        step: timedelta, default timedelta(minutes=5)
+        step: :class:`datetime.timedelta`, default=5 minutes
             Time step for the computation
 
-        record: timedelta, default timedelta(hours=1)
+        record: :class:`datetime.timedelta`, default=1 hours
             Time step for writing the output
 
         output: bool, default=False

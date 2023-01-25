@@ -21,6 +21,8 @@ All results were described in the supplement_ for D2.3_. For the most recent ver
 
 This supplement document includes recommendations for the boundary current of interest based on trajectories of virtual argo floats performed with the **VirtualFleet** software.
 
+.. _earise-gs:
+
 Gulf Stream Extension
 ---------------------
 All results are published on this *public* repository: https://github.com/euroargodev/VirtualFleet_GulfStream

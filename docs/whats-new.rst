@@ -51,7 +51,7 @@ where you will note the added properties ``area_*``:
           - profile_depth (Maximum profile depth): 2000.0 [m]
           - vertical_speed (Vertical profiling speed): 0.09 [m/s]
 
-Passing this specific :class:`FloatConfiguration` instance to a :class:`VirtualFleet` will automatically select the appropriate Argo float parcel kernels (:class:`app_parcels.ArgoFloatKernel_exp`). This new float type was developed for the `EA-RISE WP2.3 Gulf-Stream experiment <https://github.com/euroargodev/VirtualFleet_GulfStream>`__.
+Passing this specific :class:`FloatConfiguration` instance to a :class:`VirtualFleet` will automatically select the appropriate Argo float parcel kernels (:class:`app_parcels.ArgoFloatKernel_exp`). This new float type was developed for the :ref:`EA-RISE WP2.3 Gulf-Stream experiment <earise-gs>`.
 
 - All Argo float types (``default`` and ``local-change``) now come with a proper cycle number property. This makes much easier the tracking of the float profiles.
 
@@ -64,11 +64,11 @@ Passing this specific :class:`FloatConfiguration` instance to a :class:`VirtualF
 **Breaking changes**
 
 - Huge internal refactoring, with proper submodule assignment !
-- ``VelocityField`` now refers to :class:`VelocityField`, while the high-level function to work with known velocity fields is :meth:`Velocity`.
+- The former ``VelocityField`` function to work with known velocity fields is now :meth:`Velocity`. The new :class:`VelocityField` refers to the class used to manage a velocity field.
 - Options in :class:`VirtualFleet`:
 
-  - instantiation option named ``vfield`` has been replaced by ``fieldset`` and now must take a :class:`parcels.fieldset.FieldSet` or a :class:`VelocityField` instance.
-  - the simulate method have been renamed to be more explicit and now takes timedelta as values, instead of mixed/confusing integer units.
+  - instantiation argument ``vfield`` has been replaced by ``fieldset`` and now must take a :class:`parcels.fieldset.FieldSet` or a :class:`VelocityField` instance.
+  - the :meth:`VirtualFleet.simulate` method has been refactored to use more explicit arguments and now takes :class:`datetime.timedelta` as values, instead of mixed/confusing integer units.
 
 
 v0.2.0 (30 Aug. 2021)
