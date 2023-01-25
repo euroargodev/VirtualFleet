@@ -13,17 +13,14 @@ Documentation
 * :doc:`intro`
 * :doc:`Usage <usage/index>`
 * :doc:`Applications <applications/index>`
+* :doc:`what_is_argo`
 
 
 **Help & reference**
 
-* :doc:`what_is_argo`
 * :doc:`whats-new`
+* :doc:`roadmap`
 * :doc:`api`
-
-.. raw:: html
-
-   <br>
 
 
 This software is developed by:
@@ -46,14 +43,15 @@ This software is developed by:
     intro
     usage/index
     applications/index
+    what_is_argo
 
 .. toctree::
     :maxdepth: 2
     :hidden:
     :caption: Help & reference
 
-    what_is_argo
     whats-new
+    roadmap
     api
 
 .. |Documentation| image:: https://img.shields.io/static/v1?label=&message=Read%20the%20documentation&color=blue&logo=read-the-docs&logoColor=white
