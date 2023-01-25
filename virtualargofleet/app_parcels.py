@@ -1,3 +1,6 @@
+"""
+Kernels are inspired from: https://nbviewer.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Argofloats.ipynb
+"""
 import numpy as np
 from parcels import JITParticle, Variable
 import logging
@@ -8,42 +11,53 @@ log = logging.getLogger("virtualfleet.parcels")
 
 
 class ArgoParticle(JITParticle):
-    """ Internal class used by parcels to add variables to particle kernel
+    """ Default class to represent an Argo float
 
-    Inherit from :class:`parcels.JITParticle`
+    :class:`ArgoParticle` inherits from :class:`parcels.particle.JITParticle`.
+
+    A :class:`.VirtualFleet` will create and work with a :class:`parcels.particleset.particlesetsoa.ParticleSetSOA`
+    of this class.
 
     Returns
     -------
-    :class:`parcels.particle.JITParticle``
+    :class:`parcels.particle.JITParticle`
     """
-    # Phase of cycle: init_descend = 0, drift = 1, profile_descend = 2, profile_ascend = 3, transmit = 4
     cycle_phase = Variable('cycle_phase', dtype=np.int32, initial=0, to_write=True)
+    """Cycle phase (init_descend = 0, drift = 1, profile_descend = 2, profile_ascend = 3, transmit = 4)"""
     cycle_number = Variable('cycle_number', dtype=np.int32, initial=1, to_write=True)  # 1-based
+    """Cycle number (starts at 1)"""
     cycle_age = Variable('cycle_age', dtype=np.float32, initial=0., to_write=True)
+    """Elapsed time since the beginning of the current cycle"""
     drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=False)
+    """Elapsed time since the beginning of the drifting phase"""
     in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=False)
+    """Boolean indicating if the virtual float is in land (0) or water (1), used to detect grounding, based on fieldset.mask"""
 
 
 def ArgoFloatKernel(particle, fieldset, time):
-    """This is the kernel definition that mimics an Argo float.
+    """Default kernel to simulate an Argo float cycle
 
-    It can only have (particle, fieldset, time) as arguments. So missions parameters are passed as constants through the fieldset.
+    It only takes (particle, fieldset, time) as arguments.
+
+    Virtual float missions parameters are passed as attributes to the fieldset (see below).
+
+    This function will be compiled as a :class:`parcels.kernel.kernelsoa.KernelSOA` at run time.
 
     Parameters
     ----------
-    particle:
+    particle: :class:`ArgoParticle`
+        An instance of virtual Argo float
     fieldset: :class:`parcels.fieldset.FieldSet`
-        FieldSet class instance that holds hydrodynamic data needed to execute particles
-    time:
+        A FieldSet class instance that holds hydrodynamic data needed to transport virtual floats. This instance must
+        also have the following attributes:
 
-    Returns
-    -------
-    :class:`parcels.kernels`
+        - ``parking_depth``, ``profile_depth``, ``vertical_speed``, ``cycle_duration``, ``life_expectancy``
+    time
     """
     driftdepth = fieldset.parking_depth
     maxdepth = fieldset.profile_depth
     mindepth = 1  # not too close to the surface so that particle doesn't go above it
-    vertical_speed = fieldset.v_speed  # in m/s
+    v_speed = fieldset.vertical_speed  # in m/s
     cycletime = fieldset.cycle_duration * 3600  # has to be in seconds
     particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
@@ -53,14 +67,14 @@ def ArgoFloatKernel(particle, fieldset, time):
         verbose_print = True
 
     # Compute drifting time so that the cycletime is respected:
-    # Time to descent to parking (mindepth to driftdepth at vertical_speed)
-    transit = (driftdepth - mindepth) / vertical_speed
-    # Time to descent to profile depth (driftdepth to maxdepth at vertical_speed)
-    transit += (maxdepth - driftdepth) / vertical_speed
-    # Time to ascent (maxdepth to mindepth at vertical_speed)
-    transit += (maxdepth - mindepth) / vertical_speed
-    drifttime = cycletime - transit - 15*60  # Remove 15 minutes for surface transmission
-    drifttime = math.floor(drifttime / particle.dt) * particle.dt  # Should be a multiple of dt
+    # Time to descent to parking (mindepth to driftdepth at v_speed)
+    transit = (driftdepth - mindepth) / v_speed
+    # Time to descent to profile depth (driftdepth to maxdepth at v_speed)
+    transit += (maxdepth - driftdepth) / v_speed
+    # Time to ascent (maxdepth to mindepth at v_speed)
+    transit += (maxdepth - mindepth) / v_speed
+    drift_time = cycletime - transit - 15*60  # Remove 15 minutes for surface transmission
+    drift_time = math.floor(drift_time / particle.dt) * particle.dt  # Should be a multiple of dt
 
 
     # Grounding management : Since parcels turns NaN to Zero within our domain, we have to manage
@@ -87,31 +101,31 @@ def ArgoFloatKernel(particle, fieldset, time):
 
     # CYCLE MANAGEMENT
     if particle.cycle_phase == 0:
-        # Phase 0: Sinking with vertical_speed until depth is driftdepth
-        particle.depth += vertical_speed * particle.dt
+        # Phase 0: Sinking with v_speed until depth is driftdepth
+        particle.depth += v_speed * particle.dt
         particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
         if particle.depth >= driftdepth:
             particle.cycle_phase = 1
 
     elif particle.cycle_phase == 1:
-        # Phase 1: Drifting at depth for drifttime seconds
+        # Phase 1: Drifting at depth for drift_time seconds
         particle.drift_age += particle.dt
-        if particle.drift_age >= drifttime:
+        if particle.drift_age >= drift_time:
             particle.drift_age = 0  # reset drift_age for next cycle
             particle.cycle_phase = 2
 
     elif particle.cycle_phase == 2:
         # Phase 2: Sinking further to maxdepth
-        particle.depth += vertical_speed * particle.dt
+        particle.depth += v_speed * particle.dt
         particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
         if particle.depth >= maxdepth:
             particle.cycle_phase = 3
 
     elif particle.cycle_phase == 3:
-        # Phase 3: Rising with vertical_speed until at surface
-        particle.depth -= vertical_speed * particle.dt
+        # Phase 3: Rising with v_speed until at surface
+        particle.depth -= v_speed * particle.dt
         particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
         if particle.depth <= mindepth:
@@ -136,44 +150,40 @@ def ArgoFloatKernel(particle, fieldset, time):
         particle.cycle_age += particle.dt  # update cycle_age
 
 
-class ArgoParticle_exp(JITParticle):
-    """ Internal class used by parcels to add variables to particle kernel
+class ArgoParticle_exp(ArgoParticle):
+    """ Class used to represent an Argo float that can temporarily change its mission parameters
 
-    Inherit from :class:`parcels.JITParticle`
+    This class extends :class:`ArgoParticle`.
+
+    To be used by the :class:`ArgoFloatKernel_exp` kernel.
 
     Returns
     -------
-    :class:`parcels.particle.JITParticle``
+    :class:`parcels.particle.JITParticle`
     """
-    # Phase of cycle: init_descend = 0, drift = 1, profile_descend = 2, profile_ascend = 3, transmit = 4
-    cycle_phase = Variable('cycle_phase', dtype=np.int32, initial=0, to_write=True)
-    cycle_number = Variable('cycle_number', dtype=np.int32, initial=1, to_write=True)  # 1-based
-    cycle_age = Variable('cycle_age', dtype=np.float32, initial=0., to_write=True)
-    drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=False)
-    in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=False)
     in_area = Variable('in_area', dtype=np.float32, initial=0., to_write=False)
+    """Boolean indicating if the virtual float in the experiment area (1) or not (0)"""
 
 
 def ArgoFloatKernel_exp(particle, fieldset, time):
-    """This is the kernel definition that mimics an Argo float.
-
-    It can only have (particle, fieldset, time) as arguments. So missions parameters are passed as constants through the fieldset.
+    """Argo float kernel to simulate an Argo float cycle with change of mission parameters in a specific geographical area
 
     Parameters
     ----------
-    particle:
+    particle: :class:`ArgoParticle_exp`
+        A virtual Argo float of 'local-change' type
     fieldset: :class:`parcels.fieldset.FieldSet`
-        FieldSet class instance that holds hydrodynamic data needed to execute particles
-    time:
+        A FieldSet class instance that holds hydrodynamic data needed to transport virtual floats. This instance must
+        also have the following attributes:
 
-    Returns
-    -------
-    :class:`parcels.kernels`
+        - parking_depth, profile_depth, vertical_speed, cycle_duration, life_expectancy, mask
+        - area_xmin, area_xmax, area_ymin, area_ymax, area_cycle_duration, area_parking_depth
+    time
     """
     driftdepth = fieldset.parking_depth
     maxdepth = fieldset.profile_depth
     mindepth = 1  # not too close to the surface so that particle doesn't go above it
-    vertical_speed = fieldset.v_speed  # in m/s
+    v_speed = fieldset.vertical_speed  # in m/s
     cycletime = fieldset.cycle_duration * 3600  # has to be in seconds
     particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
@@ -196,15 +206,14 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
         particle.in_area = 0
 
     # Compute drifting time so that the cycletime is respected:
-    # Time to descent to parking (mindepth to driftdepth at vertical_speed)
-    transit = (driftdepth - mindepth) / vertical_speed
-    # Time to descent to profile depth (driftdepth to maxdepth at vertical_speed)
-    transit += (maxdepth - driftdepth) / vertical_speed
-    # Time to ascent (maxdepth to mindepth at vertical_speed)
-    transit += (maxdepth - mindepth) / vertical_speed
-    drifttime = cycletime - transit - 15*60  # Remove 15 minutes for surface transmission
-    drifttime = math.floor(drifttime / particle.dt) * particle.dt  # Should be a multiple of dt
-
+    # Time to descent to parking (mindepth to driftdepth at v_speed)
+    transit = (driftdepth - mindepth) / v_speed
+    # Time to descent to profile depth (driftdepth to maxdepth at v_speed)
+    transit += (maxdepth - driftdepth) / v_speed
+    # Time to ascent (maxdepth to mindepth at v_speed)
+    transit += (maxdepth - mindepth) / v_speed
+    drift_time = cycletime - transit - 15*60  # Remove 15 minutes for surface transmission
+    drift_time = math.floor(drift_time / particle.dt) * particle.dt  # Should be a multiple of dt
 
     # Grounding management : Since parcels turns NaN to Zero within our domain, we have to manage
     # groundings in another way that the recovery of deleted particles (below)
@@ -229,31 +238,31 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
 
     # CYCLE MANAGEMENT
     if particle.cycle_phase == 0:
-        # Phase 0: Sinking with vertical_speed until depth is driftdepth
-        particle.depth += vertical_speed * particle.dt
+        # Phase 0: Sinking with v_speed until depth is driftdepth
+        particle.depth += v_speed * particle.dt
         particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
         if particle.depth >= driftdepth:
             particle.cycle_phase = 1
 
     elif particle.cycle_phase == 1:
-        # Phase 1: Drifting at depth for drifttime seconds
+        # Phase 1: Drifting at depth for drift_time seconds
         particle.drift_age += particle.dt
-        if particle.drift_age >= drifttime:
+        if particle.drift_age >= drift_time:
             particle.drift_age = 0  # reset drift_age for next cycle
             particle.cycle_phase = 2
 
     elif particle.cycle_phase == 2:
         # Phase 2: Sinking further to maxdepth
-        particle.depth += vertical_speed * particle.dt
+        particle.depth += v_speed * particle.dt
         particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
         if particle.depth >= maxdepth:
             particle.cycle_phase = 3
 
     elif particle.cycle_phase == 3:
-        # Phase 3: Rising with vertical_speed until at surface
-        particle.depth -= vertical_speed * particle.dt
+        # Phase 3: Rising with v_speed until at surface
+        particle.depth -= v_speed * particle.dt
         particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
         if particle.depth <= mindepth:

@@ -18,7 +18,7 @@ from .app_parcels import (
     ArgoFloatKernel_exp,
     PeriodicBoundaryConditionKernel,
 )
-from .velocity_helpers import VelocityFieldProto
+from .velocity_helpers import VelocityField
 from .utilities import SimulationSet, FloatConfiguration
 from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo
 from packaging import version
@@ -30,29 +30,31 @@ log = logging.getLogger("virtualfleet.virtualfleet")
 
 
 class VirtualFleet:
-    """Argo Virtual Fleet simulator helper.
+    """Argo Virtual Fleet simulator.
 
-    This class should make it easier to process and analyse a simulation.
+    This class makes it easy to process and analyse a simulation.
 
     """
     def __init__(self,
                  plan: dict,
-                 fieldset: Union[FieldSet, VelocityFieldProto],
+                 fieldset: Union[FieldSet, VelocityField],
                  mission: Union[dict, FloatConfiguration],
                  isglobal: bool=False,
                  **kwargs):
-        """
+        """Create an Argo Virtual Fleet simulator
+
         Parameters
         ----------
         plan: dict
-            A dictionary with the deployment plan coordinates as keys: 'lat', 'lon', 'time', ['depth']
+            A dictionary with the deployment plan coordinates as keys: ``lat``, ``lon``, ``time``, [``depth``]
             Each value are Numpy arrays describing where Argo floats are deployed.
             Depth is optional, if not provided it will be set to 1m.
-        fieldset: :class:`parcels.fieldset` or :class:`VelocityFieldProto`
+        fieldset: :class:`parcels.fieldset.FieldSet` or :class:`VelocityField`
             A velocity field
         mission: dict or :class:`FloatConfiguration`
-            A dictionary with at least the Argo float mission parameters: 'parking_depth', 'profile_depth', 'vertical_speed' and 'cycle_duration'
-        isglobal: False
+            A dictionary with at least the following Argo float mission parameters: ``parking_depth``, ``profile_depth``, ``vertical_speed`` and ``cycle_duration``
+        isglobal: bool, optional, default=False
+            A boolean indicating weather the velocity field is global or not
 
         """
         self._isglobal = bool(isglobal)
@@ -95,7 +97,7 @@ class VirtualFleet:
                              "option to pass on the Ocean Parcels fieldset.")
 
         # Velocity/Hydrodynamic field:
-        if isinstance(fieldset, VelocityFieldProto):  # be nice when we forget to set the correct input
+        if isinstance(fieldset, VelocityField):  # be nice when we forget to set the correct input
             fieldset = fieldset.fieldset
         if not isinstance(fieldset, FieldSet):
             raise TypeError("The `fieldset` argument must be a `FieldSet` Parcels or `VelocityField` instance")
@@ -103,7 +105,7 @@ class VirtualFleet:
         # Forward mission parameters to the simulation through fieldset
         fieldset.add_constant("parking_depth", mission["parking_depth"])
         fieldset.add_constant("profile_depth", mission["profile_depth"])
-        fieldset.add_constant("v_speed", mission["vertical_speed"])
+        fieldset.add_constant("vertical_speed", mission["vertical_speed"])
         fieldset.add_constant("cycle_duration", mission["cycle_duration"])
         fieldset.add_constant("life_expectancy", mission["life_expectancy"])
 
@@ -192,7 +194,7 @@ class VirtualFleet:
 
     @property
     def ParticleSet(self):
-        """Container class for storing particle and executing kernel over them.
+        """Return ParticleSet
 
         Returns
         -------
@@ -202,7 +204,7 @@ class VirtualFleet:
 
     @property
     def fieldset(self):
-        """Container class for storing velocity FieldSet
+        """Return FieldSet
 
         Returns
         -------
@@ -212,9 +214,9 @@ class VirtualFleet:
         # return self._parcels['fieldset']
 
     def plot_positions(self):
-        """Method to show where are Argo Floats
+        """Plot the last position of virtual Argo Floats
 
-        Using parcels psel builtin show function for now
+        Use :meth:`parcels.particleset.baseparticleset.BaseParticleSet.show`
         """
         self._parcels['ParticleSet'].show()
 
@@ -228,26 +230,29 @@ class VirtualFleet:
                  **kwargs):
         """Execute a Virtual Fleet simulation
 
-        Inputs
-        ------
-        duration: timedelta,
+        Parameters
+        ----------
+        duration: :class:`datetime.timedelta`,
             Length of the simulation
-            Eg: timedelta(days=365)
 
-        step: timedelta, default timedelta(minutes=5)
+        step: :class:`datetime.timedelta`, default=5 minutes
             Time step for the computation
 
-        record: timedelta, default timedelta(hours=1)
+        record: :class:`datetime.timedelta`, default=1 hours
             Time step for writing the output
 
         output: bool, default=False
             Should the simulation trajectories be saved on file or not
 
         output_file: str
-            Name of the netcdf file where to store simulation results
+            Name of the zarr file where to store simulation results
 
         output_folder: str
-            Name of folder where to store 'output_file'
+            Name of folder where to store the 'output_file' zarr archive
+
+        Returns
+        -------
+        self
         """
         def _validate(td, name='?', fallback='hours'):
             if not isinstance(td, datetime.timedelta):

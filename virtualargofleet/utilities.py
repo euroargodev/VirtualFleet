@@ -1,6 +1,5 @@
 import collections
 import warnings
-
 import numpy as np
 import xarray as xr
 from tqdm import tqdm
@@ -17,6 +16,7 @@ import platform
 import socket
 import psutil
 from packaging import version
+from typing import Union
 
 
 log = logging.getLogger("virtualfleet.utils")
@@ -75,7 +75,7 @@ class ConfigParam:
 class FloatConfiguration:
     """Float mission configuration manager
 
-    Create a default configuration and then possibly update parameter values or add new parameters
+    Create a default configuration and then possibly update parameter values or add new ones
 
     Can be used to create a virtual fleet, to save or load float configurations
 
@@ -94,13 +94,13 @@ class FloatConfiguration:
 
     """
 
-    def __init__(self, name='default', *args, **kwargs):
+    def __init__(self, name: Union[str, list] = 'default', *args, **kwargs):
         """
 
         Parameters
         ----------
         name: str
-            Name of a known configuration to load
+            Name of the configuration to load
         """
         self._params_dict = {}
 
@@ -169,7 +169,7 @@ class FloatConfiguration:
 
     @property
     def params(self):
-        """Return the list of parameters"""
+        """List of parameter keys"""
         return sorted([self._params_dict[p].key for p in self._params_dict.keys()])
 
     @params.setter
@@ -180,7 +180,16 @@ class FloatConfiguration:
             self._params_dict[param.key] = param
             self._params_dict = collections.OrderedDict(sorted(self._params_dict.items()))
 
-    def update(self, key, new_value):
+    def update(self, key: str, new_value):
+        """Update value to an existing parameter
+
+        Parameters
+        ----------
+        key: str
+            Name of the parameter to update
+        new_value:
+            New value to attribute to this parameter
+        """
         if key not in self.params:
             raise ValueError("Invalid parameter '%s' for configuration '%s'" % (key, self.name))
         self._params_dict[key].value = new_value
@@ -188,14 +197,26 @@ class FloatConfiguration:
 
     @property
     def mission(self):
-        """Return Float configuration as a dictionary"""
+        """Return the float configuration as a dictionary to be used by a :class:`VirtualFleet`"""
         mission = {}
         for key in self._params_dict.keys():
             mission[key] = self._params_dict[key].value
         return mission
 
-    def to_json(self, file_name=None):
-        """Return or save json dump of configuration"""
+    def to_json(self, file_name: str=None):
+        """Return or save json dump of configuration
+
+        If no file name is provided, just return the configuration as a json structure
+
+        Parameters
+        ----------
+        file_name: str, default:None, optional
+            Name of the json file to write configuration to.
+
+        Returns
+        -------
+        Nothing or json string
+        """
         data = {}
         for p in self._params_dict.keys():
             data = {**data, **self._params_dict[p].to_json()}
@@ -217,7 +238,7 @@ class FloatConfiguration:
 
     @property
     def tech(self):
-        """Return Float configuration as a dictionary using Argo technical keys"""
+        """Float configuration as a dictionary using Argo technical keys"""
         mission = {}
         for key in self._params_dict.keys():
             if self._params_dict[key].meta['techkey'] != '':
@@ -283,13 +304,27 @@ def splitonprofiles(ds, N = 1):
     return sub_grp
 
 
-def simu2index(ds, N = 1):
-    """Convert a simulation dataset obs/traj to an Argo index of profiles
+def simu2index(ds: xr.Dataset, N: int = 1):
+    """Convert a trajectory simulation :class:`xarray.Dataset` to an Argo index of profiles
 
-    Profiles are identified using the 'cycle_number' variable if available or 'cycle_phase' otherwise.
+    Profiles are identified using the ``cycle_number`` dataset variable. A profile is identified if the last
+    observation of a cycle_number sequence is in cycle_phase 3 or 4.
 
-    A profile is identified if the last obs of a cycle_number sequence is in cycle_phase 3 or 4.
-    A profile is identified if the last obs of a cycle_phase==3 sequence is separated by N days from the next sequence.
+    This function remains compatible with older versions of trajectory netcdf files without the ``cycle_number``
+    variable. In this case, a profile is identified if the last observation of a cycle_phase==3 sequence is separated
+    by N days from the next sequence.
+
+    Parameters
+    ----------
+    ds: :class:`xarray.Dataset`
+        The simulation trajectories dataset
+    N: int, optional
+        The minimal time lag between cycle_phase sequences to be identified as a new profile. This will be removed in
+        the future when we'll drop support for old netcdf outputs.
+    Returns
+    -------
+    df: :class:`pandas.DataFrame`
+        The profiles index
     """
     trajdim = 'trajectory' if version.parse(ds.attrs['parcels_version']) >= version.parse("2.4.0") else 'traj'
 
@@ -392,7 +427,7 @@ def simu2index_par(ds):
     return df
 
 
-def simu2csv(simu_file, index_file=None, df=None, engine=None):
+def simu2csv(simu_file: str, index_file: str=None, df: pd.DataFrame=None):
     """Save simulation results profile index to file, as Argo index
 
     Argo profile index can be loaded with argopy.
@@ -402,14 +437,14 @@ def simu2csv(simu_file, index_file=None, df=None, engine=None):
     simu_file: str
         Path to netcdf file of simulation results, to load profiles from
     index_file: str, optional
-        Path to csv file to write index to
-    df: :class:Pandas.Dataframe, optional
-        If provided, will use as profile index, otherwise, compute index from simu_file
+        Path to csv file to write index to. By default, it is set using the ``simu_file`` value.
+    df: :class:`pandas.DataFrame`, optional
+        If provided, will be used as the profile index, otherwise, compute index from ``simu_file``
 
     Returns
     -------
-    str
-        Path to Argo profile index
+    index_file: str
+        Path to the Argo profile index created
     """
     if index_file is None:
         file_name, file_extension = os.path.splitext(index_file)
@@ -454,13 +489,29 @@ def simu2csv(simu_file, index_file=None, df=None, engine=None):
     return index_file
 
 
-def set_WMO(ds, argo_index):
+def set_WMO(ds: xr.Dataset, argo_index: pd.DataFrame):
     """Identify virtual floats with their real WMO
+
+    This function will try to identify WMO from ``argo_index`` in the ``ds`` trajectories.
+
+    The Argo index must have at least the ``longitude`` and ``latitude`` variables.
+    It's assumed to be the deployment plan.
+
+    Real WMO numbers are identified as the closest floats from ``argo_index`` to the initial positions
+    of virtual floats from ``ds``.
 
     Parameters
     ----------
-    ds
-    argo_index
+    ds: :class:`xarray.Dataset`
+        The simulation trajectories dataset
+    argo_index: :class:`pandas.DataFrame`
+        The deployment plan profiles index
+
+    Returns
+    -------
+    ds: :class:`xarray.Dataset`
+        The simulation trajectories dataset with a new variable ``wmo``
+
     """
     ds['wmo'] = xr.DataArray(np.full((len(ds['traj']),), 0), dims='traj')
     wmos = []
@@ -479,17 +530,20 @@ def set_WMO(ds, argo_index):
     return ds
 
 
-def get_float_config(wmo, cyc=None):
-    """Download floats meta-data from EA API
+def get_float_config(wmo: int, cyc: int=None):
+    """Download float configuration using the Euro-Argo meta-data API
 
     Parameters
     ----------
-    wmo : int
-    cyc: None or int
+    wmo: int
+        The float WMO number
+    cyc: int, default: None
+        The specific cycle number to retrieve data from. If set to None, all cycles meta-data are fetched.
 
     Returns
     -------
-    pandas.DataFrame
+    :class:`pandas.DataFrame`
+        A dataframe with relevant float configuration parameters for 1 or more cycle numbers.
     """
     def id_mission(missionCycles, a_cyc):
         this_mission = None
