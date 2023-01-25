@@ -20,4 +20,9 @@ you can also try to work with the latest dev. version:
 Required dependencies
 ---------------------
 
-[to be specified]
+- numpy >= 1.18
+- pandas >= 1.1
+- xarray >= 2022.12
+- parcels >= 2.4.0
+- zarr >= 2.13.3
+- tqdm >= 4.64.1
