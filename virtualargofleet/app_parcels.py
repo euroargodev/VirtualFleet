@@ -31,37 +31,46 @@ class ArgoParticle(JITParticle):
     drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=False)
     """Elapsed time since the beginning of the drifting phase"""
     in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=False)
-    """Boolean indicating if the virtual float is in land (0) or water (1), used to detect grounding, based on fieldset.mask"""
-
+    """Boolean indicating if the virtual float is in land (0) or water (1), used to detect grounding, based on fieldset.mask"""    
+    # mission parameters, in this particle class, they remain unchanged
+    parking_depth = Variable('parking_depth', dtype=np.int32, initial=1000, to_write=False)
+    """particle mission parameter parking depth in m"""
+    profile_depth = Variable('profile_depth', dtype=np.int32, initial=2000, to_write=False)
+    """particle mission parameter profile depth in m"""
+    vertical_speed = Variable('vertical_speed', dtype=np.float32, initial=0.09, to_write=False)
+    """particle mission parameter vertical speed in m/s"""
+    cycle_duration = Variable('cycle_duration', dtype=np.int32, initial=240, to_write=False)
+    """particle mission parameter cycle duration in hours"""
+    life_expectancy = Variable('life_expectancy', dtype=np.int32, initial=200, to_write=False)
+    """particle mission parameter life expectancy in cycle"""
 
 def ArgoFloatKernel(particle, fieldset, time):
     """Default kernel to simulate an Argo float cycle
 
     It only takes (particle, fieldset, time) as arguments.
 
-    Virtual float missions parameters are passed as attributes to the fieldset (see below).
+    Virtual float missions parameters are passed as Variables to the particles.
 
     This function will be compiled as a :class:`parcels.kernel.kernelsoa.KernelSOA` at run time.
 
     Parameters
     ----------
     particle: :class:`ArgoParticle`
-        An instance of virtual Argo float
-    fieldset: :class:`parcels.fieldset.FieldSet`
-        A FieldSet class instance that holds hydrodynamic data needed to transport virtual floats. This instance must
-        also have the following attributes:
-
+        An instance of virtual Argo float. 
+        This instance must also have the following attributes:
         - ``parking_depth``, ``profile_depth``, ``vertical_speed``, ``cycle_duration``, ``life_expectancy``
+    fieldset: :class:`parcels.fieldset.FieldSet`
+        A FieldSet class instance that holds hydrodynamic data needed to transport virtual floats. 
     time
     """
-    driftdepth = fieldset.parking_depth
-    maxdepth = fieldset.profile_depth
+    driftdepth = particle.parking_depth
+    maxdepth = particle.profile_depth
     mindepth = 1  # not too close to the surface so that particle doesn't go above it
-    v_speed = fieldset.vertical_speed  # in m/s
-    cycletime = fieldset.cycle_duration * 3600  # has to be in seconds
+    v_speed = particle.vertical_speed  # in m/s
+    cycletime = particle.cycle_duration * 3600  # has to be in seconds
     particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
-    max_cycle_number = fieldset.life_expectancy
+    max_cycle_number = particle.life_expectancy
     verbose_print = False
     if fieldset.verbose_events == 1:
         verbose_print = True
