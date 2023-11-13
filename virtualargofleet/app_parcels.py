@@ -189,28 +189,28 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
         - area_xmin, area_xmax, area_ymin, area_ymax, area_cycle_duration, area_parking_depth
     time
     """
-    driftdepth = fieldset.parking_depth
-    maxdepth = fieldset.profile_depth
+    driftdepth = particle.parking_depth
+    maxdepth = particle.profile_depth
     mindepth = 1  # not too close to the surface so that particle doesn't go above it
-    v_speed = fieldset.vertical_speed  # in m/s
-    cycletime = fieldset.cycle_duration * 3600  # has to be in seconds
+    v_speed = particle.vertical_speed  # in m/s
+    cycletime = particle.cycle_duration * 3600  # has to be in seconds
     particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
-    max_cycle_number = fieldset.life_expectancy
+    max_cycle_number = particle.life_expectancy
     verbose_print = False
     if fieldset.verbose_events == 1:
         verbose_print = True
 
     # Adjust mission parameters if float enters in the experiment area:
-    xmin, xmax = fieldset.area_xmin, fieldset.area_xmax
-    ymin, ymax = fieldset.area_ymin, fieldset.area_ymax
+    xmin, xmax = particle.area_xmin, particle.area_xmax
+    ymin, ymax = particle.area_ymin, particle.area_ymax
     if particle.lat >= ymin and particle.lat <= ymax and particle.lon >= xmin and particle.lon <= xmax:
         if not particle.in_area:
             # if verbose_print:
             #     print("Field Warning : This float is entering the experiment area")
             particle.in_area = 1
-        cycletime = fieldset.area_cycle_duration * 3600  # has to be in seconds
-        driftdepth = fieldset.area_parking_depth
+        cycletime = particle.area_cycle_duration * 3600  # has to be in seconds
+        driftdepth = particle.area_parking_depth
     else:
         particle.in_area = 0
 

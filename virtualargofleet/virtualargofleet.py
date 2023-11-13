@@ -69,11 +69,15 @@ class VirtualFleet:
             self.deployment_plan['depth'] = np.full(self.deployment_plan['lat'].shape, 1.0)
 
         # Mission parameters:
-        if isinstance(mission,(list,tuple,np.ndarray)):
-            if len(mission)!=len(self.deployment_plan['lat']):
-                raise TypeError("When providing a `mission` array, it should be the same lenght as your `plan`")
-        else :
+        if not isinstance(mission,(list,tuple,np.ndarray)):
             mission = list([mission])
+            
+        if len(mission)!=len(self.deployment_plan['lat']):
+            if(len(mission)==1): #if mission's len is 1, apply to all floats
+                mission = np.repeat(mission,len(self.deployment_plan['lat']))
+            else:
+                raise TypeError("When providing a `mission` array, it should be the same lenght as your `plan`")
+        
         #
         for i in range(len(mission)):
             if isinstance(mission[i], FloatConfiguration):  # be nice when we forget to set the correct input
@@ -81,10 +85,13 @@ class VirtualFleet:
                 
             if not isinstance(mission[i], dict):
                 raise TypeError("The `mission` argument must be a dictionary or a `FloatConfiguration` instance")
-
-            for key in ['parking_depth', 'profile_depth', 'cycle_duration', 'vertical_speed']:
+            
+            # standard parameters
+            for key in ['parking_depth', 'profile_depth', 'cycle_duration', 'vertical_speed', 'life_expectancy']:
                 if key not in mission[i]:
                     raise ValueError("The 'mission' argument must have a '%s' key" % key)
+                
+            # Depending of the specific kernel used, we should check keys here
 
             if mission[i]['parking_depth'] < 0 or mission[i]['parking_depth'] > 6000:
                 raise ValueError('Parking depth must be in [0-6000] db')
@@ -114,6 +121,8 @@ class VirtualFleet:
        
         Particle = ArgoParticle
         FloatKernel = ArgoFloatKernel
+
+        # kernels should not be managed by key present in the mission configuration
 
         #if "area_cycle_duration" in mission:
         #    fieldset.add_constant("area_cycle_duration", mission["area_cycle_duration"])
