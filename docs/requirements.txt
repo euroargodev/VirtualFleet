@@ -15,7 +15,7 @@ sphinx-rtd-theme
 sphinx-book-theme
 # sphinx-bootstrap-theme
 
-parcels<2.3.0
+parcels>=3.0.0
 cgen
 pymbolic
 Pydap

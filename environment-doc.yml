@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python=3.8
   - xarray
-  - parcels>=2.4.0
+  - parcels>=3.0.0
   - scipy
   - netcdf4
   - dask
