@@ -1,7 +1,16 @@
 import numbers
 import warnings
+from packaging import version
+
 import parcels
-from parcels import ParticleSet, FieldSet, AdvectionRK4, ErrorCode
+from parcels import ParticleSet, FieldSet, AdvectionRK4
+
+if version.parse(parcels.__version__) <= version.parse("2.4.2"):
+    from parcels import ErrorCode
+elif version.parse(parcels.__version__) >= version.parse("3.0.0"):
+    from parcels.tools import FieldOutOfBoundError
+    from parcels.tools.statuscodes import FieldOutOfBoundSurfaceError
+
 import datetime
 from datetime import timedelta
 import os
@@ -21,7 +30,6 @@ from .app_parcels import (
 from .velocity_helpers import VelocityField
 from .utilities import SimulationSet, FloatConfiguration
 from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo
-from packaging import version
 import time
 from typing import Union
 
@@ -345,12 +353,19 @@ class VirtualFleet:
             "Starting Virtual Fleet simulation of %i days, with data recording every %f hours"
             % (duration.days, record.seconds/3600)
         )
+
+        if version.parse(parcels.__version__) >= version.parse("3.0.0"):
+            recovery = {FieldOutOfBoundError: DeleteParticleKernel,
+                        FieldOutOfBoundSurfaceError: DeleteParticleKernel}
+        else:
+            recovery = {ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
+                        ErrorCode.ErrorThroughSurface: DeleteParticleKernel}
+
         opts = {'runtime': duration,
                 'dt': step,
                 'verbose_progress': verbose_progress,
-                'recovery': {ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
-                             ErrorCode.ErrorThroughSurface: DeleteParticleKernel},
-                'output_file': None,
+                'recovery': recovery,
+        'output_file': None,
                 }
         if output:
             # log.info("Creating ParticleFile")e
