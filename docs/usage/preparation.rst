@@ -148,3 +148,22 @@ Once you created a :class:`FloatConfiguration` instance, you can modify one or m
 .. code:: python
 
     cfg.update('parking_depth', 500)
+
+If you want the same mission configuration for all your virtual floats, you can pass this configuration when instanciate a :class:`VirtualFleet` : 
+
+.. code:: python
+
+   VFleet = VirtualFleet(plan=my_plan, fieldset=VELfield.fieldset, mission=cfg.mission)
+
+But you can also customized the mission of each float by passing an array of mission configurations to the :class:`VirtualFleet` instance :
+
+.. code:: python
+
+   mission = [
+    FloatConfiguration('default').update('parking_depth', 100),
+    FloatConfiguration('default').update('parking_depth', 200),
+    FloatConfiguration('default').update('parking_depth', 500),
+    FloatConfiguration('default').update('parking_depth', 1000),
+    FloatConfiguration('default').update('parking_depth', 1500)
+   ]  
+   VFleet = VirtualFleet(plan=my_plan, fieldset=VELfield.fieldset, mission=mission)

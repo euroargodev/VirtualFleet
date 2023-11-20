@@ -38,7 +38,7 @@ class VirtualFleet:
     def __init__(self,
                  plan: dict,
                  fieldset: Union[FieldSet, VelocityField],
-                 mission: Union[dict, FloatConfiguration],
+                 mission: Union[dict, FloatConfiguration, list, np.ndarray, tuple],
                  isglobal: bool=False,
                  **kwargs):
         """Create an Argo Virtual Fleet simulator
@@ -51,7 +51,7 @@ class VirtualFleet:
             Depth is optional, if not provided it will be set to 1m.
         fieldset: :class:`parcels.fieldset.FieldSet` or :class:`VelocityField`
             A velocity field
-        mission: dict or :class:`FloatConfiguration`
+        mission: dict or :class:`FloatConfiguration` or list/array of those (then it should be the same length as plan arrays)
             A dictionary with at least the following Argo float mission parameters: ``parking_depth``, ``profile_depth``, ``vertical_speed`` and ``cycle_duration``
         isglobal: bool, optional, default=False
             A boolean indicating weather the velocity field is global or not
@@ -69,28 +69,45 @@ class VirtualFleet:
             self.deployment_plan['depth'] = np.full(self.deployment_plan['lat'].shape, 1.0)
 
         # Mission parameters:
-        if isinstance(mission, FloatConfiguration):  # be nice when we forget to set the correct input
-            mission = mission.mission
-        if not isinstance(mission, dict):
-            raise TypeError("The `mission` argument must be a dictionary or a `FloatConfiguration` instance")
+        if not isinstance(mission,(list,tuple,np.ndarray)):
+            mission = list([mission])
+            
+        if len(mission)!=len(self.deployment_plan['lat']):
+            if(len(mission)==1): #if mission's len is 1, apply to all floats
+                mission = np.repeat(mission,len(self.deployment_plan['lat']))
+            else:
+                raise TypeError("When providing a `mission` array, it should be the same lenght as your `plan`")
+        
+        #
+        for i in range(len(mission)):
+            if isinstance(mission[i], FloatConfiguration):  # be nice when we forget to set the correct input
+                mission[i] = mission[i].mission
+                
+            if not isinstance(mission[i], dict):
+                raise TypeError("The `mission` argument must be a dictionary or a `FloatConfiguration` instance")
+            
+            # standard parameters
+            for key in ['parking_depth', 'profile_depth', 'cycle_duration', 'vertical_speed', 'life_expectancy']:
+                if key not in mission[i]:
+                    raise ValueError("The 'mission' argument must have a '%s' key" % key)
+                
+            # Depending of the specific kernel used, we should check keys here
 
-        for key in ['parking_depth', 'profile_depth', 'cycle_duration', 'vertical_speed']:
-            if key not in mission:
-                raise ValueError("The 'mission' argument must have a '%s' key" % key)
+            if mission[i]['parking_depth'] < 0 or mission[i]['parking_depth'] > 6000:
+                raise ValueError('Parking depth must be in [0-6000] db')
 
-        if mission['parking_depth'] < 0 or mission['parking_depth'] > 6000:
-            raise ValueError('Parking depth must be in [0-6000] db')
+            if mission[i]['profile_depth'] < 0 or mission[i]['profile_depth'] > 6000:
+                raise ValueError('Profile depth must be in [0-6000] db')
 
-        if mission['profile_depth'] < 0 or mission['profile_depth'] > 6000:
-            raise ValueError('Profile depth must be in [0-6000] db')
+            if mission[i]['cycle_duration'] < 0:
+                raise ValueError('Cycle duration must be positive')
 
-        if mission['cycle_duration'] < 0:
-            raise ValueError('Cycle duration must be positive')
-
-        if mission['vertical_speed'] < 0:
-            raise ValueError('Vertical speed must be positive')
-        if mission['vertical_speed'] > 1:
-            warnings.warn("%f m/s is pretty fast for an Argo float ! Typical speed is 0.09 m/s" % mission['vertical_speed'])
+            if mission[i]['vertical_speed'] < 0:
+                raise ValueError('Vertical speed must be positive')
+            if mission[i]['vertical_speed'] > 1:
+                warnings.warn("%f m/s is pretty fast for an Argo float ! Typical speed is 0.09 m/s" % mission[i]['vertical_speed'])
+        
+        self.mission = mission        
 
         if 'vfield' in kwargs:
             raise ValueError("The 'vfield' option is deprecated. You can use the 'fieldset' "
@@ -101,26 +118,21 @@ class VirtualFleet:
             fieldset = fieldset.fieldset
         if not isinstance(fieldset, FieldSet):
             raise TypeError("The `fieldset` argument must be a `FieldSet` Parcels or `VelocityField` instance")
-
-        # Forward mission parameters to the simulation through fieldset
-        fieldset.add_constant("parking_depth", mission["parking_depth"])
-        fieldset.add_constant("profile_depth", mission["profile_depth"])
-        fieldset.add_constant("vertical_speed", mission["vertical_speed"])
-        fieldset.add_constant("cycle_duration", mission["cycle_duration"])
-        fieldset.add_constant("life_expectancy", mission["life_expectancy"])
-
+       
         Particle = ArgoParticle
         FloatKernel = ArgoFloatKernel
 
-        if "area_cycle_duration" in mission:
-            fieldset.add_constant("area_cycle_duration", mission["area_cycle_duration"])
-            fieldset.add_constant("area_parking_depth", mission["area_parking_depth"])
-            fieldset.add_constant("area_xmin", mission["area_xmin"])
-            fieldset.add_constant("area_xmax", mission["area_xmax"])
-            fieldset.add_constant("area_ymin", mission["area_ymin"])
-            fieldset.add_constant("area_ymax", mission["area_ymax"])
-            Particle = ArgoParticle_exp
-            FloatKernel = ArgoFloatKernel_exp
+        # kernels should not be managed by key present in the mission configuration
+
+        #if "area_cycle_duration" in mission:
+        #    fieldset.add_constant("area_cycle_duration", mission["area_cycle_duration"])
+        #    fieldset.add_constant("area_parking_depth", mission["area_parking_depth"])
+        #    fieldset.add_constant("area_xmin", mission["area_xmin"])
+        #    fieldset.add_constant("area_xmax", mission["area_xmax"])
+        #    fieldset.add_constant("area_ymin", mission["area_ymin"])
+        #    fieldset.add_constant("area_ymax", mission["area_ymax"])
+        #    Particle = ArgoParticle_exp
+        #    FloatKernel = ArgoFloatKernel_exp
 
         # More useful parameters to be sent to floats:
         verbose_events = (
@@ -153,6 +165,14 @@ class VirtualFleet:
             time=self.deployment_plan['time'],
             pid_orig=pid_orig,
         )
+        # set mission per particles
+        for i in range(len(P)):
+            P[i].parking_depth = self.mission[i]['parking_depth']
+            P[i].profile_depth = self.mission[i]['profile_depth']
+            P[i].vertical_speed = self.mission[i]['vertical_speed']
+            P[i].cycle_duration = self.mission[i]['cycle_duration']
+            P[i].life_expectancy = self.mission[i]['life_expectancy']           
+
         self._parcels['ParticleSet'] = P
         return self
 
@@ -346,9 +366,10 @@ class VirtualFleet:
 
         if output:
             # Close the ParticleFile object (used to exporting and then deleting the temporary npy files in older versions)
-            log.info("starting ParticleFile export/close/clean from %s" % opts['output_file'].fname)
+            # fname not available in older versions of parcels
+            log.info("starting ParticleFile export/close/clean")
             opts['output_file'].close(delete_tempfiles=True)
-            log.info("ending ParticleFile export/close/clean to %s" % opts['output_file'].fname)
+            log.info("ending ParticleFile export/close/clean")
 
         # Internal recording of the simulation:
         execution_end, process_end = time.time(), time.process_time()
