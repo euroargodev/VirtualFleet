@@ -314,13 +314,13 @@ def DeleteParticleKernel(particle, fieldset, time):
 
     # out of geographical area : here we can delete the particle
     if ((particle.lat < lat_min) | (particle.lat > lat_max) | (particle.lon < lon_min) | (particle.lon > lon_max)):
-        # if verbose_print:
-        #     print("Field warning : Particle out of the geographical domain --> deleted")
+        if verbose_print:
+            print("Field warning : Particle out of the geographical domain --> deleted")
         particle.delete()
     # in the air, calm down float !
     elif (particle.depth < depth_min):
-        # if verbose_print:
-        #     print("Field Warning : Particle above surface, depth set to product min_depth.")
+        if verbose_print:
+            print("Field Warning : Particle above surface, depth set to product min_depth.")
         particle.depth = depth_min
         particle.cycle_phase = 4
     # below fieldset
@@ -328,15 +328,15 @@ def DeleteParticleKernel(particle, fieldset, time):
         # if we're in phase 0 or 1 :
         #-> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)
         if particle.cycle_phase <= 1:
-            # if verbose_print:
-            #     print("Field warning : Particle below the fieldset, your dataset is probably not deep enough for what you're trying to do. It will drift here")
+            if verbose_print:
+                print("Field warning : Particle below the fieldset, your dataset is probably not deep enough for what you're trying to do. It will drift here")
             particle.depth = depth_max - 50
             particle.cycle_phase = 1
         # if we're in phase 2 :
         #-> set particle depth to max non null depth, and start profiling (phase 3)
         elif particle.cycle_phase == 2:
-            # if verbose_print:
-            #     print("Field warning : Particle below the fieldset, your dataset is not deep enough for what you're trying to do. It will start profiling here")
+            if verbose_print:
+                print("Field warning : Particle below the fieldset, your dataset is not deep enough for what you're trying to do. It will start profiling here")
             particle.depth = depth_max
             particle.cycle_phase = 3
     else:
@@ -345,9 +345,9 @@ def DeleteParticleKernel(particle, fieldset, time):
             particle.depth = depth_min
             particle.cycle_phase = 4
         else:
-            # if verbose_print:
-            #     print("%i: %f" % (particle.cycle_phase, particle.depth))
-            #     print("Field Warning : Unknown OutOfBounds --> deleted")
+            if verbose_print:
+                print("%i: %f" % (particle.cycle_phase, particle.depth))
+                print("Field Warning : Unknown OutOfBounds --> deleted")
             particle.delete()
 
 
