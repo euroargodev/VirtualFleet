@@ -7,7 +7,7 @@ from parcels import ParticleSet, FieldSet, AdvectionRK4
 
 if version.parse(parcels.__version__) <= version.parse("2.4.2"):
     from parcels import ErrorCode
-elif version.parse(parcels.__version__) >= version.parse("3.0.0"):
+# elif version.parse(parcels.__version__) >= version.parse("3.0.0"):
     from parcels.tools import FieldOutOfBoundError
     from parcels.tools.statuscodes import FieldOutOfBoundSurfaceError
 
@@ -99,7 +99,7 @@ class VirtualFleet:
                 if key not in mission[i]:
                     raise ValueError("The 'mission' argument must have a '%s' key" % key)
                 
-            # Depending of the specific kernel used, we should check keys here
+            # Depending on the specific kernel used, we should check keys here
 
             if mission[i]['parking_depth'] < 0 or mission[i]['parking_depth'] > 6000:
                 raise ValueError('Parking depth must be in [0-6000] db')
@@ -150,6 +150,10 @@ class VirtualFleet:
         )
         fieldset.add_constant("verbose_events", verbose_events)
 
+        # Maximum depth of the velocity field (used by the KeepInColumn kernel)
+        fieldset.add_constant("max_fieldset_depth", np.max(fieldset.gridset.grids[0].depth))
+        # print('fieldset.max_fieldset_depth', fieldset.max_fieldset_depth)
+
         # Define Ocean parcels elements
         self._parcels = {'fieldset': fieldset,
                          'Particle': Particle,
@@ -184,6 +188,61 @@ class VirtualFleet:
         self._parcels['ParticleSet'] = P
         return self
 
+
+    def __init_kernels_v3(self):
+        """kernels for Parcels >= v3.0.0"""
+        from parcels import StatusCode
+
+        def KeepInDomain(particle, fieldset, time):
+            # out of geographical area : here we can delete the particle
+            # if ((particle.lat < lat_min) | (particle.lat > lat_max) | (particle.lon < lon_min) | (particle.lon > lon_max)):
+            if particle.state == StatusCode.ErrorOutOfBounds:
+                print("NEW Field warning : Float out of the horizontal geographical domain --> deleted")
+                particle.delete()
+
+        def KeepInWater(particle, fieldset, time):
+            if particle.state == StatusCode.ErrorThroughSurface:
+                # dgrid = fieldset.gridset.grids[0].depth
+                # depth_min = dgrid[0] + (dgrid[1] - dgrid[0]) / 2
+
+                particle_ddepth = 0.0
+                # particle_ddepth = depth_min
+                particle.cycle_phase = 4
+                particle.state = StatusCode.Success
+
+        def KeepInColumn(particle, fieldset, time):
+            depth_max = fieldset.max_fieldset_depth
+
+            # below fieldset
+            if (particle.depth > depth_max):
+
+                # if we're in phase 0 or 1 :
+                # -> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)
+                if particle.cycle_phase <= 1:
+                    print(
+                        "NEW Field warning : Float reached fieldset bottom !  Your fieldset is not deep enough compared to float drift or profiling depths. It will drift here")
+                    # particle.depth = depth_max - 50
+                    particle_ddepth = -50
+                    particle.cycle_phase = 1
+                    particle.state = StatusCode.Success
+
+                # if we're in phase 2 :
+                # -> set particle depth to max non null depth, and start profiling (phase 3)
+                elif particle.cycle_phase == 2:
+                    print(
+                        "NEW Field warning : Float reached fieldset bottom ! Your fieldset is not deep enough compared to float drift or profiling depths. It will start profiling here")
+                    # particle.depth = depth_max
+                    particle_ddepth = 0.0
+                    particle.cycle_phase = 3
+                    particle.state = StatusCode.Success
+
+        # Add kernels, attention: order matters
+        k = self._parcels['ParticleSet'].Kernel(KeepInWater)
+        k += self._parcels['ParticleSet'].Kernel(KeepInColumn)
+        k += self._parcels['ParticleSet'].Kernel(KeepInDomain)
+        return k
+
+
     def __init_kernels(self):
         if self._isglobal:
             # combine Argo vertical movement kernel with Advection kernel + boundaries
@@ -194,6 +253,12 @@ class VirtualFleet:
             )
         else:
             K = self._parcels['FloatKernel'] + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
+
+        # Add kernels for Parcels >= v3.0.0
+        if version.parse(parcels.__version__) >= version.parse("3.0.0"):
+            K = K + self.__init_kernels_v3()
+
+
         self._parcels['kernels'] = K
         return self
 
@@ -354,21 +419,19 @@ class VirtualFleet:
             % (duration.days, record.seconds/3600)
         )
 
-        if version.parse(parcels.__version__) >= version.parse("3.0.0"):
-            recovery = {FieldOutOfBoundError: DeleteParticleKernel,
-                        FieldOutOfBoundSurfaceError: DeleteParticleKernel}
-        else:
-            recovery = {ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
-                        ErrorCode.ErrorThroughSurface: DeleteParticleKernel}
-
         opts = {'runtime': duration,
                 'dt': step,
                 'verbose_progress': verbose_progress,
-                'recovery': recovery,
-        'output_file': None,
+                'output_file': None,
                 }
+
+        if version.parse(parcels.__version__) < version.parse("3.0.0"):
+            recovery = {ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
+                        ErrorCode.ErrorThroughSurface: DeleteParticleKernel}
+            opts['recovery'] = recovery
+
         if output:
-            # log.info("Creating ParticleFile")e
+            # log.info("Creating ParticleFile")
             opts['output_file'] = self._parcels['ParticleSet'].ParticleFile(name=output_path, outputdt=record)
             # log.info("Parcels temporary files will be saved in: %s" % opts['output_file'].tempwritedir_base)
         log.debug(opts)
@@ -429,11 +492,11 @@ class VirtualFleet:
             raise ValueError("You must execute a simulation with trajectory recording to get a virtual profile index")
 
         # How to open the trajectory file:
-        engine = 'zarr' if '.zarr' in output_path else 'netcdf4'
 
         if file_name:
-            return simu2csv(output_path, index_file=file_name, df=None, engine=engine)
+            return simu2csv(output_path, index_file=file_name, df=None)
         else:
+            engine = 'zarr' if '.zarr' in output_path else 'netcdf4'
             ds = xr.open_dataset(output_path, engine=engine)
             return simu2index(ds)
 
