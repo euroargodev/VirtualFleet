@@ -48,24 +48,8 @@ jobs:
           name: releases
           path: dist
 
-  detect-force-upload:
-    name: detect force upload
-    runs-on: ubuntu-latest
-    if: |
-      github.repository == 'euroargodev/VirtualFleet' && github.event_name == 'push'
-    outputs:
-      upload: ${{ steps.detect-force-upload.outputs.trigger-found }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-      - uses: xarray-contrib/ci-trigger@v1.2
-        id: detect-upload
-        with:
-          keyword: "[force-pypi-upload]"
-
   test-built-dist:
-    needs: [build-artifacts, detect-force-upload]
+    needs: build-artifacts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-python@v3
@@ -84,13 +68,13 @@ jobs:
           ls -ltrh dist
 
       - name: Verify the built dist/wheel is valid
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           python -m pip install --upgrade pip
           python -m pip install dist/VirtualFleet*.whl
 
       - name: Publish package to TestPyPI
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'push'
         uses: pypa/gh-action-pypi-publish@v1.5.0
         with:
           user: __token__
@@ -101,8 +85,8 @@ jobs:
           skip_existing: true
 
   upload-to-pypi:
-    needs: [test-built-dist, detect-force-upload]
-    if: github.event_name == 'release' || needs.detect-force-upload.outputs.upload == 'true'
+    needs: test-built-dist
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
