@@ -37,6 +37,10 @@ from typing import Union, Iterable
 log = logging.getLogger("virtualfleet.virtualfleet")
 
 
+DEFAULT_DEPLOYMENT_DEPTH = 1.0
+"""Default deployment depth when not set in the plan"""
+
+
 class VirtualFleet:
     """Argo Virtual Fleet simulator.
 
@@ -78,7 +82,7 @@ class VirtualFleet:
         default_plan = {'lat': None, 'lon': None, 'depth': None, 'time': None}
         self.deployment_plan = {**default_plan, **plan}
         if self.deployment_plan['depth'] is None:
-            self.deployment_plan['depth'] = np.full(self.deployment_plan['lat'].shape, 1.0)
+            self.deployment_plan['depth'] = np.full(self.deployment_plan['lat'].shape, DEFAULT_DEPLOYMENT_DEPTH)
 
         # Mission parameters:
         if not isinstance(mission,(list,tuple,np.ndarray)):
@@ -135,6 +139,7 @@ class VirtualFleet:
         FloatKernel = ArgoFloatKernel
 
         # kernels should not be managed by key present in the mission configuration
+        #todo Update behavior to work with ArgoParticle_exp kernel
 
         #if "area_cycle_duration" in mission:
         #    fieldset.add_constant("area_cycle_duration", mission["area_cycle_duration"])
@@ -156,12 +161,15 @@ class VirtualFleet:
 
         # Maximum depth of the velocity field (used by the KeepInColumn kernel)
         # fieldset.add_constant("max_fieldset_depth", np.max(fieldset.gridset.grids[0].depth))
-        # Get the center of the cellgrid for depth
+        # Get the center depth of the first cell:
         dgrid = fieldset.gridset.grids[0].depth
         depth_min = dgrid[0] + (dgrid[1]-dgrid[0])/2
         depth_max = dgrid[-2]+(dgrid[-1]-dgrid[-2])/2
         fieldset.add_constant("vf_surface", depth_min)
         fieldset.add_constant("vf_bottom", depth_max)
+        print("vf_surface", depth_min)
+        print("vf_bottom", depth_max)
+
         # fieldset.add_constant("vf_west", -180)
 
         # Define Ocean parcels elements
@@ -202,6 +210,7 @@ class VirtualFleet:
     def __init_kernels_v3(self):
         """kernels for Parcels >= v3.0.0"""
         from parcels import StatusCode
+        from parcels.tools import FieldOutOfBoundError
 
         def KeepInDomain(particle, fieldset, time):
             # out of geographical area : here we can delete the particle
@@ -211,48 +220,30 @@ class VirtualFleet:
                 particle.delete()
 
         def KeepInWater(particle, fieldset, time):
-            # if particle.state == StatusCode.ErrorThroughSurface:
-            if particle.depth < fieldset.vf_surface:
+            if particle.state == StatusCode.ErrorThroughSurface:
+                # Make the float sticks to the surface level
+                # Rq: change in cycle phase is managed by the FloatKernel
                 print("NEW Field Warning : Float above surface, depth set to fieldset surface level")
-                # dgrid = fieldset.gridset.grids[0].depth
-                # depth_min = dgrid[0] + (dgrid[1] - dgrid[0]) / 2
 
-                # particle_ddepth += -1.0
-                particle_ddepth = particle.depth - fieldset.vf_surface
-                # particle.depth = fieldset.vf_surface
-                particle.cycle_phase = 4
+                particle.depth = fieldset.vf_surface
+                particle_ddepth = 0
                 particle.state = StatusCode.Success
 
         def KeepInColumn(particle, fieldset, time):
-            # depth_max = fieldset.max_fieldset_depth
-
-            # below fieldset
-            if (particle.depth > fieldset.vf_bottom):
-
-                # if we're in phase 0 or 1 :
-                # -> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)
-                if particle.cycle_phase <= 1:
-                    print(
-                        "NEW Field warning : Float reached fieldset bottom !  Your fieldset is not deep enough compared to float drift or profiling depths. It will drift here")
-                    # particle.depth = fieldset.vf_bottom - 50
-                    particle_ddepth = -50
-                    particle.cycle_phase = 1
-                    particle.state = StatusCode.Success
-
-                # if we're in phase 2 :
-                # -> set particle depth to max non null depth, and start profiling (phase 3)
-                elif particle.cycle_phase == 2:
-                    print(
-                        "NEW Field warning : Float reached fieldset bottom ! Your fieldset is not deep enough compared to float drift or profiling depths. It will start profiling here")
-                    # particle.depth = depth_max
-                    particle_ddepth = 0.0
-                    particle.cycle_phase = 3
-                    particle.state = StatusCode.Success
+            if particle.state == StatusCode.ErrorOutOfBounds:
+                # Make the float sticks to the bottom level
+                # Rq: change in cycle phase is managed by the FloatKernel
+                # Here, we don't let the float going deeper, and change in particle_ddepth are managed by FloatKernel
+                # depending on the cycle phase
+                print(
+                    "NEW Field warning : Float reached fieldset bottom ! Your fieldset is not deep enough compared to float drift or profiling depths. It will drift here")
+                particle.depth = fieldset.vf_bottom
+                particle.state = StatusCode.Success
 
         # Add kernels, attention: order matters
         k = self._parcels['ParticleSet'].Kernel(KeepInWater)
         k += self._parcels['ParticleSet'].Kernel(KeepInColumn)
-        k += self._parcels['ParticleSet'].Kernel(KeepInDomain)
+        # k += self._parcels['ParticleSet'].Kernel(KeepInDomain)
         return k
 
 
@@ -269,9 +260,8 @@ class VirtualFleet:
 
         # Add kernels for Parcels >= v3.0.0
         if version.parse(parcels.__version__) >= version.parse("3.0.0"):
-            K = self._parcels['FloatKernel'] + self._parcels['ParticleSet'].Kernel(AdvectionRK4) + self.__init_kernels_v3()
-            # K = K + self.__init_kernels_v3()
-
+            K = self._parcels['FloatKernel'] + self.__init_kernels_v3() + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
+            # K = self._parcels['FloatKernel'] + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
 
         self._parcels['kernels'] = K
         return self

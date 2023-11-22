@@ -2,7 +2,7 @@
 Kernels are inspired from: https://nbviewer.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Argofloats.ipynb
 """
 import numpy as np
-from parcels import JITParticle, Variable
+from parcels import JITParticle, Variable, StatusCode
 import logging
 import math
 
@@ -65,13 +65,15 @@ def ArgoFloatKernel(particle, fieldset, time):
     time
     """
     driftdepth = particle.parking_depth
-    maxdepth = particle.profile_depth
+    maxdepth = fieldset.vf_bottom
     mindepth = fieldset.vf_surface  # not too close to the surface so that particle doesn't go above it
+
     v_speed = particle.vertical_speed  # in m/s
     cycletime = particle.cycle_duration * 3600  # has to be in seconds
-    particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
-                                      particle.lon]
+
+    particle.in_water = fieldset.mask[time, particle.depth, particle.lat, particle.lon]
     max_cycle_number = particle.life_expectancy
+
     verbose_print = False
     if fieldset.verbose_events == 1:
         verbose_print = True
@@ -87,25 +89,23 @@ def ArgoFloatKernel(particle, fieldset, time):
     drift_time = math.floor(drift_time / particle.dt) * particle.dt  # Should be a multiple of dt
 
 
-    # Grounding management : Since parcels turns NaN to Zero within our domain, we have to manage
-    # groundings in another way that the recovery of deleted particles (below)
+    # Grounding management:
+    # (This is not in a kernel because it involves change in cycle phase)
     if not particle.in_water:
         # if we're in phase 0 or 1 :
         #-> rising 50 db and start drifting (phase 1)
         if particle.cycle_phase <= 1:
-            # if verbose_print:
-            #     print(
-            #         "Grouding during descent to parking or during parking, rising up 50m and try drifting here.")
-            # particle.depth = particle.depth - 50
+            if verbose_print:
+                print(
+                    "Grounding during descent to parking or during parking, rising up 50m and try drifting here.")
             particle_ddepth = - 50
-            particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
-                                      particle.lon]
             particle.cycle_phase = 1
+
         # if we're in phase 2:
         #-> start profiling (phase 3)
         elif particle.cycle_phase == 2:
-            # if verbose_print:
-            #     print("Grounding during descent to profile, starting profile here")
+            if verbose_print:
+                print("Grounding during descent to profile, starting profile here")
             particle.cycle_phase = 3
         else:
             pass
@@ -113,10 +113,8 @@ def ArgoFloatKernel(particle, fieldset, time):
     # CYCLE MANAGEMENT
     if particle.cycle_phase == 0:
         # Phase 0: Sinking with v_speed until depth is driftdepth
-        # particle.depth += v_speed * particle.dt
+        print("Phase 0: Sinking with v_speed until depth is driftdepth")
         particle_ddepth += v_speed * particle.dt
-        particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
-                                      particle.lon]
         if particle.depth >= driftdepth:
             particle.cycle_phase = 1
 
@@ -129,37 +127,33 @@ def ArgoFloatKernel(particle, fieldset, time):
 
     elif particle.cycle_phase == 2:
         # Phase 2: Sinking further to maxdepth
-        # particle.depth += v_speed * particle.dt
+        print("Phase 2: Sinking further to maxdepth")
         particle_ddepth += v_speed * particle.dt
-        particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
-                                      particle.lon]
-        if particle.depth >= maxdepth:
+        if particle.depth_nextloop >= maxdepth:
             particle.cycle_phase = 3
 
     elif particle.cycle_phase == 3:
         # Phase 3: Rising with v_speed until at surface
-        # particle.depth -= v_speed * particle.dt
-        particle_ddepth += - v_speed * particle.dt
-        particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
-                                      particle.lon]
-        if particle.depth <= mindepth:
-            # particle.depth = mindepth
-            particle_ddepth = particle.depth - fieldset.vf_surface
+        print("Phase 3: Rising with v_speed until at surface")
+        particle_ddepth -= v_speed * particle.dt
+
+        if particle.depth_nextloop <= fieldset.vf_surface:
+            # Now that we reached the surface, we update the cycle phase
+            # Note that the float depth is managed by the KeepInWater kernel
             particle.cycle_phase = 4
 
     elif particle.cycle_phase == 4:
         # Phase 4: Transmitting at surface until cycletime is reached
         if particle.cycle_age >= cycletime:
-            # print("End of cycle number %i" % particle.cycle_number)
+            print("End of cycle number %i" % particle.cycle_number)
             particle.cycle_phase = 0
             particle.cycle_age = 0
             particle.cycle_number += 1
 
     # Life expectancy management:
     if particle.cycle_number > max_cycle_number:  # Kill this float before moving on to a new cycle
-        # if verbose_print:
-        #     print("%i > %i" % (particle.cycle_number, max_cycle_number))
-        #     print("Field Warning : This float is killed because it exceeds its life expectancy")
+        if verbose_print:
+            print("Field Warning : This float is killed because it exceeds its life expectancy")
         particle.delete()
     else:  # otherwise continue to cycle
         particle.cycle_age += particle.dt  # update cycle_age
