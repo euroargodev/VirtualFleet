@@ -65,7 +65,7 @@ jobs:
           keyword: "[force-pypi-upload]"
 
   test-built-dist:
-    needs: build-artifacts, detect-ci-skip
+    needs: [build-artifacts, detect-force-upload]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-python@v3
@@ -101,7 +101,7 @@ jobs:
           skip_existing: true
 
   upload-to-pypi:
-    needs: test-built-dist, detect-ci-skip
+    needs: [test-built-dist, detect-force-upload]
     if: github.event_name == 'release' || needs.detect-force-upload.outputs.upload == 'true'
     runs-on: ubuntu-latest
     steps:
