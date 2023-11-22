@@ -55,8 +55,8 @@ class VirtualFleet:
             A dictionary with the following Argo float mission parameters: ``parking_depth``, ``profile_depth``,
             ``vertical_speed`` and ``cycle_duration``. A :class:`FloatConfiguration` instance can also be passed.
 
-            A list/tuple of dictionaries or :class:`FloatConfiguration` can be passed to specified mission parameters for each
-            virtual floats. In this case, the length of the list/tuple must match the length of the deployment plan.
+            An iterable of dictionaries or :class:`FloatConfiguration` can be passed to specified mission parameters for each
+            virtual floats. In this case, the length of the iterable must match the length of the deployment plan.
         isglobal: bool, optional, default=False
             A boolean indicating weather the velocity field is global or not
 
