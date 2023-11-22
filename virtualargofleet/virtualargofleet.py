@@ -151,8 +151,14 @@ class VirtualFleet:
         fieldset.add_constant("verbose_events", verbose_events)
 
         # Maximum depth of the velocity field (used by the KeepInColumn kernel)
-        fieldset.add_constant("max_fieldset_depth", np.max(fieldset.gridset.grids[0].depth))
-        # print('fieldset.max_fieldset_depth', fieldset.max_fieldset_depth)
+        # fieldset.add_constant("max_fieldset_depth", np.max(fieldset.gridset.grids[0].depth))
+        # Get the center of the cellgrid for depth
+        dgrid = fieldset.gridset.grids[0].depth
+        depth_min = dgrid[0] + (dgrid[1]-dgrid[0])/2
+        depth_max = dgrid[-2]+(dgrid[-1]-dgrid[-2])/2
+        fieldset.add_constant("vf_surface", depth_min)
+        fieldset.add_constant("vf_bottom", depth_max)
+        # fieldset.add_constant("vf_west", -180)
 
         # Define Ocean parcels elements
         self._parcels = {'fieldset': fieldset,
@@ -201,27 +207,30 @@ class VirtualFleet:
                 particle.delete()
 
         def KeepInWater(particle, fieldset, time):
-            if particle.state == StatusCode.ErrorThroughSurface:
+            # if particle.state == StatusCode.ErrorThroughSurface:
+            if particle.depth < fieldset.vf_surface:
+                print("NEW Field Warning : Float above surface, depth set to fieldset surface level")
                 # dgrid = fieldset.gridset.grids[0].depth
                 # depth_min = dgrid[0] + (dgrid[1] - dgrid[0]) / 2
 
-                particle_ddepth = 0.0
-                # particle_ddepth = depth_min
+                # particle_ddepth += -1.0
+                particle_ddepth = particle.depth - fieldset.vf_surface
+                # particle.depth = fieldset.vf_surface
                 particle.cycle_phase = 4
                 particle.state = StatusCode.Success
 
         def KeepInColumn(particle, fieldset, time):
-            depth_max = fieldset.max_fieldset_depth
+            # depth_max = fieldset.max_fieldset_depth
 
             # below fieldset
-            if (particle.depth > depth_max):
+            if (particle.depth > fieldset.vf_bottom):
 
                 # if we're in phase 0 or 1 :
                 # -> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)
                 if particle.cycle_phase <= 1:
                     print(
                         "NEW Field warning : Float reached fieldset bottom !  Your fieldset is not deep enough compared to float drift or profiling depths. It will drift here")
-                    # particle.depth = depth_max - 50
+                    # particle.depth = fieldset.vf_bottom - 50
                     particle_ddepth = -50
                     particle.cycle_phase = 1
                     particle.state = StatusCode.Success
@@ -256,7 +265,8 @@ class VirtualFleet:
 
         # Add kernels for Parcels >= v3.0.0
         if version.parse(parcels.__version__) >= version.parse("3.0.0"):
-            K = K + self.__init_kernels_v3()
+            K = self._parcels['FloatKernel'] + self._parcels['ParticleSet'].Kernel(AdvectionRK4) + self.__init_kernels_v3()
+            # K = K + self.__init_kernels_v3()
 
 
         self._parcels['kernels'] = K
@@ -378,14 +388,9 @@ class VirtualFleet:
             # Start a new simulation, from scratch
             # We need to reinitialize the 'ParticleSet' of self._parcels
             log.debug('start simulation from scratch')
-            self.__init_ParticleSet()#.__init_kernels()
+            self.__init_ParticleSet()
         else:
             log.debug('restart simulation where it was')
-        # print("self._parcels['fieldset']", hex(id(self._parcels['fieldset'])))
-        # print("self._parcels['ParticleSet'].fieldset", hex(id(self._parcels['ParticleSet'].fieldset)))
-        # print("self._parcels['kernels']", hex(id(self._parcels['kernels'])))
-        # print("self._parcels['ParticleSet']", hex(id(self._parcels['ParticleSet'])))
-        # print("self._parcels['ParticleSet'].collection", hex(id(self._parcels['ParticleSet'].collection)))
 
         duration = _validate(duration, name='duration', fallback='days')
         step = _validate(step, name='duration', fallback='minutes')
@@ -442,8 +447,8 @@ class VirtualFleet:
         P.execute(self._parcels['kernels'], **opts)
         log.info("ending ParticleSet execution")
 
-        if output:
-            # Close the ParticleFile object (used to exporting and then deleting the temporary npy files in older versions)
+        if output and version.parse(parcels.__version__) < version.parse("3.0.0"):
+            # Close the ParticleFile object (used to export and then delete the temporary npy files in older versions)
             # fname not available in older versions of parcels
             log.info("starting ParticleFile export/close/clean")
             opts['output_file'].close(delete_tempfiles=True)
