@@ -7,6 +7,39 @@ What's New
 
 |pypi dwn|
 
+
+v0.3.1 (22 Nov. 2023)
+---------------------
+
+.. note:: This is the last version compatible with Parcels versions < 3.0.0
+
+**New features**
+
+- Mission parameters can now be set for each floats of the deployment plan. This is useful to limit the number of simulations to explore a set of configuration parameters. (:pr:`22`) by `K. Balem <http://www.github.com/quai20>`_.
+For instance:
+
+.. code-block:: python
+
+    # Number of floats
+    nfloats = 5
+
+    # Define space/time locations of deployments:
+    lat = np.linspace(40, 41, nfloats)
+    lon = np.full_like(lat, 5)
+    tim = np.array(['2020-01-16' for i in range(nfloats)], dtype='datetime64')
+    my_plan = {'lat': lat, 'lon': lon, 'time': tim}
+
+    mission = [
+        FloatConfiguration('default').update('parking_depth', 100),
+        FloatConfiguration('default').update('parking_depth', 200),
+        FloatConfiguration('default').update('parking_depth', 500),
+        FloatConfiguration('default').update('parking_depth', 1000),
+        FloatConfiguration('default').update('parking_depth', 1500)
+    ]
+
+    VFleet = VirtualFleet(plan=my_plan, fieldset=VELfield, mission=mission)
+
+
 v0.3.0 (25 Jan. 2023)
 ---------------------
 By `G. Maze <http://www.github.com/gmaze>`_ and `K. Balem <http://www.github.com/quai20>`_.

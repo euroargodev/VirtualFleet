@@ -75,7 +75,7 @@ class ConfigParam:
 class FloatConfiguration:
     """Float mission configuration manager
 
-    Create a default configuration and then possibly update parameter values or add new ones
+    Create a default configuration and then possibly update parameter values
 
     Can be used to create a virtual fleet, to save or load float configurations
 
