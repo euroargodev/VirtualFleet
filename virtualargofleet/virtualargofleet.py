@@ -23,7 +23,7 @@ from .utilities import SimulationSet, FloatConfiguration
 from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo
 from packaging import version
 import time
-from typing import Union, List, Tuple
+from typing import Union, Iterable
 
 
 log = logging.getLogger("virtualfleet.virtualfleet")
@@ -38,8 +38,8 @@ class VirtualFleet:
     def __init__(self,
                  plan: dict,
                  fieldset: Union[FieldSet, VelocityField],
-                 mission: Union[dict, FloatConfiguration, List[dict], List[FloatConfiguration], Tuple[dict], Tuple[FloatConfiguration]],
-                 isglobal: bool=False,
+                 mission: Union[dict, FloatConfiguration, Iterable[dict], Iterable[FloatConfiguration]],
+                 isglobal: bool = False,
                  **kwargs):
         """Create an Argo Virtual Fleet simulator
 
