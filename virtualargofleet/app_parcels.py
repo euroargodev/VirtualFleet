@@ -44,6 +44,7 @@ class ArgoParticle(JITParticle):
     life_expectancy = Variable('life_expectancy', dtype=np.int32, initial=200, to_write=False)
     """particle mission parameter life expectancy in cycle"""
 
+
 def ArgoFloatKernel(particle, fieldset, time):
     """Default kernel to simulate an Argo float cycle
 
@@ -65,7 +66,7 @@ def ArgoFloatKernel(particle, fieldset, time):
     """
     driftdepth = particle.parking_depth
     maxdepth = particle.profile_depth
-    mindepth = 1  # not too close to the surface so that particle doesn't go above it
+    mindepth = fieldset.vf_surface  # not too close to the surface so that particle doesn't go above it
     v_speed = particle.vertical_speed  # in m/s
     cycletime = particle.cycle_duration * 3600  # has to be in seconds
     particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
@@ -95,7 +96,8 @@ def ArgoFloatKernel(particle, fieldset, time):
             # if verbose_print:
             #     print(
             #         "Grouding during descent to parking or during parking, rising up 50m and try drifting here.")
-            particle.depth = particle.depth - 50
+            # particle.depth = particle.depth - 50
+            particle_ddepth = - 50
             particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
             particle.cycle_phase = 1
@@ -111,7 +113,8 @@ def ArgoFloatKernel(particle, fieldset, time):
     # CYCLE MANAGEMENT
     if particle.cycle_phase == 0:
         # Phase 0: Sinking with v_speed until depth is driftdepth
-        particle.depth += v_speed * particle.dt
+        # particle.depth += v_speed * particle.dt
+        particle_ddepth += v_speed * particle.dt
         particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
         if particle.depth >= driftdepth:
@@ -126,7 +129,8 @@ def ArgoFloatKernel(particle, fieldset, time):
 
     elif particle.cycle_phase == 2:
         # Phase 2: Sinking further to maxdepth
-        particle.depth += v_speed * particle.dt
+        # particle.depth += v_speed * particle.dt
+        particle_ddepth += v_speed * particle.dt
         particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
         if particle.depth >= maxdepth:
@@ -134,11 +138,13 @@ def ArgoFloatKernel(particle, fieldset, time):
 
     elif particle.cycle_phase == 3:
         # Phase 3: Rising with v_speed until at surface
-        particle.depth -= v_speed * particle.dt
+        # particle.depth -= v_speed * particle.dt
+        particle_ddepth += - v_speed * particle.dt
         particle.in_water = fieldset.mask[time, particle.depth, particle.lat,
                                       particle.lon]
         if particle.depth <= mindepth:
-            particle.depth = mindepth
+            # particle.depth = mindepth
+            particle_ddepth = particle.depth - fieldset.vf_surface
             particle.cycle_phase = 4
 
     elif particle.cycle_phase == 4:
