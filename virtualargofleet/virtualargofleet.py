@@ -23,7 +23,7 @@ from .utilities import SimulationSet, FloatConfiguration
 from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo
 from packaging import version
 import time
-from typing import Union
+from typing import Union, List, Tuple
 
 
 log = logging.getLogger("virtualfleet.virtualfleet")
@@ -38,7 +38,7 @@ class VirtualFleet:
     def __init__(self,
                  plan: dict,
                  fieldset: Union[FieldSet, VelocityField],
-                 mission: Union[dict, FloatConfiguration, list, np.ndarray, tuple],
+                 mission: Union[dict, FloatConfiguration, List[dict], List[FloatConfiguration], Tuple[dict], Tuple[FloatConfiguration]],
                  isglobal: bool=False,
                  **kwargs):
         """Create an Argo Virtual Fleet simulator
@@ -51,8 +51,12 @@ class VirtualFleet:
             Depth is optional, if not provided it will be set to 1m.
         fieldset: :class:`parcels.fieldset.FieldSet` or :class:`VelocityField`
             A velocity field
-        mission: dict or :class:`FloatConfiguration` or list/array of those (then it should be the same length as plan arrays)
-            A dictionary with at least the following Argo float mission parameters: ``parking_depth``, ``profile_depth``, ``vertical_speed`` and ``cycle_duration``
+        mission: dict or :class:`FloatConfiguration` or an iterable of those
+            A dictionary with the following Argo float mission parameters: ``parking_depth``, ``profile_depth``,
+            ``vertical_speed`` and ``cycle_duration``. A :class:`FloatConfiguration` instance can also be passed.
+
+            A list/tuple of dictionaries or :class:`FloatConfiguration` can be passed to specified mission parameters for each
+            virtual floats. In this case, the length of the list/tuple must match the length of the deployment plan.
         isglobal: bool, optional, default=False
             A boolean indicating weather the velocity field is global or not
 
