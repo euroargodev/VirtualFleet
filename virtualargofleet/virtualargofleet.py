@@ -3,13 +3,7 @@ import warnings
 from packaging import version
 
 import parcels
-from parcels import ParticleSet, FieldSet, AdvectionRK4
-
-if version.parse(parcels.__version__) <= version.parse("2.4.2"):
-    from parcels import ErrorCode
-# elif version.parse(parcels.__version__) >= version.parse("3.0.0"):
-    from parcels.tools import FieldOutOfBoundError
-    from parcels.tools.statuscodes import FieldOutOfBoundSurfaceError
+from parcels import ParticleSet, FieldSet, AdvectionRK4, StatusCode
 
 import datetime
 from datetime import timedelta
@@ -22,7 +16,6 @@ import logging
 from .app_parcels import (
     ArgoParticle,
     ArgoParticle_exp,
-    DeleteParticleKernel,
     ArgoFloatKernel,
     ArgoFloatKernel_exp,
     PeriodicBoundaryConditionKernel,
@@ -163,8 +156,10 @@ class VirtualFleet:
         # fieldset.add_constant("max_fieldset_depth", np.max(fieldset.gridset.grids[0].depth))
         # Get the center depth of the first cell:
         dgrid = fieldset.gridset.grids[0].depth
+        # depth_min = dgrid[0] + (dgrid[1]-dgrid[0])/2
+        # depth_max = dgrid[-2]+(dgrid[-1]-dgrid[-2])/2
         depth_min = dgrid[0] + (dgrid[1]-dgrid[0])/2
-        depth_max = dgrid[-2]+(dgrid[-1]-dgrid[-2])/2
+        depth_max = dgrid[-1]
         fieldset.add_constant("vf_surface", depth_min)
         fieldset.add_constant("vf_bottom", depth_max)
         print("vf_surface", depth_min)
@@ -207,10 +202,8 @@ class VirtualFleet:
         return self
 
 
-    def __init_kernels_v3(self):
+    def __init_ErrorKernels(self):
         """kernels for Parcels >= v3.0.0"""
-        from parcels import StatusCode
-        from parcels.tools import FieldOutOfBoundError
 
         def KeepInDomain(particle, fieldset, time):
             # out of geographical area : here we can delete the particle
@@ -226,7 +219,7 @@ class VirtualFleet:
                 print("NEW Field Warning : Float above surface, depth set to fieldset surface level")
 
                 particle.depth = fieldset.vf_surface
-                particle_ddepth = 0
+                particle_ddepth = 0  # Reset change in depth
                 particle.state = StatusCode.Success
 
         def KeepInColumn(particle, fieldset, time):
@@ -236,7 +229,7 @@ class VirtualFleet:
                 # Here, we don't let the float going deeper, and change in particle_ddepth are managed by FloatKernel
                 # depending on the cycle phase
                 print(
-                    "NEW Field warning : Float reached fieldset bottom ! Your fieldset is not deep enough compared to float drift or profiling depths. It will drift here")
+                    "NEW Field warning : Float reached fieldset bottom ! Your fieldset is not deep enough compared to float drift or profiling depths.")
                 particle.depth = fieldset.vf_bottom
                 particle.state = StatusCode.Success
 
@@ -248,20 +241,11 @@ class VirtualFleet:
 
 
     def __init_kernels(self):
+        K = self._parcels['FloatKernel']
+        K += self.__init_ErrorKernels()
+        K += self._parcels['ParticleSet'].Kernel(AdvectionRK4)
         if self._isglobal:
-            # combine Argo vertical movement kernel with Advection kernel + boundaries
-            K = (
-                    self._parcels['FloatKernel']
-                    + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
-                    + self._parcels['ParticleSet'].Kernel(PeriodicBoundaryConditionKernel)
-            )
-        else:
-            K = self._parcels['FloatKernel'] + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
-
-        # Add kernels for Parcels >= v3.0.0
-        if version.parse(parcels.__version__) >= version.parse("3.0.0"):
-            K = self._parcels['FloatKernel'] + self.__init_kernels_v3() + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
-            # K = self._parcels['FloatKernel'] + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
+            K += self._parcels['ParticleSet'].Kernel(PeriodicBoundaryConditionKernel)
 
         self._parcels['kernels'] = K
         return self
@@ -423,11 +407,6 @@ class VirtualFleet:
                 'verbose_progress': verbose_progress,
                 'output_file': None,
                 }
-
-        if version.parse(parcels.__version__) < version.parse("3.0.0"):
-            recovery = {ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
-                        ErrorCode.ErrorThroughSurface: DeleteParticleKernel}
-            opts['recovery'] = recovery
 
         if output:
             # log.info("Creating ParticleFile")

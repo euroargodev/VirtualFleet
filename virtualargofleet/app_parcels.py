@@ -64,8 +64,10 @@ def ArgoFloatKernel(particle, fieldset, time):
         A FieldSet class instance that holds hydrodynamic data needed to transport virtual floats. 
     time
     """
-    driftdepth = particle.parking_depth
-    maxdepth = fieldset.vf_bottom
+    drift_depth = particle.parking_depth
+    profile_depth = particle.profile_depth
+
+    # maxdepth = fieldset.vf_bottom
     mindepth = fieldset.vf_surface  # not too close to the surface so that particle doesn't go above it
 
     v_speed = particle.vertical_speed  # in m/s
@@ -78,77 +80,136 @@ def ArgoFloatKernel(particle, fieldset, time):
     if fieldset.verbose_events == 1:
         verbose_print = True
 
-    # Compute drifting time so that the cycletime is respected:
-    # Time to descent to parking (mindepth to driftdepth at v_speed)
-    transit = (driftdepth - mindepth) / v_speed
-    # Time to descent to profile depth (driftdepth to maxdepth at v_speed)
-    transit += (maxdepth - driftdepth) / v_speed
-    # Time to ascent (maxdepth to mindepth at v_speed)
-    transit += (maxdepth - mindepth) / v_speed
-    drift_time = cycletime - transit - 15*60  # Remove 15 minutes for surface transmission
-    drift_time = math.floor(drift_time / particle.dt) * particle.dt  # Should be a multiple of dt
-
-
-    # Grounding management:
+    ########################
+    # GROUNDING MANAGEMENT #
+    ########################
     # (This is not in a kernel because it involves change in cycle phase)
     if not particle.in_water:
+        grounded = False
         # if we're in phase 0 or 1 :
         #-> rising 50 db and start drifting (phase 1)
         if particle.cycle_phase <= 1:
-            if verbose_print:
+            if verbose_print and particle.cycle_phase == 0:
                 print(
-                    "Grounding during descent to parking or during parking, rising up 50m and try drifting here.")
+                    "Grounding during descent to parking, rising up 50m and start drifting there.")
+            elif verbose_print and particle.cycle_phase == 1:
+                print(
+                    "Grounding during drift at parking, rising up 50m and continue drifting there.")
             particle_ddepth = - 50
             particle.cycle_phase = 1
+            grounded = True
 
         # if we're in phase 2:
         #-> start profiling (phase 3)
         elif particle.cycle_phase == 2:
             if verbose_print:
-                print("Grounding during descent to profile, starting profile here")
+                print("Phase 2: Grounding during descent to profile, starting profile here")
             particle.cycle_phase = 3
+            grounded = True
         else:
             pass
 
-    # CYCLE MANAGEMENT
+    #################
+    # DRIFTING TIME #
+    #################
+    # Compute drifting time so that the cycletime is respected
+
+    # We need to take into account the fact that the float may try to reach inaccessible depths:
+    if drift_depth < fieldset.vf_bottom:
+        effective_drift_depth = drift_depth
+    else:
+        effective_drift_depth = fieldset.vf_bottom
+    if profile_depth < fieldset.vf_bottom:
+        effective_profile_depth = profile_depth
+    else:
+        effective_profile_depth = fieldset.vf_bottom
+
+    if grounded:
+        if particle.cycle_phase <= 1:
+            effective_drift_depth = particle.depth + particle_ddepth
+        if particle.cycle_phase == 2:
+            effective_profile_depth = particle.depth
+
+    # Compute all transit times:
+    transit = (effective_drift_depth - mindepth) / v_speed  # Time to descent to parking
+    transit += (effective_profile_depth - effective_drift_depth) / v_speed  # Time to descent to profile depth
+    transit += (effective_profile_depth - mindepth) / v_speed  # Time to ascent to surface
+
+    # And then adjust drifting time to respect cycletime:
+    drift_time = cycletime - transit - 15 * 60  # Remove 15 minutes for surface transmission
+    drift_time = math.floor(drift_time / particle.dt) * particle.dt  # Should be a multiple of dt
+
+    ##########################
+    # CYCLE PHASE MANAGEMENT #
+    ##########################
     if particle.cycle_phase == 0:
         # Phase 0: Sinking with v_speed until depth is driftdepth
-        print("Phase 0: Sinking with v_speed until depth is driftdepth")
+        # print("Phase 0: Sinking with v_speed until depth is drift_depth")
         particle_ddepth += v_speed * particle.dt
-        if particle.depth >= driftdepth:
-            particle.cycle_phase = 1
 
-    elif particle.cycle_phase == 1:
+        # if particle.depth + particle_ddepth >= drift_depth:
+        #     print("End of Phase 0: Reached drift_depth")
+        #     particle.cycle_phase = 1
+        #     particle_ddepth = 0
+        #     particle_ddepth = drift_depth - particle.depth  # Make sure we're going exactly at drift_depth
+        #     print("Phase 1: Drifting at depth for drift_time seconds")
+
+        # We have 2 ifs in order to make sure that the first sample with cycle_phase=1 is exactly at the drift depth
+        if particle.depth == drift_depth:
+            print("End of Phase 0: Reached drift_depth")
+            particle.cycle_phase = 1
+            particle_ddepth = 0
+            print("Phase 1: Drifting at depth for drift_time seconds")
+        if particle.depth + particle_ddepth > drift_depth:
+            print("Phase 0 warning: Overshoot drift_depth, re-adjust depth to target")
+            particle_ddepth = drift_depth - particle.depth  # Make sure we're going exactly at drift_depth
+
+    if particle.cycle_phase == 1:
         # Phase 1: Drifting at depth for drift_time seconds
         particle.drift_age += particle.dt
         if particle.drift_age >= drift_time:
+            print("End of Phase 1: Drifted drift_time seconds")
             particle.drift_age = 0  # reset drift_age for next cycle
             particle.cycle_phase = 2
+            print("Phase 2: Sinking further to profile_depth")
 
-    elif particle.cycle_phase == 2:
-        # Phase 2: Sinking further to maxdepth
-        print("Phase 2: Sinking further to maxdepth")
+    if particle.cycle_phase == 2:
+        # Phase 2: Sinking further to profile_depth
         particle_ddepth += v_speed * particle.dt
-        if particle.depth_nextloop >= maxdepth:
-            particle.cycle_phase = 3
 
-    elif particle.cycle_phase == 3:
+        if particle.depth + particle_ddepth >= profile_depth:
+            particle_ddepth = profile_depth - particle.depth  # Make sure we're not going deeper than profile_depth
+
+        if particle.depth >= profile_depth:
+            print("End of Phase 2: Reached profile_depth")
+            particle.cycle_phase = 3
+            print("Phase 3: Rising with v_speed until at surface")
+
+
+    if particle.cycle_phase == 3:
         # Phase 3: Rising with v_speed until at surface
-        print("Phase 3: Rising with v_speed until at surface")
+        # print("Phase 3: Rising with v_speed until at surface")
         particle_ddepth -= v_speed * particle.dt
 
-        if particle.depth_nextloop <= fieldset.vf_surface:
+        if particle.depth + particle_ddepth <= fieldset.vf_surface:
             # Now that we reached the surface, we update the cycle phase
             # Note that the float depth is managed by the KeepInWater kernel
+            print("End of Phase 3: Reached surface")
+            particle.depth = fieldset.vf_surface
+            particle_ddepth = 0  # Reset change in depth
             particle.cycle_phase = 4
+            print("Phase 4: Transmitting at surface until cycletime is reached")
 
-    elif particle.cycle_phase == 4:
+    if particle.cycle_phase == 4:
         # Phase 4: Transmitting at surface until cycletime is reached
         if particle.cycle_age >= cycletime:
             print("End of cycle number %i" % particle.cycle_number)
             particle.cycle_phase = 0
             particle.cycle_age = 0
             particle.cycle_number += 1
+            particle_ddepth += v_speed * particle.dt  # Start descent toward profile_depth
+            print("Phase 0: Sinking with v_speed until depth is drift_depth")
+
 
     # Life expectancy management:
     if particle.cycle_number > max_cycle_number:  # Kill this float before moving on to a new cycle
@@ -294,61 +355,6 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
         particle.delete()
     else:  # otherwise continue to cycle
         particle.cycle_age += particle.dt  # update cycle_age
-
-
-def DeleteParticleKernel(particle, fieldset, time):
-    """Define recovery for OutOfBounds Error."""
-
-    # Get velocity field bounds
-    lat_min, lat_max = fieldset.gridset.dimrange(dim='lat')
-    lon_min, lon_max = fieldset.gridset.dimrange(dim='lon')
-    # Get the center of the cellgrid for depth
-    dgrid = fieldset.gridset.grids[0].depth
-    depth_min = dgrid[0] + (dgrid[1]-dgrid[0])/2
-    depth_max = dgrid[-2]+(dgrid[-1]-dgrid[-2])/2
-
-    #
-    verbose_print = False
-    if fieldset.verbose_events == 1:
-        verbose_print = True
-
-    # out of geographical area : here we can delete the particle
-    if ((particle.lat < lat_min) | (particle.lat > lat_max) | (particle.lon < lon_min) | (particle.lon > lon_max)):
-        if verbose_print:
-            print("Field warning : Particle out of the geographical domain --> deleted")
-        particle.delete()
-    # in the air, calm down float !
-    elif (particle.depth < depth_min):
-        if verbose_print:
-            print("Field Warning : Particle above surface, depth set to product min_depth.")
-        particle.depth = depth_min
-        particle.cycle_phase = 4
-    # below fieldset
-    elif (particle.depth > depth_max):
-        # if we're in phase 0 or 1 :
-        #-> set particle depth to max non null depth, ascent 50 db and start drifting (phase 1)
-        if particle.cycle_phase <= 1:
-            if verbose_print:
-                print("Field warning : Particle below the fieldset, your dataset is probably not deep enough for what you're trying to do. It will drift here")
-            particle.depth = depth_max - 50
-            particle.cycle_phase = 1
-        # if we're in phase 2 :
-        #-> set particle depth to max non null depth, and start profiling (phase 3)
-        elif particle.cycle_phase == 2:
-            if verbose_print:
-                print("Field warning : Particle below the fieldset, your dataset is not deep enough for what you're trying to do. It will start profiling here")
-            particle.depth = depth_max
-            particle.cycle_phase = 3
-    else:
-        # I don't know why yet but in some cases, during ascent, I get an outOfBounds error, even with a depth > depth_min...
-        if particle.cycle_phase == 3:
-            particle.depth = depth_min
-            particle.cycle_phase = 4
-        else:
-            if verbose_print:
-                print("%i: %f" % (particle.cycle_phase, particle.depth))
-                print("Field Warning : Unknown OutOfBounds --> deleted")
-            particle.delete()
 
 
 def PeriodicBoundaryConditionKernel(particle, fieldset, time):
