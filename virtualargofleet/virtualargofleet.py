@@ -205,11 +205,13 @@ class VirtualFleet:
     def __init_kernels(self):
         """Add kernels, attention: Order matters !"""
         K = self._parcels['FloatKernel']
-        K += self._parcels['ParticleSet'].Kernel(KeepInWater)
-        K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
+        # K += self._parcels['ParticleSet'].Kernel(KeepInWater)
+        # K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
         K += self._parcels['ParticleSet'].Kernel(AdvectionRK4)
         if self._isglobal:
             K += self._parcels['ParticleSet'].Kernel(PeriodicBoundaryConditionKernel)
+        K += self._parcels['ParticleSet'].Kernel(KeepInWater)
+        K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
         K += self._parcels['ParticleSet'].Kernel(KeepInDomain)
 
         self._parcels['kernels'] = K
