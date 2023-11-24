@@ -19,6 +19,7 @@ from .app_parcels import (
     ArgoFloatKernel,
     ArgoFloatKernel_exp,
     PeriodicBoundaryConditionKernel,
+    KeepInDomain, KeepInWater, KeepInColumn,
 )
 from .velocity_helpers import VelocityField
 from .utilities import SimulationSet, FloatConfiguration
@@ -201,51 +202,15 @@ class VirtualFleet:
         self._parcels['ParticleSet'] = P
         return self
 
-
-    def __init_ErrorKernels(self):
-        """kernels for Parcels >= v3.0.0"""
-
-        def KeepInDomain(particle, fieldset, time):
-            # out of geographical area : here we can delete the particle
-            # if ((particle.lat < lat_min) | (particle.lat > lat_max) | (particle.lon < lon_min) | (particle.lon > lon_max)):
-            if particle.state == StatusCode.ErrorOutOfBounds:
-                print("NEW Field warning : Float out of the horizontal geographical domain --> deleted")
-                particle.delete()
-
-        def KeepInWater(particle, fieldset, time):
-            if particle.state == StatusCode.ErrorThroughSurface:
-                # Make the float sticks to the surface level
-                # Rq: change in cycle phase is managed by the FloatKernel
-                print("NEW Field Warning : Float above surface, depth set to fieldset surface level")
-
-                particle.depth = fieldset.vf_surface
-                particle_ddepth = 0  # Reset change in depth
-                particle.state = StatusCode.Success
-
-        def KeepInColumn(particle, fieldset, time):
-            if particle.state == StatusCode.ErrorOutOfBounds:
-                # Make the float sticks to the bottom level
-                # Rq: change in cycle phase is managed by the FloatKernel
-                # Here, we don't let the float going deeper, and change in particle_ddepth are managed by FloatKernel
-                # depending on the cycle phase
-                print(
-                    "NEW Field warning : Float reached fieldset bottom ! Your fieldset is not deep enough compared to float drift or profiling depths.")
-                particle.depth = fieldset.vf_bottom
-                particle.state = StatusCode.Success
-
-        # Add kernels, attention: order matters
-        k = self._parcels['ParticleSet'].Kernel(KeepInWater)
-        k += self._parcels['ParticleSet'].Kernel(KeepInColumn)
-        # k += self._parcels['ParticleSet'].Kernel(KeepInDomain)
-        return k
-
-
     def __init_kernels(self):
+        """Add kernels, attention: Order matters !"""
         K = self._parcels['FloatKernel']
-        K += self.__init_ErrorKernels()
+        K += self._parcels['ParticleSet'].Kernel(KeepInWater)
+        K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
         K += self._parcels['ParticleSet'].Kernel(AdvectionRK4)
         if self._isglobal:
             K += self._parcels['ParticleSet'].Kernel(PeriodicBoundaryConditionKernel)
+        K += self._parcels['ParticleSet'].Kernel(KeepInDomain)
 
         self._parcels['kernels'] = K
         return self
