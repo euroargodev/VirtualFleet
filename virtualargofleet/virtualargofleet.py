@@ -163,8 +163,6 @@ class VirtualFleet:
         depth_max = dgrid[-1]
         fieldset.add_constant("vf_surface", depth_min)
         fieldset.add_constant("vf_bottom", depth_max)
-        print("vf_surface", depth_min)
-        print("vf_bottom", depth_max)
 
         # fieldset.add_constant("vf_west", -180)
 
