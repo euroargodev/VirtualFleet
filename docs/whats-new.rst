@@ -8,6 +8,11 @@ What's New
 |pypi dwn|
 
 
+Coming up next in the next release
+----------------------------------
+
+- In order to stay compatible with last Parcels development, we had to update *VirtualFleet*. This is a major internal refactoring that does not impact the user API. (:pr:`24`) by `G. Maze <http://www.github.com/gmaze>`_.
+
 v0.3.1 (22 Nov. 2023)
 ---------------------
 
