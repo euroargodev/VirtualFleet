@@ -1,10 +1,10 @@
-name: virtualfleet-v3
+name: virtualfleet-v2
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
+  - python=3.8
   - xarray>0.16.0
-  - parcels>=3.0.0
+  - parcels>=2.4.0<3.0.0
   - dask
   - distributed
   - dask-kubernetes
@@ -17,7 +17,7 @@ dependencies:
   - lz4
   - libzip
   - nomkl
-#  - nbserverproxy
+  - nbserverproxy
   - jupyter
   - jupyterlab>=0.35
   - jupyterlab_launcher
