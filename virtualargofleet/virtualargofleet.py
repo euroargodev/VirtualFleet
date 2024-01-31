@@ -1,7 +1,10 @@
 import numbers
 import warnings
+from packaging import version
+
 import parcels
-from parcels import ParticleSet, FieldSet, AdvectionRK4, ErrorCode
+from parcels import ParticleSet, FieldSet, AdvectionRK4, StatusCode
+
 import datetime
 from datetime import timedelta
 import os
@@ -13,20 +16,23 @@ import logging
 from .app_parcels import (
     ArgoParticle,
     ArgoParticle_exp,
-    DeleteParticleKernel,
     ArgoFloatKernel,
     ArgoFloatKernel_exp,
     PeriodicBoundaryConditionKernel,
+    KeepInDomain, KeepInWater, KeepInColumn,
 )
 from .velocity_helpers import VelocityField
 from .utilities import SimulationSet, FloatConfiguration
 from .utilities import simu2csv, simu2index, strfdelta, getSystemInfo
-from packaging import version
 import time
 from typing import Union, Iterable
 
 
 log = logging.getLogger("virtualfleet.virtualfleet")
+
+
+DEFAULT_DEPLOYMENT_DEPTH = 1.0
+"""Default deployment depth when not set in the plan"""
 
 
 class VirtualFleet:
@@ -70,7 +76,7 @@ class VirtualFleet:
         default_plan = {'lat': None, 'lon': None, 'depth': None, 'time': None}
         self.deployment_plan = {**default_plan, **plan}
         if self.deployment_plan['depth'] is None:
-            self.deployment_plan['depth'] = np.full(self.deployment_plan['lat'].shape, 1.0)
+            self.deployment_plan['depth'] = np.full(self.deployment_plan['lat'].shape, DEFAULT_DEPLOYMENT_DEPTH)
 
         # Mission parameters:
         if not isinstance(mission,(list,tuple,np.ndarray)):
@@ -95,7 +101,7 @@ class VirtualFleet:
                 if key not in mission[i]:
                     raise ValueError("The 'mission' argument must have a '%s' key" % key)
                 
-            # Depending of the specific kernel used, we should check keys here
+            # Depending on the specific kernel used, we should check keys here
 
             if mission[i]['parking_depth'] < 0 or mission[i]['parking_depth'] > 6000:
                 raise ValueError('Parking depth must be in [0-6000] db')
@@ -127,6 +133,7 @@ class VirtualFleet:
         FloatKernel = ArgoFloatKernel
 
         # kernels should not be managed by key present in the mission configuration
+        #todo Update behavior to work with ArgoParticle_exp kernel
 
         #if "area_cycle_duration" in mission:
         #    fieldset.add_constant("area_cycle_duration", mission["area_cycle_duration"])
@@ -145,6 +152,19 @@ class VirtualFleet:
             else 1
         )
         fieldset.add_constant("verbose_events", verbose_events)
+
+        # Maximum depth of the velocity field (used by the KeepInColumn kernel)
+        # fieldset.add_constant("max_fieldset_depth", np.max(fieldset.gridset.grids[0].depth))
+        # Get the center depth of the first cell:
+        dgrid = fieldset.gridset.grids[0].depth
+        # depth_min = dgrid[0] + (dgrid[1]-dgrid[0])/2
+        # depth_max = dgrid[-2]+(dgrid[-1]-dgrid[-2])/2
+        depth_min = dgrid[0] + (dgrid[1]-dgrid[0])/2
+        depth_max = dgrid[-1]
+        fieldset.add_constant("vf_surface", depth_min)
+        fieldset.add_constant("vf_bottom", depth_max)
+
+        # fieldset.add_constant("vf_west", -180)
 
         # Define Ocean parcels elements
         self._parcels = {'fieldset': fieldset,
@@ -181,15 +201,17 @@ class VirtualFleet:
         return self
 
     def __init_kernels(self):
+        """Add kernels, attention: Order matters !"""
+        K = self._parcels['FloatKernel']
+        # K += self._parcels['ParticleSet'].Kernel(KeepInWater)
+        # K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
+        K += self._parcels['ParticleSet'].Kernel(AdvectionRK4)
         if self._isglobal:
-            # combine Argo vertical movement kernel with Advection kernel + boundaries
-            K = (
-                    self._parcels['FloatKernel']
-                    + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
-                    + self._parcels['ParticleSet'].Kernel(PeriodicBoundaryConditionKernel)
-            )
-        else:
-            K = self._parcels['FloatKernel'] + self._parcels['ParticleSet'].Kernel(AdvectionRK4)
+            K += self._parcels['ParticleSet'].Kernel(PeriodicBoundaryConditionKernel)
+        K += self._parcels['ParticleSet'].Kernel(KeepInWater)
+        K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
+        K += self._parcels['ParticleSet'].Kernel(KeepInDomain)
+
         self._parcels['kernels'] = K
         return self
 
@@ -309,14 +331,9 @@ class VirtualFleet:
             # Start a new simulation, from scratch
             # We need to reinitialize the 'ParticleSet' of self._parcels
             log.debug('start simulation from scratch')
-            self.__init_ParticleSet()#.__init_kernels()
+            self.__init_ParticleSet()
         else:
             log.debug('restart simulation where it was')
-        # print("self._parcels['fieldset']", hex(id(self._parcels['fieldset'])))
-        # print("self._parcels['ParticleSet'].fieldset", hex(id(self._parcels['ParticleSet'].fieldset)))
-        # print("self._parcels['kernels']", hex(id(self._parcels['kernels'])))
-        # print("self._parcels['ParticleSet']", hex(id(self._parcels['ParticleSet'])))
-        # print("self._parcels['ParticleSet'].collection", hex(id(self._parcels['ParticleSet'].collection)))
 
         duration = _validate(duration, name='duration', fallback='days')
         step = _validate(step, name='duration', fallback='minutes')
@@ -349,15 +366,15 @@ class VirtualFleet:
             "Starting Virtual Fleet simulation of %i days, with data recording every %f hours"
             % (duration.days, record.seconds/3600)
         )
+
         opts = {'runtime': duration,
                 'dt': step,
                 'verbose_progress': verbose_progress,
-                'recovery': {ErrorCode.ErrorOutOfBounds: DeleteParticleKernel,
-                             ErrorCode.ErrorThroughSurface: DeleteParticleKernel},
                 'output_file': None,
                 }
+
         if output:
-            # log.info("Creating ParticleFile")e
+            # log.info("Creating ParticleFile")
             opts['output_file'] = self._parcels['ParticleSet'].ParticleFile(name=output_path, outputdt=record)
             # log.info("Parcels temporary files will be saved in: %s" % opts['output_file'].tempwritedir_base)
         log.debug(opts)
@@ -368,8 +385,8 @@ class VirtualFleet:
         P.execute(self._parcels['kernels'], **opts)
         log.info("ending ParticleSet execution")
 
-        if output:
-            # Close the ParticleFile object (used to exporting and then deleting the temporary npy files in older versions)
+        if output and version.parse(parcels.__version__) < version.parse("3.0.0"):
+            # Close the ParticleFile object (used to export and then delete the temporary npy files in older versions)
             # fname not available in older versions of parcels
             log.info("starting ParticleFile export/close/clean")
             opts['output_file'].close(delete_tempfiles=True)
@@ -418,11 +435,11 @@ class VirtualFleet:
             raise ValueError("You must execute a simulation with trajectory recording to get a virtual profile index")
 
         # How to open the trajectory file:
-        engine = 'zarr' if '.zarr' in output_path else 'netcdf4'
 
         if file_name:
-            return simu2csv(output_path, index_file=file_name, df=None, engine=engine)
+            return simu2csv(output_path, index_file=file_name, df=None)
         else:
+            engine = 'zarr' if '.zarr' in output_path else 'netcdf4'
             ds = xr.open_dataset(output_path, engine=engine)
             return simu2index(ds)
 

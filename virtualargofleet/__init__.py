@@ -5,7 +5,7 @@ from .velocity_helpers import VelocityField
 
 import parcels
 import warnings
-from packaging.version import parse as parse_version
+from packaging import version
 try:
     from importlib.metadata import version as il_version
 except ImportError:
@@ -21,10 +21,9 @@ except Exception:
     __version__ = '999'
 
 
-parcels_version = parcels.__version__.replace("v","").split(".")
-if int(parcels_version[0]) < 2 or (int(parcels_version[0]) == 2 and int(parcels_version[1]) < 4):
+if version.parse(parcels.__version__) < version.parse("3.0.0"):
     msg = "You're running Parcels %s but VirtualFleet no longer support Parcels versions " \
-          "strictly lower than 2.4, please upgrade." % parcels.__version__,
+          "lower than 3, please upgrade." % parcels.__version__,
     warnings.warn(str(msg))
 
 #

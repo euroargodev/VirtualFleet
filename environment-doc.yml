@@ -2,9 +2,9 @@ name: virtualfleet-docs
 channels:
   - conda-forge
 dependencies:
-  - python=3.8
+  - python=3.9
   - xarray
-  - parcels<3.0.0
+  - parcels>=3.0.0
   - scipy
   - netcdf4
   - dask

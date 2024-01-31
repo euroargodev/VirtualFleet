@@ -2,9 +2,6 @@ name: Build and Upload to PyPI
 on:
   release:
     types: [created, edited]
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 
@@ -74,7 +71,7 @@ jobs:
           python -m pip install dist/VirtualFleet*.whl
 
       - name: Publish package to TestPyPI
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'push'
         uses: pypa/gh-action-pypi-publish@v1.5.0
         with:
           user: __token__
