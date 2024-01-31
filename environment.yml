@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.9
-  - xarray>0.16.0
+  - xarray
   - parcels>=3.0.0
   - dask
   - distributed
