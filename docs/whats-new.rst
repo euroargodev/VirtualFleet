@@ -8,8 +8,8 @@ What's New
 |pypi dwn|
 
 
-Coming up next in the next release
-----------------------------------
+v0.4.0 (2 Feb. 2024)
+--------------------
 
 .. note:: New version compatible with Parcels versions >= 3.0.0
 
