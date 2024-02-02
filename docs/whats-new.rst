@@ -11,6 +11,8 @@ What's New
 Coming up next in the next release
 ----------------------------------
 
+.. note:: New version compatible with Parcels versions >= 3.0.0
+
 - In order to stay compatible with last Parcels development, we had to update *VirtualFleet*. This is a major internal refactoring that does not impact the user API. `All details here <https://github.com/euroargodev/VirtualFleet/pull/24#issuecomment-1825563838>`_. (:pr:`24`) by `G. Maze <http://www.github.com/gmaze>`_.
 
 v0.3.1 (22 Nov. 2023)
