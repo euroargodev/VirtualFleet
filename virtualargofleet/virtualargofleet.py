@@ -149,7 +149,7 @@ class VirtualFleet:
         verbose_events = (
             kwargs["verbose_events"]
             if "verbose_events" in kwargs
-            else 1
+            else 0
         )
         fieldset.add_constant("verbose_events", verbose_events)
 
