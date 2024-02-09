@@ -144,12 +144,15 @@ class FloatConfiguration:
             di = {'CONFIG_ProfilePressure_dbar': 'profile_depth',
                   'CONFIG_ParkPressure_dbar': 'parking_depth',
                   'CONFIG_CycleTime_hours': 'cycle_duration',
-                  'CONFIG_MaxCycles_NUMBER': 'life_expectancy'
+                  'CONFIG_MaxCycles_NUMBER': 'life_expectancy',
+                  'CONFIG_AscentSpeed_mm/s': 'vertical_speed',
                   }
             # Over-write known parameters:
             for code in di.keys():
                 if code in df:
                     self.update(di[code], df[code])
+                    if code == 'vertical_speed':
+                        self.update(di[code], df[code]/100)  # Convert mm/s to m/s
                 else:
                     msg = "%s not found for this profile, fall back on default value: %s" % \
                           (code, self._params_dict[di[code]])
@@ -530,7 +533,7 @@ def set_WMO(ds: xr.Dataset, argo_index: pd.DataFrame):
     return ds
 
 
-def get_float_config(wmo: int, cyc: int=None):
+def get_float_config(wmo: int, cyc: int = None):
     """Download float configuration using the Euro-Argo meta-data API
 
     Parameters
@@ -545,6 +548,7 @@ def get_float_config(wmo: int, cyc: int=None):
     :class:`pandas.DataFrame`
         A dataframe with relevant float configuration parameters for 1 or more cycle numbers.
     """
+
     def id_mission(missionCycles, a_cyc):
         this_mission = None
         for im, mission in enumerate(missionCycles):
@@ -553,11 +557,22 @@ def get_float_config(wmo: int, cyc: int=None):
                 this_mission = mission
         return this_mission
 
-    # Download floats meta-data from EA API:
+    # Download float meta-data from EA API:
     URI = "https://fleetmonitoring.euro-argo.eu/floats/%s" % wmo
     with urllib.request.urlopen(URI) as url:
         data = json.load(url)
-    # return data
+
+    # data['configurations']['cycles'] -> dict
+    #    keys (str): comma separated list of cycle numbers
+    #                Eg: '14,15,22'
+    #    values (list of dict): items of the list are one parameter description and value as a dict.
+    #                Eg: {'argoCode': 'CONFIG_AscentSpeedMin_mm/s', 'dimLevel': 7, 'value': 83.0, 'description': None}
+
+    # data['configurations']['missionCycles'] -> dict
+    #    keys (str): configuration ID
+    #                Eg: '24'
+    #    values (list of str): items of the list are cycle numbers, as str, with this configuration
+    #                Eg: ['105', '78', '80', '83', '99', '108', '74', '93']
 
     # Get the list of cycles covered:
     all_cycles = []
@@ -565,37 +580,43 @@ def get_float_config(wmo: int, cyc: int=None):
         cycles = data['configurations']['missionCycles'][mission]
         cycles = np.sort([int(cyc) for cyc in cycles])
         [all_cycles.append(cyc) for cyc in cycles]
-        cycles = [str(c) for c in cycles]
-        # print("mission #%s: from #%s to #%s" % (mission, cycles[0], cycles[-1]))
-        # print(cycles[0],"-",cycles[-1])
-        # print(",".join(cycles) in data['configurations']['cycles'])
-        data['configurations']['cycles'][",".join(cycles)]
     all_cycles = np.sort(all_cycles)
+    if cyc is not None:
+        all_cycles = [cyc]
 
+    # Create a dictionary with 'CONFIG_*' as keys
+    # the CONFIG_MissionID is set manually, then we add all possible config keys by scanning all argoCode
     CONFIG = {'CONFIG_MissionID': []}
-    for c in list(data['configurations']['cycles'].keys()):
-        for item in data['configurations']['cycles'][c]:
-            CONFIG[item['argoCode']] = []
+    for cyles_with_this_config in list(data['configurations']['cycles'].keys()):
+        for item in data['configurations']['cycles'][cyles_with_this_config]:
+            if cyc is not None:
+                if cyc in [int(c) for c in cyles_with_this_config.split(',')]:
+                    CONFIG[item['argoCode']] = []
+            else:
+                CONFIG[item['argoCode']] = []
     CONFIG = dict(sorted(CONFIG.items()))
-    for a_cyc in all_cycles:
-        for im, mission_cycles in enumerate(data['configurations']['cycles']):
-            if a_cyc in [int(c) for c in mission_cycles.split(',')]:
-                this_mission = data['configurations']['cycles'][mission_cycles]
+
+    # Loop through all cycle numbers
+    # for each cycle we identify the associated entry
+    for icyc, a_cyc in enumerate(all_cycles):
+        mission_id = id_mission(data['configurations']['missionCycles'], a_cyc)
+        for im, cyles_with_this_config in enumerate(data['configurations']['cycles']):
+            if a_cyc in [int(c) for c in cyles_with_this_config.split(',')]:
+                this_config = data['configurations']['cycles'][cyles_with_this_config]
                 for key in CONFIG:
-                    if key in [item['argoCode'] for item in this_mission]:
-                        for item in this_mission:
+                    if key in [item['argoCode'] for item in this_config]:
+                        for item in this_config:
                             if item['argoCode'] == key:
-                                CONFIG[item['argoCode']].append(item['value'])
+                                if len(CONFIG[item[
+                                    'argoCode']]) == icyc:  # issue: https://github.com/euroargodev/VirtualFleet/issues/26
+                                    CONFIG[item['argoCode']].append(item['value'])
                     elif key == 'CONFIG_MissionID':
-                        this_id = id_mission(data['configurations']['missionCycles'], a_cyc)
-                        CONFIG['CONFIG_MissionID'].append(this_id)
+                        CONFIG['CONFIG_MissionID'].append(mission_id)
                     else:
                         CONFIG[key].append('')
+
     df = pd.DataFrame(CONFIG, index=all_cycles)
     df.index.name = 'CYCLE_NUMBER'
-
-    if cyc is not None:
-        df = df.loc[cyc]
 
     return df
 
