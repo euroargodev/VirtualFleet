@@ -151,7 +151,7 @@ class FloatConfiguration:
             for code in di.keys():
                 if code in df:
                     self.update(di[code], df[code])
-                    if code == 'vertical_speed':
+                    if code == 'CONFIG_AscentSpeed_mm/s':
                         self.update(di[code], df[code]/100)  # Convert mm/s to m/s
                 else:
                     msg = "%s not found for this profile, fall back on default value: %s" % \
