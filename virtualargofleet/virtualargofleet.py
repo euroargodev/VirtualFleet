@@ -236,7 +236,7 @@ class VirtualFleet:
         summary = ["<VirtualFleet>"]
         summary.append("- %i floats in the deployment plan" % self._parcels['ParticleSet'].size)
         if self.use_recovery_kernel:
-            summary.append("- Found at least one float that requires the 'recovery' kernel'")
+            summary.append("- Found at least one float that requires the 'recovery' kernel")
         if self.simulations_set.simulated:
             # summary.append("A simulation has been performed:")
             summary.append("- Number of simulation(s): %i" % self.simulations_set.N)
