@@ -8,6 +8,21 @@ What's New
 |pypi dwn|
 
 
+Coming up next
+--------------
+
+- A new kernel was developed to handle the specific use case of Argo floats recovery. With this new kernel it is possible
+to let the float free drift at the surface after a given number of simulated cycles. This kernel will automatically be
+selected when the ``free_surface_drift`` parameter is found in the :class:`FloatConfiguration` of the deployment plan. This
+can be used as follows:
+
+.. code-block:: python
+
+    cfg = FloatConfiguration([6903091, 120])  # Load data from the last cycle of the float to recover
+    cfg.add('free_surface_drift', 4)  #
+
+With this configuration, the virtual float will start to free drift at the surface after the 4th simulated cycle.
+
 v0.4.0 (2 Feb. 2024)
 --------------------
 
