@@ -238,7 +238,6 @@ class FloatConfiguration:
     #     """Should be able to read from file a float configuration"""
     #     pass
 
-
     @property
     def tech(self):
         """Float configuration as a dictionary using Argo technical keys"""
