@@ -277,7 +277,7 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
     if fieldset.verbose_events == 1:
         fieldset.verbose_events = True
 
-    # Adjust mission parameters if float enters in the experiment area:
+    # Adjust mission parameters if float to enter in the experiment area:
     xmin, xmax = particle.area_xmin, particle.area_xmax
     ymin, ymax = particle.area_ymin, particle.area_ymax
     if particle.lat >= ymin and particle.lat <= ymax and particle.lon >= xmin and particle.lon <= xmax:
