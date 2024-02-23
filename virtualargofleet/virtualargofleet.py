@@ -15,9 +15,10 @@ import xarray as xr
 import logging
 from .app_parcels import (
     ArgoParticle,
-    ArgoParticle_exp,
     ArgoFloatKernel,
+    ArgoParticle_exp,
     ArgoFloatKernel_exp,
+    ArgoFloatKernel_recovery,
     PeriodicBoundaryConditionKernel,
     KeepInDomain, KeepInWater, KeepInColumn,
 )
@@ -79,12 +80,12 @@ class VirtualFleet:
             self.deployment_plan['depth'] = np.full(self.deployment_plan['lat'].shape, DEFAULT_DEPLOYMENT_DEPTH)
 
         # Mission parameters:
-        if not isinstance(mission,(list,tuple,np.ndarray)):
+        if not isinstance(mission, (list, tuple, np.ndarray)):
             mission = list([mission])
             
-        if len(mission)!=len(self.deployment_plan['lat']):
-            if(len(mission)==1): #if mission's len is 1, apply to all floats
-                mission = np.repeat(mission,len(self.deployment_plan['lat']))
+        if len(mission) != len(self.deployment_plan['lat']):
+            if len(mission) == 1:  #if mission's len is 1, apply to all floats
+                mission = np.repeat(mission, len(self.deployment_plan['lat']))
             else:
                 raise TypeError("When providing a `mission` array, it should be the same lenght as your `plan`")
         
@@ -128,7 +129,7 @@ class VirtualFleet:
             fieldset = fieldset.fieldset
         if not isinstance(fieldset, FieldSet):
             raise TypeError("The `fieldset` argument must be a `FieldSet` Parcels or `VelocityField` instance")
-       
+
         Particle = ArgoParticle
         FloatKernel = ArgoFloatKernel
 
@@ -177,6 +178,15 @@ class VirtualFleet:
         # Init the internal class to hold all simulation metadata:
         self.simulations_set = SimulationSet()
 
+    @property
+    def use_recovery_kernel(self):
+        if not hasattr(self, '_use_recovery_kernel'):
+            self._use_recovery_kernel = False
+            for i in range(len(self.mission)):
+                if 'reco_free_surface_drift' in self.mission[i]:
+                    self._use_recovery_kernel = True
+        return self._use_recovery_kernel
+
     def __init_ParticleSet(self):
         pid_orig = np.arange(self.deployment_plan['lon'].size)
         # print(pid_orig)
@@ -189,13 +199,19 @@ class VirtualFleet:
             time=self.deployment_plan['time'],
             pid_orig=pid_orig,
         )
+
         # set mission per particles
         for i in range(len(P)):
             P[i].parking_depth = self.mission[i]['parking_depth']
             P[i].profile_depth = self.mission[i]['profile_depth']
             P[i].vertical_speed = self.mission[i]['vertical_speed']
             P[i].cycle_duration = self.mission[i]['cycle_duration']
-            P[i].life_expectancy = self.mission[i]['life_expectancy']           
+            P[i].life_expectancy = self.mission[i]['life_expectancy']
+
+            if self.use_recovery_kernel:
+                P[i].free_surface_drift = 9999  # Default value
+            if 'reco_free_surface_drift' in self.mission[i]:
+                P[i].free_surface_drift = self.mission[i]['reco_free_surface_drift']
 
         self._parcels['ParticleSet'] = P
         return self
@@ -203,8 +219,9 @@ class VirtualFleet:
     def __init_kernels(self):
         """Add kernels, attention: Order matters !"""
         K = self._parcels['FloatKernel']
-        # K += self._parcels['ParticleSet'].Kernel(KeepInWater)
-        # K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
+        if self.use_recovery_kernel:
+            K += self._parcels['ParticleSet'].Kernel(ArgoFloatKernel_recovery)
+
         K += self._parcels['ParticleSet'].Kernel(AdvectionRK4)
         if self._isglobal:
             K += self._parcels['ParticleSet'].Kernel(PeriodicBoundaryConditionKernel)
@@ -218,6 +235,8 @@ class VirtualFleet:
     def __repr__(self):
         summary = ["<VirtualFleet>"]
         summary.append("- %i floats in the deployment plan" % self._parcels['ParticleSet'].size)
+        if self.use_recovery_kernel:
+            summary.append("- Found at least one float that requires the 'recovery' kernel'")
         if self.simulations_set.simulated:
             # summary.append("A simulation has been performed:")
             summary.append("- Number of simulation(s): %i" % self.simulations_set.N)

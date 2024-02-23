@@ -53,6 +53,10 @@ class ArgoParticle(JITParticle):
     life_expectancy = Variable('life_expectancy', dtype=np.int32, initial=200, to_write=False)
     """Float mission parameter life expectancy in cycle"""
 
+    # Kernel specifics parameters:
+    free_surface_drift = Variable('free_surface_drift', dtype=np.int8, initial=9999, to_write=False)
+    """Integer indicating when the virtual float will start to free drift at the surface"""
+
 
 def ArgoFloatKernel(particle, fieldset, time):
     """Default kernel to simulate an Argo float
@@ -247,7 +251,7 @@ class ArgoParticle_exp(ArgoParticle):
     :class:`parcels.particle.JITParticle`
     """
     in_area = Variable('in_area', dtype=np.float32, initial=0., to_write=False)
-    """Boolean indicating if the virtual float in the experiment area (1) or not (0)"""
+    """Boolean indicating if the virtual float is in the experiment area (1) or not (0)"""
 
 
 def ArgoFloatKernel_exp(particle, fieldset, time):
@@ -372,6 +376,22 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
         particle.cycle_age += particle.dt  # update cycle_age
 
 
+def ArgoFloatKernel_recovery(particle, fieldset, time):
+    """
+    To be chained after the standard ArgoFloatKernel
+    """
+    if particle.cycle_number >= particle.free_surface_drift:
+        if fieldset.verbose_events:
+            print("This float will start to free drift at the surface")
+
+        particle_ddepth = 0  # Reset change in depth
+
+        particle.cycle_age += particle.dt  # update cycle_age
+
+        if particle.cycle_phase == 0:
+            particle.cycle_phase = 5
+
+
 def PeriodicBoundaryConditionKernel(particle, fieldset, time):
     """Define periodic Boundary Conditions."""
     if particle.lon < fieldset.halo_west:
@@ -382,7 +402,6 @@ def PeriodicBoundaryConditionKernel(particle, fieldset, time):
         particle_dlat += fieldset.halo_north - fieldset.halo_south
     elif particle.lat > fieldset.halo_north:
         particle_dlast -= fieldset.halo_north - fieldset.halo_south
-
 
 
 def KeepInDomain(particle, fieldset, time):
