@@ -386,8 +386,6 @@ def ArgoFloatKernel_recovery(particle, fieldset, time):
 
         particle_ddepth = 0  # Reset change in depth
 
-        particle.cycle_age += particle.dt  # update cycle_age
-
         if particle.cycle_phase == 0:
             particle.cycle_phase = 5
 
