@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json",
+  "title": "VirtualFleet Argo Float configuration",
+  "description": "A set of meta-data documenting virtual Argo Float configuration to be used in a VirtualFleet simulation",
+  "format_version": {
+    "const": "0.1"
+  },
+  "required": [ "created", "version", "name" ],
+  "type": "object",
+  "properties": {
+    "created": {
+      "description": "UTC creation datetime of the configuration file",
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "description": "Version name of the configuration parameter set",
+      "type": "string"
+    },
+    "name": {
+      "description": "Internal shortname of the configuration parameter set. Used to load a configuration JSON file",
+      "type": "string"
+    },
+    "data": {
+      "description": "List of configuration parameters",
+      "type": "array",
+      "items": {
+        "$ref": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ConfigParam.json"
+      },
+      "minItems": 5,
+      "uniqueItems": true
+    }
+  }
+}
