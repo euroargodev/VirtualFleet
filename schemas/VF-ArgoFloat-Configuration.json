@@ -25,11 +25,77 @@
     "data": {
       "description": "List of configuration parameters",
       "type": "array",
-      "items": {
-        "$ref": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ConfigParam.json"
-      },
-      "minItems": 5,
-      "uniqueItems": true
+      "allOf": [
+        { "contains": {
+          "type": "object",
+          "properties": {
+            "cycle_duration": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "integer"
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "description": {"type": "string"},
+                    "unit": {"type": "string"},
+                    "dtype": {"type": "string"},
+                    "teckkey": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        } },
+        { "contains": {
+          "type": "object",
+          "properties": {
+            "life_expectancy": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "integer"
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "description": {"type": "string"},
+                    "unit": {"type": "string"},
+                    "dtype": {"type": "string"},
+                    "teckkey": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        } }
+      ],
+      "additionalItems": {
+        "anyOf": [
+          {"type": "object",
+          "properties": {
+            "area_cycle_duration": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "integer"
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "description": {"type": "string"},
+                    "unit": {"type": "string"},
+                    "dtype": {"type": "string"},
+                    "teckkey": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }},
+          {}
+        ]
+      }
     }
   }
 }
