@@ -211,6 +211,9 @@ class FloatConfiguration:
 
         If no file name is provided, just return the configuration as a json structure
 
+        Produces a json file following the public schema documented here:
+        https://raw.githubusercontent.com/euroargodev/VirtualFleet/schemas/VF-schema-ArgoFloatConfig.json
+
         Parameters
         ----------
         file_name: str, default:None, optional
