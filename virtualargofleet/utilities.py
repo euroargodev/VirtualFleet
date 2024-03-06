@@ -189,9 +189,9 @@ class ConfigParam:
                     'techkey': self.meta['techkey']}
         })
 
-    def to_json(self):
+    def to_json(self, *args, **kwargs):
         """Return a dictionary serialisable in json"""
-        return self.json_schema.to_json()
+        return self.json_schema.to_json(*args, **kwargs)
 
     value = property(get_value, set_value)
 
@@ -228,20 +228,48 @@ class FloatConfiguration:
         """
         self._params_dict = {}
 
-        def load_from_json(name):
+        def load_from_json_v1(name):
             # Load configuration from file
             with open(name, "r") as f:
                 js = json.load(f)
             if js['version'] != "1.0":
                 raise ValueError("Unsupported file format version '%s'" % js['version'])
+            name = js['name']
             data = js['data']
             for key in data.keys():
                 value = data[key]['value']
                 meta = data[key]['meta']
                 meta['dtype'] = eval(meta['dtype'])
                 self.params = ConfigParam(key=key, value=value, **meta)
-            name = js['name']
             return name, data
+
+        def load_from_json_v2(name):
+            # Load configuration from file
+            with open(name, "r") as f:
+                js = json.load(f)
+            if js['version'] != "2.0":
+                raise ValueError("Unsupported file format version '%s'" % js['version'])
+            name = js['name']
+            parameters = js['parameters']
+            for param_obj in parameters:
+                key = param_obj['name']
+                value = param_obj['value']
+                meta = param_obj['meta']
+                meta['description'] = param_obj['description']
+                meta['dtype'] = eval(meta['dtype'])
+                self.params = ConfigParam(key=key, value=value, **meta)
+            return name, parameters
+
+        def load_from_json(name):
+            # Load configuration from file
+            with open(name, "r") as f:
+                js = json.load(f)
+            if js['version'] == "1.0":
+                return load_from_json_v1(name)
+            elif js['version'] == "2.0":
+                return load_from_json_v2(name)
+            else:
+                raise ValueError("Unsupported file format version '%s'" % js['version'])
 
         if name == 'default':
             name, data = load_from_json(os.path.join(path2data, 'FloatConfiguration_default.json'))
@@ -349,9 +377,9 @@ class FloatConfiguration:
             'parameters': parameters
         })
 
-    def to_json(self):
+    def to_json(self, *args, **kwargs):
         """Return a dictionary serialisable in json"""
-        return self.json_schema.to_json()
+        return self.json_schema.to_json(*args, **kwargs)
 
 
 class SimulationSet:
