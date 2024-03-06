@@ -1,12 +1,16 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "VirtualFleet Argo Float configuration",
-  "description": "A set of meta-data documenting virtual Argo Float configuration to be used in a VirtualFleet simulation",
+  "description": "A set of data documenting a virtual Argo Float configuration to be used in a VirtualFleet simulation",
   "format_version": {
-    "const": "0.1"
+    "const": "2.0"
   },
-  "required": [ "created", "version", "name" ],
+  "required": [
+    "created",
+    "version",
+    "name",
+    "parameters"
+  ],
   "type": "object",
   "properties": {
     "created": {
@@ -22,79 +26,112 @@
       "description": "Internal shortname of the configuration parameter set. Used to load a configuration JSON file",
       "type": "string"
     },
-    "data": {
+    "parameters": {
       "description": "List of configuration parameters",
       "type": "array",
-      "allOf": [
-        { "contains": {
-          "type": "object",
-          "properties": {
-            "cycle_duration": {
-              "type": "object",
-              "properties": {
-                "value": {
-                  "type": "integer"
-                },
-                "meta": {
-                  "type": "object",
-                  "properties": {
-                    "description": {"type": "string"},
-                    "unit": {"type": "string"},
-                    "dtype": {"type": "string"},
-                    "teckkey": {"type": "string"}
-                  }
-                }
-              }
-            }
+      "oneOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/required_parameter"
           }
-        } },
-        { "contains": {
-          "type": "object",
-          "properties": {
-            "life_expectancy": {
-              "type": "object",
-              "properties": {
-                "value": {
-                  "type": "integer"
-                },
-                "meta": {
-                  "type": "object",
-                  "properties": {
-                    "description": {"type": "string"},
-                    "unit": {"type": "string"},
-                    "dtype": {"type": "string"},
-                    "teckkey": {"type": "string"}
-                  }
-                }
-              }
-            }
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/optional_parameter"
           }
-        } }
-      ],
-      "additionalItems": {
-        "anyOf": [
-          {"type": "object",
-          "properties": {
-            "area_cycle_duration": {
-              "type": "object",
-              "properties": {
-                "value": {
-                  "type": "integer"
-                },
-                "meta": {
-                  "type": "object",
-                  "properties": {
-                    "description": {"type": "string"},
-                    "unit": {"type": "string"},
-                    "dtype": {"type": "string"},
-                    "teckkey": {"type": "string"}
-                  }
-                }
-              }
-            }
-          }},
-          {}
-        ]
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "required_parameter": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "VirtualFleet Argo Float configuration required parameter",
+      "description": "A set of data documenting one parameter for a virtual Argo Float configuration",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "cycle_duration",
+            "life_expectancy",
+            "parking_depth",
+            "profile_depth",
+            "vertical_speed"
+          ]
+        },
+        "value": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "meta": {
+          "$ref": "#/$defs/parameter_metadata"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ]
+    },
+    "optional_parameter": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "VirtualFleet Argo Float configuration optional parameter",
+      "description": "A set of data documenting one parameter for a virtual Argo Float configuration",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "area_cycle_duration",
+            "area_parking_depth",
+            "area_xmax",
+            "area_xmin",
+            "area_ymax",
+            "area_ymin"
+          ]
+        },
+        "value": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "meta": {
+          "$ref": "#/$defs/parameter_metadata"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ]
+    },
+    "parameter_metadata": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VirtualFleet Argo Float configuration parameter meta-data",
+      "required": [],
+      "type": "object",
+      "properties": {
+        "unit": {
+          "type": "string"
+        },
+        "dtype": {
+          "type": "string",
+          "enum": [
+            "float",
+            "int"
+          ]
+        },
+        "teckkey": {
+          "type": "string"
+        }
       }
     }
   }
