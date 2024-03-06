@@ -16,11 +16,129 @@ import platform
 import socket
 import psutil
 from packaging import version
-from typing import Union
+from typing import List, Dict, Union
 
 
 log = logging.getLogger("virtualfleet.utils")
 path2data = pkg_resources.resource_filename("virtualargofleet", "assets/")
+
+
+class VFschema:
+
+    def __init__(self, **kwargs):
+        for key in self.required:
+            if key not in kwargs:
+                raise ValueError("Missing '%s' property" % key)
+        for key in kwargs:
+            if key in self.properties:
+                setattr(self, key, kwargs[key])
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        summary = []
+        for p in self.properties:
+            if p != 'description':
+                summary.append("%s=%s" % (p, getattr(self, p)))
+        if hasattr(self, 'description'):
+            summary.append("%s='%s'" % ('description', getattr(self, 'description')))
+
+        return "%s(%s)" % (name, ", ".join(summary))
+
+    def _repr_html_(self):
+        return self.__repr__()
+
+    class JSONEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, pd._libs.tslibs.nattype.NaTType):
+                return None
+            if isinstance(obj, pd.Timestamp):
+                return obj.isoformat()
+            if isinstance(obj, pd.Timedelta):
+                return obj.isoformat()
+            if isinstance(obj, (VFschema_meta, VFschema_parameter, VFschema_configuration)):
+                return obj.__dict__
+            # 👇️ otherwise use the default behavior
+            return json.JSONEncoder.default(self, obj)
+
+    @property
+    def __dict__(self):
+        d = {}
+        for key in self.properties:
+            value = getattr(self, key)
+            d.update({key: value})
+        return d
+
+    def to_json(self, fp=None):
+        jsdata = self.__dict__
+        if hasattr(self, 'schema'):
+            jsdata.update({"$schema": "https://raw.githubusercontent.com/euroargodev/json-schemas-FloatConfiguration/schemas/%s.json" % getattr(
+                self, 'schema')})
+        if fp is None:
+            return json.dumps(jsdata, indent=4, cls=self.JSONEncoder)
+        else:
+            return json.dump(jsdata, fp, indent=4, cls=self.JSONEncoder)
+
+
+class VFschema_meta(VFschema):
+    unit: str
+    dtype: str
+    techkey: str
+
+    description: str = "Meta-data of a configuration parameter"
+    properties: List = ["unit", "dtype", "techkey"]
+    required: List = []
+
+    @staticmethod
+    def from_dict(obj: Dict) -> 'VFschema_meta':
+        return VFschema_meta(**obj)
+
+
+class VFschema_parameter(VFschema):
+    name: str
+    value: Union[str, float]
+    meta: VFschema_meta
+    description: str = "One configuration parameter"
+
+    properties: List = ["name", "value", "description", "meta"]
+    required: List = ["name", "value"]
+
+    def __init__(self, **kwargs):
+        if 'meta' in kwargs and isinstance(kwargs['meta'], dict):
+            kwargs['meta'] = VFschema_meta.from_dict(kwargs['meta'])
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def from_dict(obj: Dict) -> 'VFschema_parameter':
+        return VFschema_parameter(**obj)
+
+
+class VFschema_configuration(VFschema):
+    version: str
+    name: str
+    parameters: List[VFschema_parameter]
+    created: pd.Timestamp = None
+
+    schema: str = "VF-ArgoFloat-Configuration"
+    description: str = "VirtualFleet Argo Float configuration"
+    properties: List = ["created", "version", "name", "parameters"]
+    required: List = ["created", "version", "name", "parameters"]
+
+    def __init__(self, **kwargs):
+        if 'created' not in kwargs or kwargs['created'] is None:
+            kwargs['created'] = pd.to_datetime('now', utc=True)
+        if 'parameters' in kwargs:
+            parameters = []
+            for param in kwargs['parameters']:
+                if isinstance(param, dict):
+                    parameters.append(VFschema_parameter.from_dict(param))
+                else:
+                    parameters.append(param)
+            kwargs['parameters'] = parameters
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def from_dict(obj: Dict) -> 'VFschema_configuration':
+        return VFschema_configuration(**obj)
 
 
 class ConfigParam:
@@ -59,15 +177,21 @@ class ConfigParam:
                 raise ValueError("Cannot cast '%s' value as expected %s" % (self.key, self.str_val(self.meta['dtype'])))
         self._value = value
 
+    @property
+    def json_schema(self):
+        return VFschema_parameter.from_dict({
+            'name': self.key,
+            'value': self.value,
+            'description': self.meta['description'],
+            'meta': {
+                    'unit': self.meta['unit'],
+                    'dtype': self.str_val(self.meta['dtype']),
+                    'techkey': self.meta['techkey']}
+        })
+
     def to_json(self):
         """Return a dictionary serialisable in json"""
-
-        def meta_to_json(d):
-            [d.update({key: self.str_val(val)}) for key, val in self.meta.items()]
-            return d
-
-        js = {self.key: {'value': self.value, 'meta': meta_to_json(self.meta.copy())}}
-        return js
+        return self.json_schema.to_json()
 
     value = property(get_value, set_value)
 
@@ -206,42 +330,6 @@ class FloatConfiguration:
             mission[key] = self._params_dict[key].value
         return mission
 
-    def to_json(self, file_name: str=None):
-        """Return or save json dump of configuration
-
-        If no file name is provided, just return the configuration as a json structure
-
-        Produces a json file following the public schema documented here:
-        https://raw.githubusercontent.com/euroargodev/VirtualFleet/schemas/VF-schema-ArgoFloatConfig.json
-
-        Parameters
-        ----------
-        file_name: str, default:None, optional
-            Name of the json file to write configuration to.
-
-        Returns
-        -------
-        Nothing or json string
-        """
-        data = {}
-        for p in self._params_dict.keys():
-            data = {**data, **self._params_dict[p].to_json()}
-        js = {}
-        js['name'] = self.name
-        js['version'] = "1.0"
-        js['created'] = pd.to_datetime('now', utc=True).strftime('%Y%m%d%H%M%S')
-        js['data'] = data
-        if file_name is not None:
-            with open(file_name, "w") as f:
-                json.dump(js, f, indent=4)
-        else:
-            return js
-
-    # def from_netcdf(self):
-    #     """Should be able to read from file a float configuration"""
-    #     pass
-
-
     @property
     def tech(self):
         """Float configuration as a dictionary using Argo technical keys"""
@@ -251,6 +339,19 @@ class FloatConfiguration:
                 techkey = self._params_dict[key].meta['techkey']
                 mission[techkey] = self._params_dict[key].value
         return mission
+
+    @property
+    def json_schema(self):
+        parameters = [self._params_dict[key].json_schema for key in self._params_dict]
+        return VFschema_configuration.from_dict({
+            'name': self.name,
+            'version': '2.0',
+            'parameters': parameters
+        })
+
+    def to_json(self):
+        """Return a dictionary serialisable in json"""
+        return self.json_schema.to_json()
 
 
 class SimulationSet:
