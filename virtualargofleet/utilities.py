@@ -194,7 +194,7 @@ class ConfigParam:
         })
 
     def to_json(self, *args, **kwargs):
-        """Return a dictionary serialisable in json"""
+        """Return a dictionary serialisable in json or write to file"""
         return self.json_schema.to_json(*args, **kwargs)
 
     value = property(get_value, set_value)
@@ -382,7 +382,7 @@ class FloatConfiguration:
         })
 
     def to_json(self, *args, **kwargs):
-        """Return a dictionary serialisable in json"""
+        """Return a dictionary serialisable in json or write to file"""
         return self.json_schema.to_json(*args, **kwargs)
 
 
