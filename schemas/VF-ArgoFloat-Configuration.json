@@ -30,22 +30,17 @@
     "parameters": {
       "description": "List of virtual Argo floats configuration parameters",
       "type": "array",
-      "oneOf": [
+      "allOf": [
         {
           "items": {
-            "$ref": "#/$defs/required_parameter"
-          }
-        },
-        {
-          "items": {
-            "$ref": "#/$defs/optional_parameter"
+            "$ref": "#/$defs/parameter"
           }
         }
       ]
     }
   },
   "$defs": {
-    "required_parameter": {
+    "parameter": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "VirtualFleet Argo Float configuration required parameter",
       "description": "A set of data documenting one parameter for a virtual Argo Float configuration",
@@ -58,36 +53,7 @@
             "life_expectancy",
             "parking_depth",
             "profile_depth",
-            "vertical_speed"
-          ]
-        },
-        "value": {
-          "type": [
-            "string",
-            "number"
-          ]
-        },
-        "description": {
-          "type": "string"
-        },
-        "meta": {
-          "$ref": "#/$defs/parameter_metadata"
-        }
-      },
-      "required": [
-        "name",
-        "value"
-      ]
-    },
-    "optional_parameter": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "title": "VirtualFleet Argo Float configuration optional parameter",
-      "description": "Set of data documenting one parameter for a virtual Argo Float configuration",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "enum": [
+            "vertical_speed",
             "area_cycle_duration",
             "area_parking_depth",
             "area_xmax",
