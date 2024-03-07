@@ -86,13 +86,13 @@ class VFschema:
     @staticmethod
     def validate(data, schema) -> Union[bool, List]:
         # Read schema and create validator:
-        schema = json.loads(schema)
+        schema = json.loads(Path(schema).read_text())
         res = Resource.from_contents(schema)
         registry = Registry(retrieve = res)
         validator = jsonschema.Draft202012Validator(schema, registry=registry)
 
         # Read data and validate against schema:
-        data = json.loads(data)
+        data = json.loads(Path(data).read_text())
         # return validator.validate(data)
         try:
             validator.validate(data)
@@ -287,8 +287,9 @@ class FloatConfiguration:
                 raise ValueError("This file is not with format 2.0 version: '%s'" % js['version'])
 
             # Validate json against schema:
-            json_schema = Path(os.path.join(path2schemas, 'VF-ArgoFloat-Configuration.json')).read_text()
-            errors = VFschema_configuration.validate(Path(name).read_text(), json_schema)
+            # json_schema = Path(os.path.join(path2schemas, 'VF-ArgoFloat-Configuration.json')).read_text()
+            json_schema = os.path.join(path2schemas, 'VF-ArgoFloat-Configuration.json')
+            errors = VFschema_configuration.validate(name, json_schema)
             if isinstance(errors, list):
                 log.debug(list)
                 raise jsonschema.exceptions.ValidationError("This Float configuration file is not valid against format version 2.0\n%s" % str(errors))
