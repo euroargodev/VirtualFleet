@@ -8,8 +8,8 @@ What's New
 |pypi dwn|
 
 
-Upcoming features
------------------
+Coming up next
+--------------
 
 - Virtual Argo float configuration manager :class:`FloatConfiguration` now uses a well documented `JSON schema <https://raw.githubusercontent.com/euroargodev/VirtualFleet/master/schemas/VF-ArgoFloat-Configuration.json>`_ to load/validate and save
 the set of parameters. (:pr:`29`) by `G. Maze <http://www.github.com/gmaze>`_.
