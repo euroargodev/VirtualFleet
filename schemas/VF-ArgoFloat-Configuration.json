@@ -82,7 +82,7 @@
     "optional_parameter": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "VirtualFleet Argo Float configuration optional parameter",
-      "description": "A set of data documenting one parameter for a virtual Argo Float configuration",
+      "description": "Set of data documenting one parameter for a virtual Argo Float configuration",
       "type": "object",
       "properties": {
         "name": {
@@ -116,7 +116,7 @@
     },
     "parameter_metadata": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "VirtualFleet Argo Float configuration parameter meta-data",
+      "title": "Set of meta-data documenting one parameter for a virtual Argo Float configuration",
       "required": [],
       "type": "object",
       "properties": {
