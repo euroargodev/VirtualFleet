@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json",
   "title": "VirtualFleet Argo Float configuration",
   "description": "A set of data documenting a virtual Argo Float configuration to be used in a VirtualFleet simulation",
   "format_version": {
