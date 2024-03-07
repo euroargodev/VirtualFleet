@@ -311,6 +311,7 @@ class FloatConfiguration:
             with open(name, "r") as f:
                 js = json.load(f)
             if js['version'] == "1.0":
+                warnings.warn("There is a newer json file format '2.0' for Argo float configuration available, please re-save this configuration, it will automatically be updated to the new format.")
                 return load_from_json_v1(name)
             elif js['version'] == "2.0":
                 return load_from_json_v2(name)
