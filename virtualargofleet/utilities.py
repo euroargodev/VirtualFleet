@@ -10,17 +10,21 @@ import pandas as pd
 import logging
 import json
 import urllib.request
-import pkg_resources
 from string import Formatter
 import platform
 import socket
 import psutil
 from packaging import version
 from typing import List, Dict, Union
+import jsonschema
+from referencing import Registry, Resource
+from jsonschema import Draft202012Validator
+from pathlib import Path
 
 
 log = logging.getLogger("virtualfleet.utils")
-path2data = pkg_resources.resource_filename("virtualargofleet", "assets/")
+path2data = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
+path2schemas = os.path.sep.join([os.path.dirname(os.path.abspath(__file__)), '..', 'schemas'])
 
 
 class VFschema:
@@ -78,6 +82,34 @@ class VFschema:
             return json.dumps(jsdata, indent=4, cls=self.JSONEncoder)
         else:
             return json.dump(jsdata, fp, indent=4, cls=self.JSONEncoder)
+
+    @staticmethod
+    def validate(data, schema) -> Union[bool, List]:
+        # Read schema and create validator:
+        schema = json.loads(schema)
+        res = Resource.from_contents(schema)
+        registry = Registry(retrieve = res)
+        validator = jsonschema.Draft202012Validator(schema, registry=registry)
+
+        # Read data and validate against schema:
+        data = json.loads(data)
+        # return validator.validate(data)
+        try:
+            validator.validate(data)
+        except jsonschema.exceptions.ValidationError:
+            pass
+        except jsonschema.exceptions.SchemaError as error:
+            log.debug("SchemaError")
+            raise
+        except jsonschema.exceptions.UnknownType as error:
+            log.debug("UnknownType")
+            raise
+        except jsonschema.exceptions.UndefinedTypeCheck as error:
+            log.debug("UndefinedTypeCheck")
+            raise
+
+        errors = list(validator.iter_errors(data))
+        return True if len(errors) == 0 else errors
 
 
 class VFschema_meta(VFschema):
@@ -237,7 +269,7 @@ class FloatConfiguration:
             with open(name, "r") as f:
                 js = json.load(f)
             if js['version'] != "1.0":
-                raise ValueError("Unsupported file format version '%s'" % js['version'])
+                raise ValueError("This file is not with format 1.0 version: '%s'" % js['version'])
             name = js['name']
             data = js['data']
             for key in data.keys():
@@ -248,11 +280,20 @@ class FloatConfiguration:
             return name, data
 
         def load_from_json_v2(name):
-            # Load configuration from file
+            # Load configuration from file:
             with open(name, "r") as f:
                 js = json.load(f)
             if js['version'] != "2.0":
-                raise ValueError("Unsupported file format version '%s'" % js['version'])
+                raise ValueError("This file is not with format 2.0 version: '%s'" % js['version'])
+
+            # Validate json against schema:
+            json_schema = Path(os.path.join(path2schemas, 'VF-ArgoFloat-Configuration.json')).read_text()
+            errors = VFschema_configuration.validate(Path(name).read_text(), json_schema)
+            if isinstance(errors, list):
+                log.debug(list)
+                raise jsonschema.exceptions.ValidationError("This Float configuration file is not valid against format version 2.0\n%s" % str(errors))
+
+            # Load to FloatConfiguration instance:
             name = js['name']
             parameters = js['parameters']
             for param_obj in parameters:
