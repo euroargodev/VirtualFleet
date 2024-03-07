@@ -10,10 +10,8 @@
             "meta": {
                 "unit": "hours",
                 "dtype": "float",
-                "techkey": "CONFIG_CycleTime_hours",
-                "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json#parameter_metadata"
-            },
-            "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json#required_parameter"
+                "techkey": "CONFIG_CycleTime_hours"
+            }
         },
         {
             "name": "life_expectancy",
@@ -22,10 +20,8 @@
             "meta": {
                 "unit": "cycle",
                 "dtype": "int",
-                "techkey": "CONFIG_MaxCycles_NUMBER",
-                "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json#parameter_metadata"
-            },
-            "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json#required_parameter"
+                "techkey": "CONFIG_MaxCycles_NUMBER"
+            }
         },
         {
             "name": "parking_depth",
@@ -34,10 +30,8 @@
             "meta": {
                 "unit": "m",
                 "dtype": "float",
-                "techkey": "CONFIG_ParkPressure_dbar",
-                "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json#parameter_metadata"
-            },
-            "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json#required_parameter"
+                "techkey": "CONFIG_ParkPressure_dbar"
+            }
         },
         {
             "name": "profile_depth",
@@ -46,10 +40,8 @@
             "meta": {
                 "unit": "m",
                 "dtype": "float",
-                "techkey": "CONFIG_ProfilePressure_dbar",
-                "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json#parameter_metadata"
-            },
-            "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json#required_parameter"
+                "techkey": "CONFIG_ProfilePressure_dbar"
+            }
         },
         {
             "name": "vertical_speed",
@@ -58,10 +50,8 @@
             "meta": {
                 "unit": "m/s",
                 "dtype": "float",
-                "techkey": "",
-                "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json#parameter_metadata"
-            },
-            "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json#required_parameter"
+                "techkey": ""
+            }
         }
     ],
     "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json"
