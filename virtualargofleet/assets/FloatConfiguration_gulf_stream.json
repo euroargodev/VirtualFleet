@@ -1,5 +1,5 @@
 {
-    "created": "2024-03-06T16:05:40.238562+00:00",
+    "created": "2024-03-07T08:44:44.033446+00:00",
     "version": "2.0",
     "name": "gulf-stream",
     "parameters": [
@@ -114,5 +114,5 @@
             }
         }
     ],
-    "$schema": "https://raw.githubusercontent.com/euroargodev/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json"
+    "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json"
 }

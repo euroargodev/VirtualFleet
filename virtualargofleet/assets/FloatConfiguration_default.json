@@ -1,5 +1,5 @@
 {
-    "created": "2024-03-06T15:54:38.818728+00:00",
+    "created": "2024-03-07T08:44:43.560904+00:00",
     "version": "2.0",
     "name": "default",
     "parameters": [
@@ -54,5 +54,5 @@
             }
         }
     ],
-    "$schema": "https://raw.githubusercontent.com/euroargodev/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json"
+    "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json"
 }
