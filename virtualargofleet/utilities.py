@@ -24,6 +24,8 @@ path2data = pkg_resources.resource_filename("virtualargofleet", "assets/")
 
 
 class VFschema:
+    """A base class to export json files following a schema"""
+    schema_root: str = "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas"
 
     def __init__(self, **kwargs):
         for key in self.required:
@@ -71,8 +73,7 @@ class VFschema:
     def to_json(self, fp=None):
         jsdata = self.__dict__
         if hasattr(self, 'schema'):
-            jsdata.update({"$schema": "https://raw.githubusercontent.com/euroargodev/json-schemas-FloatConfiguration/schemas/%s.json" % getattr(
-                self, 'schema')})
+            jsdata.update({"$schema": "%s/%s.json" % (self.schema_root, getattr(self, 'schema'))})
         if fp is None:
             return json.dumps(jsdata, indent=4, cls=self.JSONEncoder)
         else:
@@ -80,6 +81,7 @@ class VFschema:
 
 
 class VFschema_meta(VFschema):
+    """JSON schema handler for meta-data of a :class:`ConfigParam` instance"""
     unit: str
     dtype: str
     techkey: str
@@ -94,6 +96,7 @@ class VFschema_meta(VFschema):
 
 
 class VFschema_parameter(VFschema):
+    """JSON schema handler for a :class:`ConfigParam` instance"""
     name: str
     value: Union[str, float]
     meta: VFschema_meta
@@ -113,6 +116,7 @@ class VFschema_parameter(VFschema):
 
 
 class VFschema_configuration(VFschema):
+    """JSON schema handler for a :class:`FloatConfiguration` instance"""
     version: str
     name: str
     parameters: List[VFschema_parameter]
