@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
   "$id": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json",
   "title": "VirtualFleet Argo Float configuration",
   "description": "A set of data documenting a virtual Argo Float configuration to be used in a VirtualFleet simulation",
@@ -41,7 +41,6 @@
   },
   "$defs": {
     "parameter": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "VirtualFleet Argo Float configuration required parameter",
       "description": "A set of data documenting one parameter for a virtual Argo Float configuration",
       "type": "object",
@@ -81,7 +80,6 @@
       ]
     },
     "parameter_metadata": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Set of meta-data documenting one parameter for a virtual Argo Float configuration",
       "required": [],
       "type": "object",
@@ -101,5 +99,6 @@
         }
       }
     }
-  }
+  },
+  "version": 2
 }
