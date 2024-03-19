@@ -15,7 +15,7 @@ import platform
 import socket
 import psutil
 from packaging import version
-from typing import List, Dict, Union
+from typing import List, Dict, Union, TextIO
 import jsonschema
 from referencing import Registry, Resource
 from jsonschema import Draft202012Validator
@@ -73,15 +73,24 @@ class VFschema:
             value = getattr(self, key)
             d.update({key: value})
         return d
-
-    def to_json(self, fp=None):
+    
+    def to_json(self, fp: Union[str, Path, TextIO] = None, indent=4):
+        """Save to JSON file or return a JSON string that can be loaded with json.loads()"""
         jsdata = self.__dict__
         if hasattr(self, 'schema'):
             jsdata.update({"$schema": "%s/%s.json" % (self.schema_root, getattr(self, 'schema'))})
         if fp is None:
-            return json.dumps(jsdata, indent=4, cls=self.JSONEncoder)
+            return json.dumps(jsdata, indent=indent, cls=self.JSONEncoder)
         else:
-            return json.dump(jsdata, fp, indent=4, cls=self.JSONEncoder)
+            if hasattr(fp, 'write'):
+                return json.dump(jsdata, fp, indent=indent, cls=self.JSONEncoder)
+            else:
+                if isinstance(fp, str):
+                    fp = Path(fp)
+
+                with fp.open('w') as fpp:
+                    o = json.dump(jsdata, fpp, indent=indent, cls=self.JSONEncoder)
+                return o
 
     @staticmethod
     def validate(data, schema) -> Union[bool, List]:
