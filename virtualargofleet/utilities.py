@@ -73,7 +73,7 @@ class VFschema:
             value = getattr(self, key)
             d.update({key: value})
         return d
-    
+
     def to_json(self, fp: Union[str, Path, TextIO] = None, indent=4):
         """Save to JSON file or return a JSON string that can be loaded with json.loads()"""
         jsdata = self.__dict__
