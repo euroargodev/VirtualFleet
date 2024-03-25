@@ -59,7 +59,7 @@
             "area_xmin",
             "area_ymax",
             "area_ymin",
-            "reco_free_surface_drift",
+            "reco_free_surface_drift"
           ]
         },
         "value": {
