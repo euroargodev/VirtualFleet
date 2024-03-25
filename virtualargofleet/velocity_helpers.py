@@ -17,7 +17,7 @@ class VelocityField(ABC):
     """Class prototype to manage a Virtual Fleet velocity field
 
     This prototype provides useful methods to prepare a :class:`parcels.fieldset.FieldSet` for a VirtualFleet simulation.
-    A :class:`VelocityField` instance can be passed directly to a :class:`.VirtualFleet` instance.
+    A :class:`VelocityField` instance can be passed directly to a :class:`VirtualFleet` instance.
 
     You can use the :meth:`Velocity` function to instantiate such a class for known products.
 
