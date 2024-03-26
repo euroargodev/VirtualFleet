@@ -384,15 +384,6 @@ def PeriodicBoundaryConditionKernel(particle, fieldset, time):
         particle_dlast -= fieldset.halo_north - fieldset.halo_south
 
 
-
-def KeepInDomain(particle, fieldset, time):
-    # out of geographical area : here we can delete the particle
-    if particle.state == StatusCode.ErrorOutOfBounds:
-        if fieldset.verbose_events == 1:
-            print("Field warning : Float out of the horizontal geographical domain --> deleted")
-        particle.delete()
-
-
 def KeepInWater(particle, fieldset, time):
     if particle.state == StatusCode.ErrorThroughSurface:
         # Make the float sticks to the surface level
@@ -404,14 +395,25 @@ def KeepInWater(particle, fieldset, time):
         particle.state = StatusCode.Success
 
 
-def KeepInColumn(particle, fieldset, time):
+# def KeepInColumn(particle, fieldset, time):
+#     if particle.state == StatusCode.ErrorOutOfBounds:
+#         # Make the float sticks to the bottom level
+#         # Rq: change in cycle phase is managed by the FloatKernel
+#         # Here, we don't let the float going deeper, and change in particle_ddepth are managed by FloatKernel
+#         # depending on the cycle phase
+#         if particle.depth <= fieldset.vf_bottom:            
+#             if fieldset.verbose_events == 1:
+#                 print(
+#                     "Field warning : Float reached fieldset bottom ! Your fieldset is not deep enough compared to float drift or profiling depths.")
+#             particle.depth = fieldset.vf_bottom
+#             particle.state = StatusCode.Success
+#         else :
+#             # Go throught KeepInDomain
+#             pass 
+
+def KeepInDomain(particle, fieldset, time):
+    # out of geographical area : here we can delete the particle
     if particle.state == StatusCode.ErrorOutOfBounds:
-        # Make the float sticks to the bottom level
-        # Rq: change in cycle phase is managed by the FloatKernel
-        # Here, we don't let the float going deeper, and change in particle_ddepth are managed by FloatKernel
-        # depending on the cycle phase
-        if fieldset.verbose_events == 1:
-            print(
-                "Field warning : Float reached fieldset bottom ! Your fieldset is not deep enough compared to float drift or profiling depths.")
-        particle.depth = fieldset.vf_bottom
-        particle.state = StatusCode.Success
+        if fieldset.verbose_events == 1:            
+            print("Field warning : Float out of the horizontal geographical domain OR interpolation error --> deleted")
+        particle.delete()
