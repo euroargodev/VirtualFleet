@@ -165,7 +165,7 @@ class VelocityField_CUSTOM(VelocityField):
         self.add_mask()
 
 
-def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args, **kwargs):
+def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args: object, **kwargs: object) -> object:
     """Function to return a :class:`VelocityField` instance for known products
 
     Note that you can provide a :class:`VelocityField` or :attr:`VelocityField.fieldset`
