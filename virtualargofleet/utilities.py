@@ -217,6 +217,7 @@ class ConfigParam:
     def set_value(self, value):
         if self.meta['dtype'] != '':
             try:
+                print(self.key)
                 value = self.meta['dtype'](value)
             except ValueError:
                 raise ValueError("Cannot cast '%s' value as expected %s" % (self.key, self.str_val(self.meta['dtype'])))
@@ -358,9 +359,9 @@ class FloatConfiguration:
             # Over-write known parameters:
             for code in di.keys():
                 if code in df:
-                    self.update(di[code], df[code])
+                    self.update(di[code].iloc[0], df[code].iloc[0])
                     if code == 'CONFIG_AscentSpeed_mm/s':
-                        self.update(di[code], df[code]/1000)  # Convert mm/s to m/s
+                        self.update(di[code].iloc[0], df[code].iloc[0]/1000)  # Convert mm/s to m/s
                 else:
                     msg = "%s not found for this profile, fall back on default value: %s" % \
                           (code, self._params_dict[di[code]])
