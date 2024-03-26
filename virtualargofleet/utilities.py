@@ -358,9 +358,9 @@ class FloatConfiguration:
             # Over-write known parameters:
             for code in di.keys():
                 if code in df:
-                    self.update(di[code].iloc[0], df[code].iloc[0])
+                    self.update(di[code], df[code].iloc[0])
                     if code == 'CONFIG_AscentSpeed_mm/s':
-                        self.update(di[code].iloc[0], df[code].iloc[0]/1000)  # Convert mm/s to m/s
+                        self.update(di[code], df[code].iloc[0]/1000)  # Convert mm/s to m/s
                 else:
                     msg = "%s not found for this profile, fall back on default value: %s" % \
                           (code, self._params_dict[di[code]])
