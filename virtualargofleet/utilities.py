@@ -217,7 +217,6 @@ class ConfigParam:
     def set_value(self, value):
         if self.meta['dtype'] != '':
             try:
-                print(self.key)
                 value = self.meta['dtype'](value)
             except ValueError:
                 raise ValueError("Cannot cast '%s' value as expected %s" % (self.key, self.str_val(self.meta['dtype'])))
