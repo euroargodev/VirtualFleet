@@ -873,3 +873,22 @@ def getSystemInfo():
         return info
     except Exception as e:
         logging.exception(e)
+
+
+def save_figurefile(this_fig, a_name, folder: Path = Path('.')):
+    """
+    Parameters
+    ----------
+    this_fig
+    a_name
+
+    Returns
+    -------
+    path
+    """
+    # figname = os.path.join(folder, "%s.png" % a_name)
+    figname = folder.joinpath("%s.png" % a_name)
+    # log.debug("Saving %s ..." % figname)
+    this_fig.savefig(figname)
+    return figname
+

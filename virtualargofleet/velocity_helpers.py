@@ -1,14 +1,14 @@
-"""
-Velocity Field Helper
-"""
-
 from parcels import FieldSet, ParticleSet, Field
 import xarray as xr
+import pandas as pd
+import numpy as np
 import glob
 from abc import ABC
 import logging
-from .app_parcels import ArgoParticle
+from pathlib import Path
 
+from .app_parcels import ArgoParticle
+from .utilities import save_figurefile
 
 log = logging.getLogger("virtualfleet.velocity")
 
@@ -163,6 +163,50 @@ class VelocityField_CUSTOM(VelocityField):
 
         # Create mask to manage grounding:
         self.add_mask()
+
+    def plot(self, it=0, iz=0, save: bool = False, workdir: Path = Path('.')):
+        """
+
+        Parameters
+        ----------
+        save
+        workdir
+
+        Returns
+        -------
+        fig, ax
+        """
+        import matplotlib.pyplot as plt
+        import argopy.plot as argoplot
+        import cartopy.crs as ccrs
+
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20, 20), dpi=100,
+                               subplot_kw={'projection': ccrs.PlateCarree()})
+
+        # ax.set_extent(box)
+        argoplot.utils.latlongrid(ax)
+        ax.add_feature(argoplot.utils.land_feature, edgecolor="black")
+
+        self.field.isel(time=it, depth=iz).plot.quiver(x="longitude", y="latitude",
+                                                    u=self.var['U'], v=self.var['V'], ax=ax, color='grey', alpha=0.5,
+                                                    add_guide=False)
+
+        # txt = "starting from cycle %i, predicting cycle %i" % (cyc[0], cyc[1])
+        # ax.set_title(
+        #     "VirtualFleet recovery system for WMO %i: %s\n"
+        #     "%s velocity snapshot to illustrate the simulation domain\n"
+        #     "Vectors: Velocity field at z=%0.2fm, t=%s" %
+        #     (wmo, txt, vel_name, vel.field['depth'][0].values[np.newaxis][0],
+        #      pd.to_datetime(vel.field['time'][0].values).strftime("%Y/%m/%d %H:%M")), fontsize=15)
+
+        plt.tight_layout()
+        if save:
+            t = pd.to_datetime(self.field.isel(time=it, depth=iz)['time'].data).strftime("%Y%m%d")
+            z = str(np.abs(self.field.isel(time=it, depth=iz)['depth'].data)).split('.')[0]
+            figname = save_figurefile(fig, 'velocity_%s_t%s_z%s' % (self.name, t, z), workdir)
+            return fig, ax, figname
+        else:
+            return fig, ax
 
 
 def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args: object, **kwargs: object) -> object:
