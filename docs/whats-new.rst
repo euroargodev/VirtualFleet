@@ -23,6 +23,9 @@ can be used as follows:
 
 With this configuration, the virtual float will start to free drift at the surface after the 4th simulated cycle.
 
+- Virtual Argo float configuration manager :class:`FloatConfiguration` now uses a well documented `JSON schema <https://raw.githubusercontent.com/euroargodev/VirtualFleet/master/schemas/VF-ArgoFloat-Configuration.json>`_ to load/validate/save the set of parameters. (:pr:`29`) by `G. Maze <http://www.github.com/gmaze>`_.
+
+
 v0.4.0 (2 Feb. 2024)
 --------------------
 

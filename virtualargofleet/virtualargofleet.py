@@ -20,7 +20,7 @@ from .app_parcels import (
     ArgoFloatKernel_exp,
     ArgoFloatKernel_recovery,
     PeriodicBoundaryConditionKernel,
-    KeepInDomain, KeepInWater, KeepInColumn,
+    KeepInDomain, KeepInWater #, KeepInColumn,
 )
 from .velocity_helpers import VelocityField
 from .utilities import SimulationSet, FloatConfiguration
@@ -226,7 +226,7 @@ class VirtualFleet:
         if self._isglobal:
             K += self._parcels['ParticleSet'].Kernel(PeriodicBoundaryConditionKernel)
         K += self._parcels['ParticleSet'].Kernel(KeepInWater)
-        K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
+        #K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
         K += self._parcels['ParticleSet'].Kernel(KeepInDomain)
 
         self._parcels['kernels'] = K

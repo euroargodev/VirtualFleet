@@ -1,58 +1,52 @@
 {
-    "created": "2024-03-07T08:44:43.560904+00:00",
-    "version": "2.0",
     "name": "default",
-    "parameters": [
-        {
-            "name": "cycle_duration",
+    "version": "1.0",
+    "created": "20221212151119",
+    "data": {
+        "cycle_duration": {
             "value": 240.0,
-            "description": "Maximum length of float complete cycle",
             "meta": {
+                "description": "Maximum length of float complete cycle",
                 "unit": "hours",
                 "dtype": "float",
                 "techkey": "CONFIG_CycleTime_hours"
             }
         },
-        {
-            "name": "life_expectancy",
+        "life_expectancy": {
             "value": 200,
-            "description": "Maximum number of completed cycle",
             "meta": {
+                "description": "Maximum number of completed cycle",
                 "unit": "cycle",
                 "dtype": "int",
                 "techkey": "CONFIG_MaxCycles_NUMBER"
             }
         },
-        {
-            "name": "parking_depth",
+        "parking_depth": {
             "value": 1000.0,
-            "description": "Drifting depth",
             "meta": {
+                "description": "Drifting depth",
                 "unit": "m",
                 "dtype": "float",
                 "techkey": "CONFIG_ParkPressure_dbar"
             }
         },
-        {
-            "name": "profile_depth",
+        "profile_depth": {
             "value": 2000.0,
-            "description": "Maximum profile depth",
             "meta": {
+                "description": "Maximum profile depth",
                 "unit": "m",
                 "dtype": "float",
                 "techkey": "CONFIG_ProfilePressure_dbar"
             }
         },
-        {
-            "name": "vertical_speed",
+        "vertical_speed": {
             "value": 0.09,
-            "description": "Vertical profiling speed",
             "meta": {
+                "description": "Vertical profiling speed",
                 "unit": "m/s",
                 "dtype": "float",
                 "techkey": ""
             }
         }
-    ],
-    "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json"
+    }
 }
