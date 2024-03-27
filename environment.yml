@@ -7,7 +7,7 @@ dependencies:
   - parcels>=3.0.0
   - dask
   - distributed
-  - dask-kubernetes
+#  - dask-kubernetes
   - bottleneck
   - gcsfs
   - zarr
