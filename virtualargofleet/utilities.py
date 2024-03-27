@@ -10,17 +10,180 @@ import pandas as pd
 import logging
 import json
 import urllib.request
-import pkg_resources
 from string import Formatter
 import platform
 import socket
 import psutil
 from packaging import version
-from typing import Union
+from typing import List, Dict, Union, TextIO
+import jsonschema
+from referencing import Registry, Resource
+from jsonschema import Draft202012Validator
+from pathlib import Path
 
 
 log = logging.getLogger("virtualfleet.utils")
-path2data = pkg_resources.resource_filename("virtualargofleet", "assets/")
+path2data = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
+path2schemas = os.path.sep.join([os.path.dirname(os.path.abspath(__file__)), '..', 'schemas'])
+
+
+class VFschema:
+    """A base class to export json files following a schema"""
+    schema_root: str = "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas"
+
+    def __init__(self, **kwargs):
+        for key in self.required:
+            if key not in kwargs:
+                raise ValueError("Missing '%s' property" % key)
+        for key in kwargs:
+            if key in self.properties:
+                setattr(self, key, kwargs[key])
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        summary = []
+        for p in self.properties:
+            if p != 'description':
+                summary.append("%s=%s" % (p, getattr(self, p)))
+        if hasattr(self, 'description'):
+            summary.append("%s='%s'" % ('description', getattr(self, 'description')))
+
+        return "%s(%s)" % (name, ", ".join(summary))
+
+    def _repr_html_(self):
+        return self.__repr__()
+
+    class JSONEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, pd._libs.tslibs.nattype.NaTType):
+                return None
+            if isinstance(obj, pd.Timestamp):
+                return obj.isoformat()
+            if isinstance(obj, pd.Timedelta):
+                return obj.isoformat()
+            if isinstance(obj, (VFschema_meta, VFschema_parameter, VFschema_configuration)):
+                return obj.__dict__
+            # 👇️ otherwise use the default behavior
+            return json.JSONEncoder.default(self, obj)
+
+    @property
+    def __dict__(self):
+        d = {}
+        for key in self.properties:
+            value = getattr(self, key)
+            d.update({key: value})
+        return d
+
+    def to_json(self, fp: Union[str, Path, TextIO] = None, indent=4):
+        """Save to JSON file or return a JSON string that can be loaded with json.loads()"""
+        jsdata = self.__dict__
+        if hasattr(self, 'schema'):
+            jsdata.update({"$schema": "%s/%s.json" % (self.schema_root, getattr(self, 'schema'))})
+        if fp is None:
+            return json.dumps(jsdata, indent=indent, cls=self.JSONEncoder)
+        else:
+            if hasattr(fp, 'write'):
+                return json.dump(jsdata, fp, indent=indent, cls=self.JSONEncoder)
+            else:
+                if isinstance(fp, str):
+                    fp = Path(fp)
+
+                with fp.open('w') as fpp:
+                    o = json.dump(jsdata, fpp, indent=indent, cls=self.JSONEncoder)
+                return o
+
+    @staticmethod
+    def validate(data, schema) -> Union[bool, List]:
+        # Read schema and create validator:
+        schema = json.loads(Path(schema).read_text())
+        res = Resource.from_contents(schema)
+        registry = Registry(retrieve = res)
+        validator = jsonschema.Draft202012Validator(schema, registry=registry)
+
+        # Read data and validate against schema:
+        data = json.loads(Path(data).read_text())
+        # return validator.validate(data)
+        try:
+            validator.validate(data)
+        except jsonschema.exceptions.ValidationError:
+            pass
+        except jsonschema.exceptions.SchemaError as error:
+            log.debug("SchemaError")
+            raise
+        except jsonschema.exceptions.UnknownType as error:
+            log.debug("UnknownType")
+            raise
+        except jsonschema.exceptions.UndefinedTypeCheck as error:
+            log.debug("UndefinedTypeCheck")
+            raise
+
+        errors = list(validator.iter_errors(data))
+        return True if len(errors) == 0 else errors
+
+
+class VFschema_meta(VFschema):
+    """JSON schema handler for meta-data of a :class:`ConfigParam` instance"""
+    unit: str
+    dtype: str
+    techkey: str
+
+    description: str = "Meta-data of a configuration parameter"
+    properties: List = ["unit", "dtype", "techkey"]
+    required: List = []
+
+    @staticmethod
+    def from_dict(obj: Dict) -> 'VFschema_meta':
+        return VFschema_meta(**obj)
+
+
+class VFschema_parameter(VFschema):
+    """JSON schema handler for a :class:`ConfigParam` instance"""
+    name: str
+    value: Union[str, float]
+    meta: VFschema_meta
+    description: str = "One configuration parameter"
+
+    properties: List = ["name", "value", "description", "meta"]
+    required: List = ["name", "value"]
+
+    def __init__(self, **kwargs):
+        if 'meta' in kwargs and isinstance(kwargs['meta'], dict):
+            kwargs['meta'] = VFschema_meta.from_dict(kwargs['meta'])
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def from_dict(obj: Dict) -> 'VFschema_parameter':
+        return VFschema_parameter(**obj)
+
+
+class VFschema_configuration(VFschema):
+    """JSON schema handler for a :class:`FloatConfiguration` instance"""
+    version: str
+    name: str
+    parameters: List[VFschema_parameter]
+    created: pd.Timestamp = None
+
+    schema: str = "VF-ArgoFloat-Configuration"
+    description: str = "VirtualFleet Argo Float configuration"
+    properties: List = ["created", "version", "name", "parameters"]
+    required: List = ["created", "version", "name", "parameters"]
+
+    def __init__(self, **kwargs):
+        if 'created' not in kwargs or kwargs['created'] is None:
+            kwargs['created'] = pd.to_datetime('now', utc=True)
+        if 'parameters' in kwargs:
+            parameters = []
+            for param in kwargs['parameters']:
+                if isinstance(param, dict):
+                    parameters.append(VFschema_parameter.from_dict(param))
+                else:
+                    parameters.append(param)
+            kwargs['parameters'] = parameters
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def from_dict(obj: Dict) -> 'VFschema_configuration':
+        return VFschema_configuration(**obj)
 
 
 class ConfigParam:
@@ -59,15 +222,21 @@ class ConfigParam:
                 raise ValueError("Cannot cast '%s' value as expected %s" % (self.key, self.str_val(self.meta['dtype'])))
         self._value = value
 
-    def to_json(self):
-        """Return a dictionary serialisable in json"""
+    @property
+    def json_schema(self):
+        return VFschema_parameter.from_dict({
+            'name': self.key,
+            'value': self.value,
+            'description': self.meta['description'],
+            'meta': {
+                    'unit': self.meta['unit'],
+                    'dtype': self.str_val(self.meta['dtype']),
+                    'techkey': self.meta['techkey']}
+        })
 
-        def meta_to_json(d):
-            [d.update({key: self.str_val(val)}) for key, val in self.meta.items()]
-            return d
-
-        js = {self.key: {'value': self.value, 'meta': meta_to_json(self.meta.copy())}}
-        return js
+    def to_json(self, *args, **kwargs):
+        """Return a dictionary serialisable in json or write to file"""
+        return self.json_schema.to_json(*args, **kwargs)
 
     value = property(get_value, set_value)
 
@@ -104,20 +273,59 @@ class FloatConfiguration:
         """
         self._params_dict = {}
 
-        def load_from_json(name):
+        def load_from_json_v1(name):
             # Load configuration from file
             with open(name, "r") as f:
                 js = json.load(f)
             if js['version'] != "1.0":
-                raise ValueError("Unsupported file format version '%s'" % js['version'])
+                raise ValueError("This file is not with format 1.0 version: '%s'" % js['version'])
+            name = js['name']
             data = js['data']
             for key in data.keys():
                 value = data[key]['value']
                 meta = data[key]['meta']
                 meta['dtype'] = eval(meta['dtype'])
                 self.params = ConfigParam(key=key, value=value, **meta)
-            name = js['name']
             return name, data
+
+        def load_from_json_v2(name):
+            # Load configuration from file:
+            with open(name, "r") as f:
+                js = json.load(f)
+            if js['version'] != "2.0":
+                raise ValueError("This file is not with format 2.0 version: '%s'" % js['version'])
+
+            # Validate json against schema:
+            # json_schema = Path(os.path.join(path2schemas, 'VF-ArgoFloat-Configuration.json')).read_text()
+            json_schema = os.path.join(path2schemas, 'VF-ArgoFloat-Configuration.json')
+            errors = VFschema_configuration.validate(name, json_schema)
+            if isinstance(errors, list):
+                log.debug(list)
+                raise jsonschema.exceptions.ValidationError("This Float configuration file is not valid against format version 2.0\n%s" % str(errors))
+
+            # Load to FloatConfiguration instance:
+            name = js['name']
+            parameters = js['parameters']
+            for param_obj in parameters:
+                key = param_obj['name']
+                value = param_obj['value']
+                meta = param_obj['meta']
+                meta['description'] = param_obj['description']
+                meta['dtype'] = eval(meta['dtype'])
+                self.params = ConfigParam(key=key, value=value, **meta)
+            return name, parameters
+
+        def load_from_json(name):
+            # Load configuration from file
+            with open(name, "r") as f:
+                js = json.load(f)
+            if js['version'] == "1.0":
+                warnings.warn("There is a newer json file format '2.0' for Argo float configuration available, please re-save this configuration, it will automatically be updated to the new format.")
+                return load_from_json_v1(name)
+            elif js['version'] == "2.0":
+                return load_from_json_v2(name)
+            else:
+                raise ValueError("Unsupported file format version '%s'" % js['version'])
 
         if name == 'default':
             name, data = load_from_json(os.path.join(path2data, 'FloatConfiguration_default.json'))
@@ -150,9 +358,9 @@ class FloatConfiguration:
             # Over-write known parameters:
             for code in di.keys():
                 if code in df:
-                    self.update(di[code], df[code])
+                    self.update(di[code], df[code].iloc[0])
                     if code == 'CONFIG_AscentSpeed_mm/s':
-                        self.update(di[code], df[code]/1000)  # Convert mm/s to m/s
+                        self.update(di[code], df[code].iloc[0]/1000)  # Convert mm/s to m/s
                 else:
                     msg = "%s not found for this profile, fall back on default value: %s" % \
                           (code, self._params_dict[di[code]])
@@ -206,39 +414,6 @@ class FloatConfiguration:
             mission[key] = self._params_dict[key].value
         return mission
 
-    def to_json(self, file_name: str=None):
-        """Return or save json dump of configuration
-
-        If no file name is provided, just return the configuration as a json structure
-
-        Parameters
-        ----------
-        file_name: str, default:None, optional
-            Name of the json file to write configuration to.
-
-        Returns
-        -------
-        Nothing or json string
-        """
-        data = {}
-        for p in self._params_dict.keys():
-            data = {**data, **self._params_dict[p].to_json()}
-        js = {}
-        js['name'] = self.name
-        js['version'] = "1.0"
-        js['created'] = pd.to_datetime('now', utc=True).strftime('%Y%m%d%H%M%S')
-        js['data'] = data
-        if file_name is not None:
-            with open(file_name, "w") as f:
-                json.dump(js, f, indent=4)
-        else:
-            return js
-
-    # def from_netcdf(self):
-    #     """Should be able to read from file a float configuration"""
-    #     pass
-
-
     @property
     def tech(self):
         """Float configuration as a dictionary using Argo technical keys"""
@@ -248,6 +423,19 @@ class FloatConfiguration:
                 techkey = self._params_dict[key].meta['techkey']
                 mission[techkey] = self._params_dict[key].value
         return mission
+
+    @property
+    def json_schema(self):
+        parameters = [self._params_dict[key].json_schema for key in self._params_dict]
+        return VFschema_configuration.from_dict({
+            'name': self.name,
+            'version': '2.0',
+            'parameters': parameters
+        })
+
+    def to_json(self, *args, **kwargs):
+        """Return a dictionary serialisable in json or write to file"""
+        return self.json_schema.to_json(*args, **kwargs)
 
 
 class SimulationSet:

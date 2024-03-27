@@ -17,7 +17,7 @@ class VelocityField(ABC):
     """Class prototype to manage a Virtual Fleet velocity field
 
     This prototype provides useful methods to prepare a :class:`parcels.fieldset.FieldSet` for a VirtualFleet simulation.
-    A :class:`VelocityField` instance can be passed directly to a :class:`.VirtualFleet` instance.
+    A :class:`VelocityField` instance can be passed directly to a :class:`VirtualFleet` instance.
 
     You can use the :meth:`Velocity` function to instantiate such a class for known products.
 
@@ -165,7 +165,7 @@ class VelocityField_CUSTOM(VelocityField):
         self.add_mask()
 
 
-def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args, **kwargs):
+def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args: object, **kwargs: object) -> object:
     """Function to return a :class:`VelocityField` instance for known products
 
     Note that you can provide a :class:`VelocityField` or :attr:`VelocityField.fieldset`

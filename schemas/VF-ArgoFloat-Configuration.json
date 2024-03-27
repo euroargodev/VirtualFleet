@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json",
+  "title": "VirtualFleet Argo Float configuration",
+  "description": "A set of data documenting a virtual Argo Float configuration to be used in a VirtualFleet simulation",
+  "format_version": {
+    "const": "2.0"
+  },
+  "required": [
+    "created",
+    "version",
+    "name",
+    "parameters"
+  ],
+  "type": "object",
+  "properties": {
+    "created": {
+      "description": "UTC creation datetime of the configuration file",
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "description": "Version name of the configuration parameter set",
+      "type": "string"
+    },
+    "name": {
+      "description": "Internal shortname of the configuration parameter set. Used to load a configuration JSON file with the 'FloatConfiguration' class.",
+      "type": "string"
+    },
+    "parameters": {
+      "description": "List of virtual Argo floats configuration parameters",
+      "type": "array",
+      "allOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/parameter"
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "parameter": {
+      "title": "VirtualFleet Argo Float configuration required parameter",
+      "description": "A set of data documenting one parameter for a virtual Argo Float configuration",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "cycle_duration",
+            "life_expectancy",
+            "parking_depth",
+            "profile_depth",
+            "vertical_speed",
+            "area_cycle_duration",
+            "area_parking_depth",
+            "area_xmax",
+            "area_xmin",
+            "area_ymax",
+            "area_ymin",
+            "reco_free_surface_drift"
+          ]
+        },
+        "value": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "meta": {
+          "$ref": "#/$defs/parameter_metadata"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ]
+    },
+    "parameter_metadata": {
+      "title": "Set of meta-data documenting one parameter for a virtual Argo Float configuration",
+      "required": [],
+      "type": "object",
+      "properties": {
+        "unit": {
+          "type": "string"
+        },
+        "dtype": {
+          "type": "string",
+          "enum": [
+            "float",
+            "int"
+          ]
+        },
+        "teckkey": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "version": 2
+}

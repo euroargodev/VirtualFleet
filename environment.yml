@@ -17,7 +17,8 @@ dependencies:
   - lz4
   - libzip
   - nomkl
-#  - nbserverproxy
+  - jsonschema
+  - referencing
   - jupyter
   - jupyterlab>=0.35
   - jupyterlab_launcher
