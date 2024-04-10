@@ -252,6 +252,7 @@ class FloatConfiguration:
     --------
     >>> cfg = FloatConfiguration('default')  # Internally defined
     >>> cfg = FloatConfiguration('local-change')  # Internally defined
+    >>> cfg = FloatConfiguration('recovery')  # Internally defined
     >>> cfg = FloatConfiguration('cfg_file.json')  # From any json file
     >>> cfg = FloatConfiguration([6902919, 132])  # From Euro-Argo Fleet API
     >>> cfg.update('parking_depth', 500)  # Update one parameter value
@@ -335,6 +336,9 @@ class FloatConfiguration:
 
         elif name == 'gse-experiment' or name == "gulf-stream":
             name, data = load_from_json(os.path.join(path2data, 'FloatConfiguration_gulf_stream.json'))
+
+        elif name == 'recovery':
+            name, data = load_from_json(os.path.join(path2data, 'FloatConfiguration_recovery.json'))
 
         elif isinstance(name, str) and os.path.splitext(name)[-1] == ".json":
             name, data = load_from_json(name)
@@ -873,3 +877,22 @@ def getSystemInfo():
         return info
     except Exception as e:
         logging.exception(e)
+
+
+def save_figurefile(this_fig, a_name, folder: Path = Path('.')):
+    """
+    Parameters
+    ----------
+    this_fig
+    a_name
+
+    Returns
+    -------
+    path
+    """
+    # figname = os.path.join(folder, "%s.png" % a_name)
+    figname = folder.joinpath("%s.png" % a_name)
+    # log.debug("Saving %s ..." % figname)
+    this_fig.savefig(figname)
+    return figname
+
