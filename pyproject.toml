@@ -15,7 +15,7 @@ fallback_version = "999"
 write_to = "virtualargofleet/_version_setup.py"
 
 [project]
-dynamic = ["version", "optional-dependencies"]
+dynamic = ["version", "dependencies", "optional-dependencies"]
 name = "VirtualFleet"
 license = {file = "LICENSE"}
 readme = "README.md"
