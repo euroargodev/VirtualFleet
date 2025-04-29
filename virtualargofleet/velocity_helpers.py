@@ -54,7 +54,7 @@ class VelocityField(ABC):
         # temp_pset.show(field = self.fieldset.V,with_particles = False)
 
     def add_mask(self):
-        """Create mask for grounding management
+        """Create bathymetric mask for grounding management
 
         Requires:
             - ``self.field`` with ``U`` and ``V`` keys
@@ -72,16 +72,20 @@ class VelocityField(ABC):
                 ds = ds[{self.dim['time']: 0}]
                 ds = ds[[self.var['U'], self.var['V']]].squeeze()
 
-            mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
-                     self.var['U']].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
+            #mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
+            #         self.var['U']].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
+            # Generate bathymetric values with a 50m security
+            ds['mk'] = (~ds[self.var['U']].isnull()).astype(int)
+            ix = ds['mk'].cumsum(self.dim['depth']).max(self.dim['depth'])
+            mask = (ds[self.dim['depth']][ix] - 50).transpose(self.dim['lon'], self.dim['lat'])
             mask = mask.values
-
+            mask[mask<0] = 0
+            
             # create a new parcels field that's going to be interpolated during simulation
-            self.fieldset.add_field(Field('mask',
+            self.fieldset.add_field(Field('bathy',
                                           data=mask,
                                           lon=ds[self.dim['lon']].values,
-                                          lat=ds[self.dim['lat']].values,
-                                          depth=ds[self.dim['depth']].values,
+                                          lat=ds[self.dim['lat']].values,                                             
                                           transpose=True,
                                           mesh='spherical',
                                           interp_method='nearest'))
