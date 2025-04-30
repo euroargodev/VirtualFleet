@@ -79,9 +79,16 @@ def ArgoFloatKernel(particle, fieldset, time):
     profile_depth = particle.profile_depth
 
     v_speed = particle.vertical_speed  # in m/s
+    #SHOULD WE INTEGRATE DIFFERENT VERTICAL SPEEDS FOR ASCENT AND DESCENT?
+    v_speed_d = v_speed  #/3.0 #descent
     cycletime = particle.cycle_duration * 3600  # has to be in seconds
 
-    particle.in_water = fieldset.mask[time, particle.depth, particle.lat, particle.lon]
+    bathym = fieldset.bathy[particle.time, particle.depth, particle.lat, particle.lon]
+    if particle.depth<=bathym:
+        particle.in_water = 1
+    else:
+        particle.in_water = 0
+        
     max_cycle_number = particle.life_expectancy
 
     ########################
@@ -135,8 +142,8 @@ def ArgoFloatKernel(particle, fieldset, time):
             effective_profile_depth = particle.depth
 
     # Compute all transit times:
-    transit = (effective_drift_depth - fieldset.vf_surface) / v_speed  # Time to descent to parking
-    transit += (effective_profile_depth - effective_drift_depth) / v_speed  # Time to descent to profile depth
+    transit = (effective_drift_depth - fieldset.vf_surface) / v_speed_d  # Time to descent to parking
+    transit += (effective_profile_depth - effective_drift_depth) / v_speed_d  # Time to descent to profile depth
     transit += (effective_profile_depth - fieldset.vf_surface) / v_speed  # Time to ascent to surface
 
     # And then adjust drifting time to respect cycletime:
@@ -148,7 +155,7 @@ def ArgoFloatKernel(particle, fieldset, time):
     ##########################
     if particle.cycle_phase == 0:
         # Phase 0: Sinking with v_speed until depth is driftdepth
-        particle_ddepth += v_speed * particle.dt
+        particle_ddepth += v_speed_d * particle.dt
 
         # if particle.depth + particle_ddepth >= drift_depth:
         #     print("End of Phase 0: Reached drift_depth")
@@ -184,7 +191,7 @@ def ArgoFloatKernel(particle, fieldset, time):
 
     if particle.cycle_phase == 2:
         # Phase 2: Sinking further to profile_depth
-        particle_ddepth += v_speed * particle.dt
+        particle_ddepth += v_speed_d * particle.dt
 
         if particle.depth + particle_ddepth >= profile_depth:
             particle_ddepth = profile_depth - particle.depth  # Make sure we're not going deeper than profile_depth
