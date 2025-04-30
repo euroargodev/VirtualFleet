@@ -5,13 +5,31 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-# def local_scheme(version):
-#     """Skip the local version (eg. +xyz of 0.6.1.dev4+gdf99fe2) to be able to upload to Test PyPI"""
-#     return ""
+with open("requirements.txt") as f:
+    requirements = f.read().splitlines()
+    print('hey',requirements)
 
 setuptools.setup(
-    use_scm_version=True,
-    setup_requires=['setuptools_scm'],
-    # use_scm_version={'write_to': 'virtualargofleet/_version_setup.py'}
-    # use_scm_version={"local_scheme": local_scheme},
+    name="VirtualFleet",    
+    version="0.4.0",
+    author="VirtualFleet Developers",
+    author_email="kevin.balem@ifremer.fr",
+    description="A python library to simulate a fleet of argo floats.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/euroargodev/VirtualFleet",
+    packages=setuptools.find_packages(),
+    package_dir={"virtualargofleet": "virtualargofleet"},
+    install_requires=requirements,
+    classifiers=[
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Topic :: Scientific/Engineering",
+        "Intended Audience :: Science/Research",
+        "Operating System :: OS Independent",
+        "Operating System :: POSIX",
+        "Operating System :: MacOS",
+        "Operating System :: Microsoft :: Windows",
+        "Development Status :: 3 - Alpha",
+    ]
 )
