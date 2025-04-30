@@ -2,12 +2,7 @@
 # to create distribution packages for your project
 
 [build-system]
-requires = [
-    "setuptools>=45",
-    "wheel",
-    "setuptools_scm[toml]>=6.2",
-    "setuptools_scm_git_archive",
-]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
@@ -22,12 +17,12 @@ readme = "README.md"
 description = "``Virtual Fleet`` is a Python package to compute and analyse simulations of virtual Argo float trajectories."
 requires-python = ">=3.8"
 authors = [
-  {name = "K. Balem", email = "kbalem@ifremer.fr" },
-  {name = "G. Maze", email = "gmaze@ifremer.fr" }
+  {name = "K. Balem", email = "kevin.balem@ifremer.fr" },
+  {name = "G. Maze", email = "guillaume.maze@ifremer.fr" }
 ]
 maintainers = [
-  {name = "K. Balem", email = "kbalem@ifremer.fr" },
-  {name = "G. Maze", email = "gmaze@ifremer.fr" }
+  {name = "K. Balem", email = "kevin.balem@ifremer.fr" },
+  {name = "G. Maze", email = "guillaume.maze@ifremer.fr" }
 ]
 
 # Classifiers help users find your project by categorizing it.
