@@ -1,0 +1,68 @@
+{
+    "created": "2024-03-07T08:44:43.560904+00:00",
+    "version": "2.0",
+    "name": "recovery",
+    "parameters": [
+        {
+            "name": "cycle_duration",
+            "value": 240.0,
+            "description": "Maximum length of float complete cycle",
+            "meta": {
+                "unit": "hours",
+                "dtype": "float",
+                "techkey": "CONFIG_CycleTime_hours"
+            }
+        },
+        {
+            "name": "life_expectancy",
+            "value": 200,
+            "description": "Maximum number of completed cycle",
+            "meta": {
+                "unit": "cycle",
+                "dtype": "int",
+                "techkey": "CONFIG_MaxCycles_NUMBER"
+            }
+        },
+        {
+            "name": "parking_depth",
+            "value": 1000.0,
+            "description": "Drifting depth",
+            "meta": {
+                "unit": "m",
+                "dtype": "float",
+                "techkey": "CONFIG_ParkPressure_dbar"
+            }
+        },
+        {
+            "name": "profile_depth",
+            "value": 2000.0,
+            "description": "Maximum profile depth",
+            "meta": {
+                "unit": "m",
+                "dtype": "float",
+                "techkey": "CONFIG_ProfilePressure_dbar"
+            }
+        },
+        {
+            "name": "vertical_speed",
+            "value": 0.09,
+            "description": "Vertical profiling speed",
+            "meta": {
+                "unit": "m/s",
+                "dtype": "float",
+                "techkey": ""
+            }
+        },
+        {
+            "name": "reco_free_surface_drift",
+            "value": 9999,
+            "description": "Virtual cycle number to start free surface drift, inclusive",
+            "meta": {
+                "unit": "",
+                "dtype": "int",
+                "techkey": ""
+            }
+        }
+    ],
+    "$schema": "https://raw.githubusercontent.com/euroargodev/VirtualFleet/json-schemas-FloatConfiguration/schemas/VF-ArgoFloat-Configuration.json"
+}

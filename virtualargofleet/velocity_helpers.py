@@ -1,16 +1,38 @@
-"""
-Velocity Field Helper
-"""
-
 from parcels import FieldSet, ParticleSet, Field
 import xarray as xr
+import pandas as pd
+import numpy as np
 import glob
 from abc import ABC
 import logging
+from pathlib import Path
+
 from .app_parcels import ArgoParticle
+from .utilities import save_figurefile
 
+logger = logging.getLogger("virtualfleet.velocity")
 
-log = logging.getLogger("virtualfleet.velocity")
+class default_logger:
+
+    def __init__(self, txt, log_level):
+        """Log text"""
+        getattr(logger, log_level.lower())(txt)
+
+    @staticmethod
+    def info(txt) -> 'default_logger':
+        return default_logger(txt, 'INFO')
+
+    @staticmethod
+    def debug(txt) -> 'default_logger':
+        return default_logger(txt, 'DEBUG')
+
+    @staticmethod
+    def warning(txt) -> 'default_logger':
+        return default_logger(txt, 'WARNING')
+
+    @staticmethod
+    def error(txt) -> 'default_logger':
+        return default_logger(txt, 'ERROR')
 
 
 class VelocityField(ABC):
@@ -62,6 +84,7 @@ class VelocityField(ABC):
             - ``self.var`` with ``U`` and ``V`` keys
         """
         if self.fieldset:
+            self.logger.debug("Create mask for grounding management from velocity dataset")
             if isinstance(self.field, xr.core.dataset.Dataset):
                 ds = self.field[{self.dim['time']: 0}]
                 ds = ds[[self.var['U'], self.var['V']]].squeeze()
@@ -116,11 +139,12 @@ class VelocityField_CUSTOM(VelocityField):
                  isglobal: bool = False,
                  **kwargs):
         """Create a custom VelocityField for known products"""
-
         if 'U' not in variables:
             raise ValueError("'variables' dictionary must have a 'U' key")
         if 'V' not in variables:
             raise ValueError("'variables' dictionary must have a 'V' key")
+
+        self.logger = kwargs['logger'] if 'logger' in kwargs else default_logger
 
         if isinstance(src, xr.core.dataset.Dataset):
             # If the source data is a Xarray dataset, we ensure to have all the required variables and coordinates:
@@ -149,6 +173,7 @@ class VelocityField_CUSTOM(VelocityField):
 
         # Define parcels fieldset
         if not isinstance(src, xr.core.dataset.Dataset):
+            self.logger.debug("Define parcels fieldset from_netcdf")
             self.field = src  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
             self.fieldset = FieldSet.from_netcdf(
                 src, self.var, self.dim,
@@ -156,6 +181,7 @@ class VelocityField_CUSTOM(VelocityField):
                 time_periodic=False,
                 deferred_load=True)
         else:
+            self.logger.debug("Define parcels fieldset from_xarray_dataset")
             self.field = src  # Xarray dataset
             self.fieldset = FieldSet.from_xarray_dataset(
                 src, self.var, self.dim,
@@ -167,6 +193,42 @@ class VelocityField_CUSTOM(VelocityField):
 
         # Create mask to manage grounding:
         self.add_mask()
+
+    def plot(self, it=0, iz=0, save: bool = False, workdir: Path = Path('.')):
+        """
+
+        Parameters
+        ----------
+        save
+        workdir
+
+        Returns
+        -------
+        fig, ax
+        """
+        import matplotlib.pyplot as plt
+        import argopy.plot as argoplot
+        import cartopy.crs as ccrs
+
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20, 20), dpi=100,
+                               subplot_kw={'projection': ccrs.PlateCarree()})
+
+        # ax.set_extent(box)
+        argoplot.utils.latlongrid(ax)
+        ax.add_feature(argoplot.utils.land_feature, edgecolor="black")
+
+        self.field.isel(time=it, depth=iz).plot.quiver(x="longitude", y="latitude",
+                                                    u=self.var['U'], v=self.var['V'], ax=ax, color='grey', alpha=0.5,
+                                                    add_guide=False)
+
+        plt.tight_layout()
+        if save:
+            t = pd.to_datetime(self.field.isel(time=it, depth=iz)['time'].data).strftime("%Y%m%d")
+            z = str(np.abs(self.field.isel(time=it, depth=iz)['depth'].data)).split('.')[0]
+            figname = save_figurefile(fig, 'velocity_%s_t%s_z%s' % (self.name, t, z), workdir)
+            return fig, ax, figname
+        else:
+            return fig, ax
 
 
 def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args: object, **kwargs: object) -> object:
@@ -252,6 +314,8 @@ def VelocityField_PSY4QV3R1(**kwargs):
     else:
         src = {'U': kwargs['src'],
                'V': kwargs['src']}
+    kwargs.pop('src', None)
+
     variables = {'U': 'uo',
                  'V': 'vo'}
     dimensions = {'time': 'time',
@@ -259,7 +323,8 @@ def VelocityField_PSY4QV3R1(**kwargs):
                   'lat': 'latitude',
                   'lon': 'longitude'}
     isglobal = kwargs['isglobal'] if 'isglobal' in kwargs else False
-    V = VelocityField_CUSTOM(src=src, variables=variables, dimensions=dimensions, isglobal=isglobal)
+    kwargs.pop('isglobal', None)
+    V = VelocityField_CUSTOM(src=src, variables=variables, dimensions=dimensions, isglobal=isglobal, **kwargs)
     V.name = 'PSY4QV3R1'
     return V
 
@@ -279,13 +344,14 @@ def VelocityField_MEDSEA_ANALYSISFORECAST_PHY_006_013(**kwargs):
     else:
         src = {'U': kwargs['src'],
                'V': kwargs['src']}
+    kwargs.pop('src', None)
     variables = {'U': 'uo',
                  'V': 'vo'}
     dimensions = {'time': 'time',
                   'depth': 'depth',
                   'lat': 'lat',
                   'lon': 'lon'}
-    V = VelocityField_CUSTOM(src=src, variables=variables, dimensions=dimensions, isglobal=False)
+    V = VelocityField_CUSTOM(src=src, variables=variables, dimensions=dimensions, isglobal=False, **kwargs)
     V.name = 'MEDSEA_ANALYSISFORECAST_PHY_006_013'
     return V
 
@@ -305,6 +371,7 @@ def VelocityField_ARMOR3D(**kwargs):
     else:
         src = {'U': kwargs['src'],
                'V': kwargs['src']}
+    kwargs.pop('src', None)
     variables = {'U': 'ugo',
                  'V': 'vgo'}
     dimensions = {'time': 'time',
@@ -312,6 +379,7 @@ def VelocityField_ARMOR3D(**kwargs):
                   'lat': 'latitude',
                   'lon': 'longitude'}
     isglobal = kwargs['isglobal'] if 'isglobal' in kwargs else False
-    V = VelocityField_CUSTOM(src=src, variables=variables, dimensions=dimensions, isglobal=isglobal)
+    kwargs.pop('isglobal', None)
+    V = VelocityField_CUSTOM(src=src, variables=variables, dimensions=dimensions, isglobal=isglobal, **kwargs)
     V.name = 'ARMOR3D'
     return V
