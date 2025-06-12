@@ -406,4 +406,4 @@ def KeepInDomain(particle, fieldset, time):
     if particle.state == StatusCode.ErrorOutOfBounds:
         if fieldset.verbose_events == 1:            
             print("Field warning : Float out of the horizontal geographical domain OR interpolation error --> deleted")
-    particle.delete()
+        particle.delete()
