@@ -401,19 +401,9 @@ def KeepInWater(particle, fieldset, time):
         particle_ddepth = 0  # Reset change in depth
         particle.state = StatusCode.Success
 
-
-def DeleteErrorParticle(particle, fieldset, time):
-    """Delete particle if it is out of bounds or has an error state."""
-    # Usefull for non rectangular domains, when particles can be considered by parcels within the domain but interpolation fails
-    # If the particle is out of bounds, delete it
-    if particle.state == StatusCode.ErrorOutOfBounds:
-        if fieldset.verbose_events == 1:
-            print("OutOfBounds error : float deleted")
-        particle.delete()
-
 def KeepInDomain(particle, fieldset, time):
     # out of geographical area : here we can delete the particle
     if particle.state == StatusCode.ErrorOutOfBounds:
         if fieldset.verbose_events == 1:            
             print("Field warning : Float out of the horizontal geographical domain OR interpolation error --> deleted")
-        particle.delete()
+    particle.delete()
