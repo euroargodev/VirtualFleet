@@ -76,7 +76,7 @@ class VelocityField(ABC):
             #         self.var['U']].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
             # Generate bathymetric values with a 50m security
             ds['mk'] = (~ds[self.var['U']].isnull()).astype(int)
-            ix = ds['mk'].cumsum(self.dim['depth']).max(self.dim['depth'])
+            ix = (ds['mk'].cumsum(self.dim['depth']).max(self.dim['depth']) - 1)
             mask = (ds[self.dim['depth']][ix] - 50).transpose(self.dim['lon'], self.dim['lat'])
             mask = mask.values
             mask[mask<0] = 0
