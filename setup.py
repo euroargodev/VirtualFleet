@@ -11,7 +11,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(
     name="VirtualFleet",    
-    version="0.4.0",
+    version="0.5.0",
     author="VirtualFleet Developers",
     author_email="kevin.balem@ifremer.fr",
     description="A python library to simulate a fleet of argo floats.",
