@@ -1,0 +1,534 @@
+{
+  "targetLevel": "Beginner",
+  "metadata": {
+    "version": "1.0",
+    "tool": "EuroArgo Software Evaluator"
+  },
+  "repository": {
+    "owner": "euroargo",
+    "repo": "VirtualFleet",
+    "url": "https://github.com/euroargo/VirtualFleet"
+  },
+  "evaluation": {
+    "level": "Beginner",
+    "targetLevel": "Beginner",
+    "achievedLevel": "Novice",
+    "score": 0.46258503401360546,
+    "stats": {
+      "totalCriteria": 26,
+      "metCriteria": 12,
+      "unmetCriteria": 14,
+      "weightedScore": 13.599999999999998,
+      "totalWeight": 29.399999999999995,
+      "autoCriteria": 10,
+      "manualCriteria": 16,
+      "targetLevel": "Beginner"
+    }
+  },
+  "details": {
+    "1": {
+      "title": "A version control tool is used to manage the codebase",
+      "level": "Beginner",
+      "category": "Versioning",
+      "group": "General",
+      "status": "unmet",
+      "weight": 1.2,
+      "type": "auto",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/1",
+      "error": "Repository not found or inaccessible"
+    },
+    "2": {
+      "title": "Argo Data accessed locally by the software are assumed to be organised following the GDAC folder structure",
+      "level": "Beginner",
+      "category": "Argo Compliance",
+      "group": "Argo specific",
+      "status": "met",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": "not applicable",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/2"
+    },
+    "3": {
+      "title": "Argo Data accessed remotely by the software are retrieved from an official GDAC server (http, ftp, s3 servers)",
+      "level": "Beginner",
+      "category": "Continuous Integration",
+      "group": "Argo specific",
+      "status": "met",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": "not applicable",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/3"
+    },
+    "4": {
+      "title": "Argo Data used by the software are traceable with a persistent identifier (Argo GDAC DOI or snapshot DOIs)",
+      "level": "Beginner",
+      "category": "FAIR Data",
+      "group": "Argo specific",
+      "status": "unmet",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/4"
+    },
+    "5": {
+      "title": "Argo Meta-Data accessed remotely by the software are retrieved from an official Argo sources (GDAC ftp, GDAC https, NVS, SparQL, STAC)",
+      "level": "Beginner",
+      "category": "Continuous Integration",
+      "group": "Argo specific",
+      "status": "met",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": "index with argopy",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/5"
+    },
+    "6": {
+      "title": "Argo papers and DOIs are referenced in the software metadata",
+      "level": "Beginner",
+      "category": "FAIR Data",
+      "group": "Argo specific",
+      "status": "met",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": "see documentation",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/6"
+    },
+    "9": {
+      "title": "Data produced by the software respect Argo file formats and conventions wherever relevant (e.g. NetCDF CF-1.7)",
+      "level": "Beginner",
+      "category": "Argo Compliance",
+      "group": "Argo specific",
+      "status": "unmet",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/9"
+    },
+    "16": {
+      "title": "Metadata produced by the software follow Argo conventions (as in reference tables provided by the NVS server)",
+      "level": "Beginner",
+      "category": "Argo Compliance",
+      "group": "Argo specific",
+      "status": "unmet",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/16"
+    },
+    "17": {
+      "title": "Non-Argo Data used by the software are explicitly identified and traceable with a persistent identifier (DOI) when available",
+      "level": "Beginner",
+      "category": "FAIR Data",
+      "group": "General",
+      "status": "met",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": "not applicable",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/17"
+    },
+    "18": {
+      "title": "Non-Argo Data used by the software should be accessible online",
+      "level": "Novice",
+      "category": "Argo Compliance",
+      "group": "General",
+      "status": "met",
+      "weight": 1,
+      "type": "manual",
+      "evidence": "velocity products",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/18"
+    },
+    "21": {
+      "title": "The codebase includes comments and is documented following referenced standards (e.g. numpy style docstrings in Python)",
+      "level": "Beginner",
+      "category": "General",
+      "group": "General",
+      "status": "met",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": "see code",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/21"
+    },
+    "22": {
+      "title": "The codebase includes comments and is documented to explain the purpose and functionality of each module, class, and function",
+      "level": "Novice",
+      "category": "General",
+      "group": "General",
+      "status": "met",
+      "weight": 1,
+      "type": "manual",
+      "evidence": "almost",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/22"
+    },
+    "23": {
+      "title": "The codebase is \"consistent\", i.e. it follows consistent naming conventions, coding styles, and design patterns throughout the software",
+      "level": "Beginner",
+      "category": "General",
+      "group": "General",
+      "status": "met",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": "see code",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/23"
+    },
+    "34": {
+      "title": "The project includes a LICENSE file",
+      "level": "Novice",
+      "category": "Licensing",
+      "group": "General",
+      "status": "unmet",
+      "weight": 1,
+      "type": "auto",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/34",
+      "error": "Repository not found or inaccessible"
+    },
+    "35": {
+      "title": "The project includes a README file",
+      "level": "Novice",
+      "category": "Documentation",
+      "group": "General",
+      "status": "unmet",
+      "weight": 1,
+      "type": "auto",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/35",
+      "error": "Repository not found or inaccessible"
+    },
+    "36": {
+      "title": "The project includes a basic documentation",
+      "level": "Novice",
+      "category": "Documentation",
+      "group": "General",
+      "status": "met",
+      "weight": 1,
+      "type": "manual",
+      "evidence": "see doc",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/36"
+    },
+    "39": {
+      "title": "The project is hosted on a web-based development platform (e.g., GitHub or GitLab).",
+      "level": "Beginner",
+      "category": "General",
+      "group": "General",
+      "status": "unmet",
+      "weight": 1.2,
+      "type": "auto",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/39",
+      "error": "Repository not found or inaccessible"
+    },
+    "40": {
+      "title": "The project is hosted on an Argo-recognised web-based development platform",
+      "level": "Beginner",
+      "category": "Argo Compliance",
+      "group": "Argo specific",
+      "status": "unmet",
+      "weight": 1.2,
+      "type": "auto",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/40",
+      "error": "Repository not found or inaccessible"
+    },
+    "41": {
+      "title": "The software documentation and codebase are written in English",
+      "level": "Beginner",
+      "category": "Documentation",
+      "group": "General",
+      "status": "unmet",
+      "weight": 1.2,
+      "type": "auto",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/41",
+      "error": "Repository not found or inaccessible"
+    },
+    "47": {
+      "title": "The software documentation includes usage guidelines and examples",
+      "level": "Beginner",
+      "category": "Documentation",
+      "group": "General",
+      "status": "met",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": "example section",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/47"
+    },
+    "50": {
+      "title": "The software has been presented to the Argo community (e.g. Data Management Team meeting)",
+      "level": "Beginner",
+      "category": "Community",
+      "group": "Argo specific",
+      "status": "unmet",
+      "weight": 1.2,
+      "type": "manual",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/50"
+    },
+    "56": {
+      "title": "The software is released under an open-source license",
+      "level": "Novice",
+      "category": "Licensing",
+      "group": "General",
+      "status": "unmet",
+      "weight": 1,
+      "type": "auto",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/56",
+      "error": "Repository not found or inaccessible"
+    },
+    "57": {
+      "title": "The software provides a clear description of its dependencies",
+      "level": "Beginner",
+      "category": "Continuous Integration",
+      "group": "General",
+      "status": "unmet",
+      "weight": 1.2,
+      "type": "auto",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/57",
+      "error": "Repository not found or inaccessible"
+    },
+    "58": {
+      "title": "The software uses a programming language adopted within the Argo community (e.g. Matlab, Python, R, Java, Julia)",
+      "level": "Novice",
+      "category": "Community",
+      "group": "Argo specific",
+      "status": "unmet",
+      "weight": 1,
+      "type": "auto",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/58",
+      "error": "Repository not found or inaccessible"
+    },
+    "59": {
+      "title": "The software uses an open-source programming language (https://en.wikipedia.org/wiki/List_of_open-source_programming_languages)",
+      "level": "Novice",
+      "category": "General",
+      "group": "General",
+      "status": "unmet",
+      "weight": 1,
+      "type": "auto",
+      "evidence": null,
+      "url": "https://github.com/euroargodev/software_guidelines/issues/59",
+      "error": "Repository not found or inaccessible"
+    },
+    "66": {
+      "title": "The project includes a basic description of what it does with or to the Argo dataset (e.g. read index file, calibrate salinity, plot trajectory, assess BGC variables,...)",
+      "level": "Novice",
+      "category": "Argo Compliance",
+      "group": "Argo specific",
+      "status": "met",
+      "weight": 1,
+      "type": "manual",
+      "evidence": "see documentation",
+      "url": "https://github.com/euroargodev/software_guidelines/issues/66"
+    }
+  },
+  "userAnswers": {
+    "2": {
+      "status": "met",
+      "evidence": "not applicable"
+    },
+    "3": {
+      "status": "met",
+      "evidence": "not applicable"
+    },
+    "4": {
+      "status": "unmet",
+      "evidence": ""
+    },
+    "5": {
+      "status": "met",
+      "evidence": "index with argopy"
+    },
+    "6": {
+      "status": "met",
+      "evidence": "see documentation"
+    },
+    "9": {
+      "status": "unmet",
+      "evidence": ""
+    },
+    "16": {
+      "status": "unmet",
+      "evidence": ""
+    },
+    "17": {
+      "status": "met",
+      "evidence": "not applicable"
+    },
+    "18": {
+      "status": "met",
+      "evidence": "velocity products"
+    },
+    "21": {
+      "status": "met",
+      "evidence": "see code"
+    },
+    "22": {
+      "status": "met",
+      "evidence": "almost"
+    },
+    "23": {
+      "status": "met",
+      "evidence": "see code"
+    },
+    "36": {
+      "status": "met",
+      "evidence": "see doc"
+    },
+    "47": {
+      "status": "met",
+      "evidence": "example section"
+    },
+    "50": {
+      "status": "unmet",
+      "evidence": ""
+    },
+    "66": {
+      "status": "met",
+      "evidence": "see documentation"
+    }
+  },
+  "feedback": [
+    {
+      "category": "Argo Compliance",
+      "priority": "high",
+      "message": "Critical: Improve your Argo Compliance practices to reach the next level",
+      "missing": [
+        {
+          "id": 9,
+          "level": "Beginner",
+          "title": "Data produced by the software respect Argo file formats and conventions wherever relevant (e.g. NetCDF CF-1.7)",
+          "isBlocker": true
+        },
+        {
+          "id": 16,
+          "level": "Beginner",
+          "title": "Metadata produced by the software follow Argo conventions (as in reference tables provided by the NVS server)",
+          "isBlocker": true
+        },
+        {
+          "id": 40,
+          "level": "Beginner",
+          "title": "The project is hosted on an Argo-recognised web-based development platform",
+          "isBlocker": true
+        }
+      ]
+    },
+    {
+      "category": "Licensing",
+      "priority": "high",
+      "message": "Critical: Improve your Licensing practices to reach the next level",
+      "missing": [
+        {
+          "id": 34,
+          "level": "Novice",
+          "title": "The project includes a LICENSE file",
+          "isBlocker": true
+        },
+        {
+          "id": 56,
+          "level": "Novice",
+          "title": "The software is released under an open-source license",
+          "isBlocker": true
+        }
+      ]
+    },
+    {
+      "category": "Documentation",
+      "priority": "high",
+      "message": "Critical: Improve your Documentation practices to reach the next level",
+      "missing": [
+        {
+          "id": 35,
+          "level": "Novice",
+          "title": "The project includes a README file",
+          "isBlocker": true
+        },
+        {
+          "id": 41,
+          "level": "Beginner",
+          "title": "The software documentation and codebase are written in English",
+          "isBlocker": true
+        }
+      ]
+    },
+    {
+      "category": "General",
+      "priority": "high",
+      "message": "Critical: Improve your General practices to reach the next level",
+      "missing": [
+        {
+          "id": 59,
+          "level": "Novice",
+          "title": "The software uses an open-source programming language (https://en.wikipedia.org/wiki/List_of_open-source_programming_languages)",
+          "isBlocker": true
+        },
+        {
+          "id": 39,
+          "level": "Beginner",
+          "title": "The project is hosted on a web-based development platform (e.g., GitHub or GitLab).",
+          "isBlocker": true
+        }
+      ]
+    },
+    {
+      "category": "Community",
+      "priority": "high",
+      "message": "Critical: Improve your Community practices to reach the next level",
+      "missing": [
+        {
+          "id": 58,
+          "level": "Novice",
+          "title": "The software uses a programming language adopted within the Argo community (e.g. Matlab, Python, R, Java, Julia)",
+          "isBlocker": true
+        },
+        {
+          "id": 50,
+          "level": "Beginner",
+          "title": "The software has been presented to the Argo community (e.g. Data Management Team meeting)",
+          "isBlocker": true
+        }
+      ]
+    },
+    {
+      "category": "Versioning",
+      "priority": "high",
+      "message": "Critical: Improve your Versioning practices to reach the next level",
+      "missing": [
+        {
+          "id": 1,
+          "level": "Beginner",
+          "title": "A version control tool is used to manage the codebase",
+          "isBlocker": true
+        }
+      ]
+    },
+    {
+      "category": "FAIR Data",
+      "priority": "high",
+      "message": "Critical: Improve your FAIR Data practices to reach the next level",
+      "missing": [
+        {
+          "id": 4,
+          "level": "Beginner",
+          "title": "Argo Data used by the software are traceable with a persistent identifier (Argo GDAC DOI or snapshot DOIs)",
+          "isBlocker": true
+        }
+      ]
+    },
+    {
+      "category": "Continuous Integration",
+      "priority": "high",
+      "message": "Critical: Improve your Continuous Integration practices to reach the next level",
+      "missing": [
+        {
+          "id": 57,
+          "level": "Beginner",
+          "title": "The software provides a clear description of its dependencies",
+          "isBlocker": true
+        }
+      ]
+    }
+  ]
+}

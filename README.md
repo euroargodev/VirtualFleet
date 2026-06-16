@@ -1,6 +1,7 @@
 |                              <img src="https://raw.githubusercontent.com/euroargodev/virtualfleet/master/docs/_static/repo_picture_tight.png" alt="VirtualFleet logo" width="400"><br>``VirtualFleet`` is a Python package to compute and analyse simulations of virtual Argo float trajectories.                              |
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
 |                                                                                        [![DOI][zenodo-badge]][zenodo-link] [![Documentation][rtd-badge]][rtd-link] [![Chat][gitter-badge]][gitter-link] [![Pypi][pip-badge]][pip-link]                                                                                         |
+[![</> Argo Software Dev. Guidelines: 🎓 Beginner level: 46.3% complete](https://img.shields.io/badge/%3C%2F%3E%20Argo%20Software%20Dev.%20Guidelines-%F0%9F%8E%93%20Beginner%20level%3A%2046.3%25%20complete-dc2626?style=flat&labelColor=0c5d8d)](https://euroargodev.github.io/Software-Evaluator/?repo=https%3A%2F%2Fgithub.com%2Feuroargo%2FVirtualFleet)
 
 [zenodo-badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.7568985.svg
 [zenodo-link]: https://doi.org/10.5281/zenodo.7568985
