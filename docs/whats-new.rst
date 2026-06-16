@@ -8,11 +8,13 @@ What's New
 |pypi dwn|
 
 
-Coming up next
---------------
+v0.5.0 (16 Jun. 2026)
+--------------------
 
-- Virtual Argo float configuration manager :class:`FloatConfiguration` now uses a well documented `JSON schema <https://raw.githubusercontent.com/euroargodev/VirtualFleet/master/schemas/VF-ArgoFloat-Configuration.json>`_ to load/validate and save
-the set of parameters. (:pr:`29`) by `G. Maze <http://www.github.com/gmaze>`_.
+- JSON schema for Argo Float Configuration. (:pr:`29`)  by `G. Maze <http://www.github.com/gmaze>`_.
+- make mask bathy instead of inwater, and add croco example nb. (:pr:`33`) by `K. Balem <http://www.github.com/quai20>`_.
+- Fix pip install by @quai20. (:pr:`34`) by `K. Balem <http://www.github.com/quai20>`_.
+- out of domain fix by @quai20. (:pr:`35`) by `K. Balem <http://www.github.com/quai20>`_.
 
 v0.4.0 (2 Feb. 2024)
 --------------------
