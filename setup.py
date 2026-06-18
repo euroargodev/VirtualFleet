@@ -20,6 +20,7 @@ setuptools.setup(
     url="https://github.com/euroargodev/VirtualFleet",
     packages=setuptools.find_packages(),
     package_dir={"virtualargofleet": "virtualargofleet"},
+    package_data={"virtualargofleet": ["assets/*"]},
     install_requires=requirements,
     classifiers=[
         "Programming Language :: Python :: 3.10",
