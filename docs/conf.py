@@ -141,7 +141,9 @@ nbsphinx_execute = "always"
 # {% set docname = env.doc2path(env.docname, base=None) %}
 # You can run this notebook in a `live session:
 # <https://mybinder.org/v2/gh/euroargodev/argopy/docs/examples/master?urlpath=lab/tree/docs/{{ docname }}>`_ |Binder|
-# or view it `on Github <https://github.com/euroargodev/argopy/blob/master-doc/docs/{{ docname }}>`_.
+# or view it `on Github <https://github.com/euroargodev/argopy/blob/master-doc/# Build documentation in the docs/ directory with Sphinx
+#sphinx:
+#  configuration: docs/conf.pydocs/{{ docname }}>`_.
 # .. |Binder| image:: https://mybinder.org/badge.svg
 #    :target: https://mybinder.org/v2/gh/euroargodev/argopy/master-doc?urlpath=lab/tree/docs/{{ docname }}
 # """
