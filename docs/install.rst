@@ -10,12 +10,19 @@ Install the last release with pip:
 
     pip install VirtualFleet
 
-you can also try to work with the latest dev. version:
+You can also try to work with the latest dev. version:
 
 .. code-block:: bash
 
     pip install git+http://github.com/euroargodev/VirtualFleet.git@master
 
+If you know that you will have to tweak the VirtualFleet code, you can also work with a local version of VirtualFleet of your own :
+
+.. code-block:: bash
+
+    import sys
+    sys.path.insert(0, "/path/to/VirtualFleet")
+    from virtualargofleet import VirtualFleet, Velocity, FloatConfiguration 
 
 Required dependencies
 ---------------------
