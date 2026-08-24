@@ -21,6 +21,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     package_dir={"virtualargofleet": "virtualargofleet"},
     package_data={"virtualargofleet": ["assets/*"]},
+    include_package_data=True,
     install_requires=requirements,
     classifiers=[
         "Programming Language :: Python :: 3.10",
