@@ -31,10 +31,10 @@ class ArgoParticle(JITParticle):
     cycle_age = Variable('cycle_age', dtype=np.float32, initial=0., to_write=True)
     """Elapsed time since the beginning of the current cycle"""
 
-    drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=False)
+    drift_age = Variable('drift_age', dtype=np.float32, initial=0., to_write=True)
     """Elapsed time since the beginning of the drifting phase"""
 
-    in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=False)
+    in_water = Variable('in_water', dtype=np.float32, initial=1., to_write=True)
     """Boolean indicating if the virtual float is in land (0) or water (1), used to detect grounding, based on fieldset.mask"""    
     # mission parameters, in this particle class, they remain unchanged
 
@@ -80,7 +80,7 @@ def ArgoFloatKernel(particle, fieldset, time):
 
     v_speed = particle.vertical_speed  # in m/s
     #SHOULD WE INTEGRATE DIFFERENT VERTICAL SPEEDS FOR ASCENT AND DESCENT?
-    v_speed_d = v_speed  #/3.0 #descent
+    v_speed_d = v_speed /3.0 #descent
     cycletime = particle.cycle_duration * 3600  # has to be in seconds
 
     bathym = fieldset.bathy[particle.time, particle.depth, particle.lat, particle.lon]

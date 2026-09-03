@@ -114,6 +114,7 @@ class VelocityField_CUSTOM(VelocityField):
                  variables: dict,
                  dimensions: dict,
                  isglobal: bool = False,
+                 time_periodic=False,
                  **kwargs):
         """Create a custom VelocityField for known products"""
 
@@ -153,14 +154,14 @@ class VelocityField_CUSTOM(VelocityField):
             self.fieldset = FieldSet.from_netcdf(
                 src, self.var, self.dim,
                 allow_time_extrapolation=True,
-                time_periodic=False,
+                time_periodic=time_periodic,
                 deferred_load=True)
         else:
             self.field = src  # Xarray dataset
             self.fieldset = FieldSet.from_xarray_dataset(
                 src, self.var, self.dim,
                 allow_time_extrapolation=True,
-                time_periodic=False)
+                time_periodic=time_periodic)
 
         # Possibly handle a global field:
         self.set_global()

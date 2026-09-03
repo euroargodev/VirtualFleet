@@ -296,6 +296,9 @@ class VirtualFleet:
         output_folder: str
             Name of folder where to store the 'output_file' zarr archive
 
+        output_chunks : Tuple
+            Tuple of integers to set the chunk size of the zarr archive. If not provided, the default chunking of Parcels is used (None)
+
         Returns
         -------
         self
@@ -351,6 +354,7 @@ class VirtualFleet:
         else:
             output_file = kwargs["output_file"] if "output_file" in kwargs else None
             output_folder = kwargs["output_folder"] if "output_folder" in kwargs else "."
+            output_chunks = kwargs["output_chunks"] if "output_chunks" in kwargs else None
             if output_folder is None:
                 output_folder = "."
             if output_file is None:
@@ -375,7 +379,7 @@ class VirtualFleet:
 
         if output:
             # log.info("Creating ParticleFile")
-            opts['output_file'] = self._parcels['ParticleSet'].ParticleFile(name=output_path, outputdt=record)
+            opts['output_file'] = self._parcels['ParticleSet'].ParticleFile(name=output_path, outputdt=record, chunks=output_chunks)
             # log.info("Parcels temporary files will be saved in: %s" % opts['output_file'].tempwritedir_base)
         log.debug(opts)
 
