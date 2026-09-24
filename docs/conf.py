@@ -14,14 +14,14 @@
 import os
 import pathlib
 import sys
-import xarray
+#import xarray
 import datetime
 #import sphinx_autosummary_accessors
 
 from contextlib import suppress
 allowed_failures = set()
 
-print("xarray: %s, %s" % (xarray.__version__, xarray.__file__))
+#print("xarray: %s, %s" % (xarray.__version__, xarray.__file__))
 
 with suppress(ImportError):
     import matplotlib
