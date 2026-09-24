@@ -56,6 +56,7 @@ Example :
 
    d2 = DeploymentPlan()
    d2.from_region([-7,-5,45,47],'2016-01-01',2.0,'random',N=12)
+   
    d2.add(d1.plan)
    d2.plot()
 

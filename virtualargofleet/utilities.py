@@ -60,7 +60,12 @@ class DeploymentPlan:
         return "\n".join(summary)
 
     def add(self, params):
-        """Add a new set of lon,lat,time,depth to the deployment"""        
+        """Add a new set of lon,lat,time,depth to the deployment
+        Parameters
+        ----------
+        params: dict
+            A dictionary with keys 'lon', 'lat', 'date', 'depth'
+        """        
         #check if params is a dict with required keys
         if not isinstance(params, dict):
             raise ValueError("params must be a dictionary with keys 'lon', 'lat', 'date', 'depth'")
