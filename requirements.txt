@@ -5,3 +5,4 @@ parcels >= 3.0.0
 zarr >= 2.13.3
 tqdm >= 4.64.1
 jsonschema
+cartopy

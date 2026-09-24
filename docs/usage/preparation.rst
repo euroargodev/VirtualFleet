@@ -42,6 +42,25 @@ Example:
    # Define the deployment plan as a dictionary:
    my_plan = {'lat': lat, 'lon': lon, 'time': tim}
 
+VirtualFleet provides a convenient utility class :class:`DeploymentPlan` to make things easier. It allows to create a deployment plan from a section or a region and a number of floats.
+The :meth:`from_region` method offers the possibility to deploy floats either randomly (method='random') or on a grid (method='grid') in the given region.
+
+Example :
+
+.. code:: python
+
+   from virtualargofleet.utilities import DeploymentPlan
+
+   d1 = DeploymentPlan()
+   d1.from_section([-5,48],[-4,47],'2016-01-01',2.0)
+   my_plan = d1.plan
+
+   d2 = DeploymentPlan()
+   d2.from_region([-7,-5,45,47],'2016-01-01',2.0,'random',N=12)
+   my_plan = d2.plan
+
+.. image:: ../_static/random_deployment.png
+
 .. _preparation_velocity:
 
 Velocity field
