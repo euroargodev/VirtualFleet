@@ -61,10 +61,16 @@ class DeploymentPlan:
 
     def add(self, params):
         """Add a new set of lon,lat,time,depth to the deployment
+
         Parameters
         ----------
         params: dict
             A dictionary with keys 'lon', 'lat', 'date', 'depth'
+
+        Returns
+        -------
+        self: :class:`Deployment`
+            The updated deployment plan with the new set of lon,lat,time,depth
         """        
         #check if params is a dict with required keys
         if not isinstance(params, dict):

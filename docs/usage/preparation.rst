@@ -42,8 +42,8 @@ Example:
    # Define the deployment plan as a dictionary:
    my_plan = {'lat': lat, 'lon': lon, 'time': tim}
 
-VirtualFleet provides a convenient utility class :class:`DeploymentPlan` to make things easier. It allows to create a deployment plan from a section or a region and a number of floats.
-The :meth:`from_region` method offers the possibility to deploy floats either randomly (method='random') or on a grid (method='grid') in the given region. The :meth:`add` method allows to add a new deployment to an existing plan, to combine multiple deployments in a single plan.
+VirtualFleet provides a convenient utility class :class:`utilities.DeploymentPlan` to make things easier. It allows to create a deployment plan from a section or a region and a number of floats.
+The :meth:`from_region` method offers the possibility to deploy floats either randomly (*method='random'*) or on a grid (*method='grid'*) in the given region. The :meth:`add` method allows to add a new deployment to an existing plan, to combine multiple deployments in a single plan.
 
 Example :
 
