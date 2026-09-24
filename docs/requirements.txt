@@ -37,9 +37,10 @@ fsspec>=0.7.4 #, <2022.3.1
 aiohttp>=3.7.4
 
 matplotlib
-geos
-cartopy
+#geos>=3.7.2
+#cartopy
 #seaborn>=0.11.0
+
 #cmocean
 
 zarr>=2.4.0
