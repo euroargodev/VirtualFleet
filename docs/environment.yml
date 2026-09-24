@@ -17,7 +17,7 @@ dependencies:
       - readthedocs-sphinx-ext
       - sphinx-rtd-theme
       - sphinx-book-theme
-      - parcels>=3.0.0
+      - parcels==3.1.4
       - cgen
       - pymbolic
       - Pydap
