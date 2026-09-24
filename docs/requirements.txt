@@ -39,7 +39,7 @@ aiohttp>=3.7.4
 matplotlib>=3.3.2
 cartopy>=0.18.0
 #seaborn>=0.11.0
-#geos>=0.2
+geos>=0.2
 #cmocean
 
 zarr>=2.4.0
