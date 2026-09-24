@@ -43,7 +43,7 @@ Example:
    my_plan = {'lat': lat, 'lon': lon, 'time': tim}
 
 VirtualFleet provides a convenient utility class :class:`DeploymentPlan` to make things easier. It allows to create a deployment plan from a section or a region and a number of floats.
-The :meth:`from_region` method offers the possibility to deploy floats either randomly (method='random') or on a grid (method='grid') in the given region.
+The :meth:`from_region` method offers the possibility to deploy floats either randomly (method='random') or on a grid (method='grid') in the given region. The :meth:`add` method allows to add a new deployment to an existing plan, to combine multiple deployments in a single plan.
 
 Example :
 
@@ -53,11 +53,11 @@ Example :
 
    d1 = DeploymentPlan()
    d1.from_section([-5,48],[-4,47],'2016-01-01',2.0)
-   my_plan = d1.plan
 
    d2 = DeploymentPlan()
    d2.from_region([-7,-5,45,47],'2016-01-01',2.0,'random',N=12)
-   my_plan = d2.plan
+   d2.add(d1.plan)
+   d2.plot()
 
 .. image:: ../_static/random_deployment.png
 
