@@ -31,6 +31,7 @@
     virtualargofleet.utilities.FloatConfiguration
     virtualargofleet.utilities.FloatConfiguration.update
     virtualargofleet.utilities.FloatConfiguration.to_json
+    
     virtualargofleet.utilities.DeploymentPlan
     virtualargofleet.utilities.DeploymentPlan.from_section
     virtualargofleet.utilities.DeploymentPlan.from_region
