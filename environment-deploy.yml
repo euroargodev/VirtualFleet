@@ -1,8 +1,8 @@
-name: virtualfleet
+name: virtualfleet-deploy
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
+  - python=3.11
   - xarray
   - parcels==3.1.4
   - dask
@@ -40,7 +40,7 @@ dependencies:
   - py
   - pip
   - pip:
-    - git+https://github.com/euroargodev/argopy.git@master
+    - git+https://github.com/euroargodev/argopy.git@master    
     - jupyter-server-proxy
     - netCDF4
     - erddapy
@@ -49,4 +49,5 @@ dependencies:
     - progressbar
     - cgen
     - pymbolic
-    - Pydap
+    - Pydap    
+    - git+https://github.com/euroargodev/VirtualFleet.git@master

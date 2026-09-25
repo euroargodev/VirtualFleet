@@ -20,12 +20,181 @@ import jsonschema
 from referencing import Registry, Resource
 from jsonschema import Draft202012Validator
 from pathlib import Path
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+from cartopy import geodesic
+Geodesic = geodesic.Geodesic()
+from typing import Annotated
+import datetime
 
 
 log = logging.getLogger("virtualfleet.utils")
 path2data = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
-path2schemas = os.path.sep.join([os.path.dirname(os.path.abspath(__file__)), '..', 'schemas'])
 
+class DeploymentPlan:
+    """A class to build and manage a deployment plan of virtual floats
+
+    Examples
+    --------
+    >>> d = DeploymentPlan()
+    >>> d.from_section(pointA, pointB, time, depth, N=10)  # Create a deployment plan of 10 floats between two points
+    >>> d.from_region(lonmin, lonmax, latmin, latmax, time, depth, N=10)  # Create a deployment plan of 10 floats in a region
+    >>> d.add({'lon': -70.0, 'lat': 40.0, 'time': '2023-01-01T00:00:00Z', 'depth':2.0})    
+    >>> d.plot()
+    """
+
+    def __init__(self):        
+        self.plan = {}
+
+    def __repr__(self):
+        summary = ["<VirtualFleet.Deployment>"]        
+        summary.append("Number of floats: %i" % len(self.plan.get('lon', [])))
+        summary.append("Deployment plan:")
+        summary.append("lon, lat, time, depth")
+        summary.append("-------------------------")
+        for i in range(len(self.plan.get('lon', []))):
+            summary.append("%s, %s, %s, %s" % (self.plan['lon'][i], self.plan['lat'][i], self.plan['time'][i], self.plan['depth'][i]))
+
+        summary.append("-------------------------")
+        return "\n".join(summary)
+
+    def add(self, params):
+        """Add a new set of lon,lat,time,depth to the deployment
+
+        Parameters
+        ----------
+        params: dict
+            A dictionary with keys 'lon', 'lat', 'time', 'depth'
+
+        Returns
+        -------
+        self: :class:`Deployment`
+            The updated deployment plan with the new set of lon,lat,time,depth
+        """        
+        #check if params is a dict with required keys
+        if not isinstance(params, dict):
+            raise ValueError("params must be a dictionary with keys 'lon', 'lat', 'time', 'depth'")
+        for key in ['lon', 'lat', 'time', 'depth']:
+            if key not in params:
+                raise ValueError("params must be a dictionary with keys 'lon', 'lat', 'time', 'depth'")
+        #check if time is a string or a pd.Timestamp or a list
+        if isinstance(params['time'], str):
+            params['time'] = np.datetime64(params['time'])
+        elif isinstance(params['time'], list):
+                    params['time'] = [np.datetime64(d) if isinstance(d, str) else d for d in params['time']]
+        elif not isinstance(params['time'], np.datetime64):
+            raise ValueError("params['time'] must be a string or a np.datetime64")        
+            
+        self.plan['lon'] = np.append(self.plan['lon'], params['lon'])
+        self.plan['lat'] = np.append(self.plan['lat'], params['lat'])
+        self.plan['time'] = np.append(self.plan['time'], params['time'])
+        self.plan['depth'] = np.append(self.plan['depth'], params['depth'])
+        return self
+
+    def from_section(self, pointA:Annotated[list,2], 
+                     pointB:Annotated[list,2], 
+                     time: Union[list, str, np.datetime64], 
+                     depth: Union[list, float],
+                     N:int=10):
+        """Create a deployment plan of N floats between two points
+
+        Parameters
+        ----------
+        pointA: tuple
+            (lon, lat) of the first point
+        pointB: tuple
+            (lon, lat) of the second point
+        time: list or str or :class:`numpy.datetime64`
+            Deployment time of the floats (either a single time or a list of times for each float)   
+        depth: list or float
+            Depth of the floats
+        N: int, optional
+            Number of floats to deploy between the two points
+
+        Returns
+        -------
+        self: :class:`Deployment`
+            The updated deployment plan with N floats between the two points
+        """
+        d = Geodesic.inverse(pointA,pointB)
+        dist = d[0][0]
+        azim = d[0][1] 
+        e = Geodesic.direct(pointA, azim, np.linspace(dist/N,dist,N,endpoint=False))
+        # if time is a single value, make it a list of N values
+        if isinstance(time, (str, np.datetime64)):
+            time = [np.datetime64(time) if isinstance(time, str) else time for _ in range(N)]
+
+        # if depth is a single value, make it a list of N values
+        if isinstance(depth, (int, float)):
+            depth = [depth]*N
+
+        self.plan = {'lon': e[:,0], 'lat': e[:,1], 'time': time, 'depth': depth}
+        return self
+
+    def from_region(self, box: list[float], time: Union[list, str, np.datetime64], depth: Union[list, float], method:str='random',N:int=10):
+        """Create a deployment plan of N floats in a region
+
+        Parameters
+        ----------
+        box: list
+            [lonmin, lonmax, latmin, latmax] defining the region
+        time: list or str or :class:`numpy.datetime64`
+            Deployment time of the floats (either a single time or a list of times for each float)   
+        depth: list or float
+            Depth of the floats
+        method: str, optional
+            Method for deploying floats in the region ('random' or 'grid')
+        N: int, optional
+            Number of floats to deploy in the region
+
+        Returns
+        -------
+        self: :class:`Deployment`
+            The updated deployment plan with N floats in the region
+        """
+        if method == 'grid':
+            # find grid with at last N points and keep only the first N points
+            nlon = int(np.ceil(np.sqrt(N*(box[1]-box[0])/(box[3]-box[2]))))
+            nlat = int(np.ceil(N / nlon))
+            lons = np.linspace(box[0], box[1], nlon)
+            lats = np.linspace(box[2], box[3], nlat)
+            lons, lats = np.meshgrid(lons, lats)
+            lons = lons.flatten()
+            lats = lats.flatten()
+            # keep only the first N points
+            lons = lons[:N]
+            lats = lats[:N]
+        else:
+            lons = np.random.uniform(box[0], box[1], N)
+            lats = np.random.uniform(box[2], box[3], N)
+
+        # if time is a single value, make it a list of N values
+        if isinstance(time, (str, np.datetime64)):
+            time = [np.datetime64(time) if isinstance(time, str) else time for _ in range(N)]
+
+        # if depth is a single value, make it a list of N values
+        if isinstance(depth, (int, float)):
+            depth = [depth]*N
+        
+        self.plan = {'lon': lons, 'lat': lats, 'time': time, 'depth': depth}
+        return self
+
+    def plot(self, ax=None):
+        """Plot the deployment plan on a map"""        
+        if ax is None:
+            fig, ax = plt.subplots(1,1, subplot_kw={'projection': ccrs.PlateCarree()})
+            ax.set_global()
+            ax.coastlines()
+            ax.gridlines(linestyle='--', color='gray', alpha=0.5, draw_labels=True)
+
+        ax.plot(self.plan['lon'], self.plan['lat'],'.r', transform=ccrs.PlateCarree())        
+        bbox = [max([min(self.plan['lon'])-2,-180]),
+                min([max(self.plan['lon'])+2,180]),
+                max([min(self.plan['lat'])-2,-90]),
+                min([max(self.plan['lat'])+2,90])]
+        ax.set_extent(bbox, crs=ccrs.PlateCarree())
+        
+        return ax
 
 class VFschema:
     """A base class to export json files following a schema"""
@@ -297,7 +466,7 @@ class FloatConfiguration:
 
             # Validate json against schema:
             # json_schema = Path(os.path.join(path2schemas, 'VF-ArgoFloat-Configuration.json')).read_text()
-            json_schema = os.path.join(path2schemas, 'VF-ArgoFloat-Configuration.json')
+            json_schema = os.path.join(path2data, 'VF-ArgoFloat-Configuration.json')
             errors = VFschema_configuration.validate(name, json_schema)
             if isinstance(errors, list):
                 log.debug(list)

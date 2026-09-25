@@ -259,12 +259,12 @@ class VirtualFleet:
         return self._parcels['ParticleSet'].fieldset
         # return self._parcels['fieldset']
 
-    def plot_positions(self):
-        """Plot the last position of virtual Argo Floats
+    # def plot_positions(self):
+    #     """Plot the last position of virtual Argo Floats
 
-        Use :meth:`parcels.particleset.baseparticleset.BaseParticleSet.show`
-        """
-        self._parcels['ParticleSet'].show()
+    #     Use :meth:`parcels.particleset.baseparticleset.BaseParticleSet.show`
+    #     """
+    #     self._parcels['ParticleSet'].show()
 
     def simulate(self,
                  duration,
