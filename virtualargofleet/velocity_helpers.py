@@ -153,14 +153,14 @@ class VelocityField_CUSTOM(VelocityField):
             self.field = src  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
             self.fieldset = FieldSet.from_netcdf(
                 src, self.var, self.dim,
-                allow_time_extrapolation=True,
+                allow_time_extrapolation=False,
                 time_periodic=time_periodic,
                 deferred_load=True)
         else:
             self.field = src  # Xarray dataset
             self.fieldset = FieldSet.from_xarray_dataset(
                 src, self.var, self.dim,
-                allow_time_extrapolation=True,
+                allow_time_extrapolation=False,
                 time_periodic=time_periodic)
 
         # Possibly handle a global field:

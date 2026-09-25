@@ -38,9 +38,9 @@ class DeploymentPlan:
     Examples
     --------
     >>> d = DeploymentPlan()
-    >>> d.from_section(pointA, pointB, date, depth, N=10)  # Create a deployment plan of 10 floats between two points
-    >>> d.from_region(lonmin, lonmax, latmin, latmax, date, depth, N=10)  # Create a deployment plan of 10 floats in a region
-    >>> d.add({'lon': -70.0, 'lat': 40.0, 'date': '2023-01-01T00:00:00Z', 'depth':2.0})    
+    >>> d.from_section(pointA, pointB, time, depth, N=10)  # Create a deployment plan of 10 floats between two points
+    >>> d.from_region(lonmin, lonmax, latmin, latmax, time, depth, N=10)  # Create a deployment plan of 10 floats in a region
+    >>> d.add({'lon': -70.0, 'lat': 40.0, 'time': '2023-01-01T00:00:00Z', 'depth':2.0})    
     >>> d.plot()
     """
 
@@ -51,10 +51,10 @@ class DeploymentPlan:
         summary = ["<VirtualFleet.Deployment>"]        
         summary.append("Number of floats: %i" % len(self.plan.get('lon', [])))
         summary.append("Deployment plan:")
-        summary.append("lon, lat, date, depth")
+        summary.append("lon, lat, time, depth")
         summary.append("-------------------------")
         for i in range(len(self.plan.get('lon', []))):
-            summary.append("%s, %s, %s, %s" % (self.plan['lon'][i], self.plan['lat'][i], self.plan['date'][i], self.plan['depth'][i]))
+            summary.append("%s, %s, %s, %s" % (self.plan['lon'][i], self.plan['lat'][i], self.plan['time'][i], self.plan['depth'][i]))
 
         summary.append("-------------------------")
         return "\n".join(summary)
@@ -65,7 +65,7 @@ class DeploymentPlan:
         Parameters
         ----------
         params: dict
-            A dictionary with keys 'lon', 'lat', 'date', 'depth'
+            A dictionary with keys 'lon', 'lat', 'time', 'depth'
 
         Returns
         -------
@@ -74,27 +74,27 @@ class DeploymentPlan:
         """        
         #check if params is a dict with required keys
         if not isinstance(params, dict):
-            raise ValueError("params must be a dictionary with keys 'lon', 'lat', 'date', 'depth'")
-        for key in ['lon', 'lat', 'date', 'depth']:
+            raise ValueError("params must be a dictionary with keys 'lon', 'lat', 'time', 'depth'")
+        for key in ['lon', 'lat', 'time', 'depth']:
             if key not in params:
-                raise ValueError("params must be a dictionary with keys 'lon', 'lat', 'date', 'depth'")
-        #check if date is a string or a pd.Timestamp or a list
-        if isinstance(params['date'], str):
-            params['date'] = np.datetime64(params['date'])
-        elif isinstance(params['date'], list):
-                    params['date'] = [np.datetime64(d) if isinstance(d, str) else d for d in params['date']]
-        elif not isinstance(params['date'], np.datetime64):
-            raise ValueError("params['date'] must be a string or a np.datetime64")        
+                raise ValueError("params must be a dictionary with keys 'lon', 'lat', 'time', 'depth'")
+        #check if time is a string or a pd.Timestamp or a list
+        if isinstance(params['time'], str):
+            params['time'] = np.datetime64(params['time'])
+        elif isinstance(params['time'], list):
+                    params['time'] = [np.datetime64(d) if isinstance(d, str) else d for d in params['time']]
+        elif not isinstance(params['time'], np.datetime64):
+            raise ValueError("params['time'] must be a string or a np.datetime64")        
             
         self.plan['lon'] = np.append(self.plan['lon'], params['lon'])
         self.plan['lat'] = np.append(self.plan['lat'], params['lat'])
-        self.plan['date'] = np.append(self.plan['date'], params['date'])
+        self.plan['time'] = np.append(self.plan['time'], params['time'])
         self.plan['depth'] = np.append(self.plan['depth'], params['depth'])
         return self
 
     def from_section(self, pointA:Annotated[list,2], 
                      pointB:Annotated[list,2], 
-                     date: Union[list, str, np.datetime64], 
+                     time: Union[list, str, np.datetime64], 
                      depth: Union[list, float],
                      N:int=10):
         """Create a deployment plan of N floats between two points
@@ -105,8 +105,8 @@ class DeploymentPlan:
             (lon, lat) of the first point
         pointB: tuple
             (lon, lat) of the second point
-        date: list or str or :class:`numpy.datetime64`
-            Deployment date of the floats (either a single date or a list of dates for each float)   
+        time: list or str or :class:`numpy.datetime64`
+            Deployment time of the floats (either a single time or a list of times for each float)   
         depth: list or float
             Depth of the floats
         N: int, optional
@@ -121,26 +121,26 @@ class DeploymentPlan:
         dist = d[0][0]
         azim = d[0][1] 
         e = Geodesic.direct(pointA, azim, np.linspace(dist/N,dist,N,endpoint=False))
-        # if date is a single value, make it a list of N values
-        if isinstance(date, (str, np.datetime64)):
-            date = [np.datetime64(date) if isinstance(date, str) else date for _ in range(N)]
+        # if time is a single value, make it a list of N values
+        if isinstance(time, (str, np.datetime64)):
+            time = [np.datetime64(time) if isinstance(time, str) else time for _ in range(N)]
 
         # if depth is a single value, make it a list of N values
         if isinstance(depth, (int, float)):
             depth = [depth]*N
 
-        self.plan = {'lon': e[:,0], 'lat': e[:,1], 'date': date, 'depth': depth}
+        self.plan = {'lon': e[:,0], 'lat': e[:,1], 'time': time, 'depth': depth}
         return self
 
-    def from_region(self, box: list[float], date: Union[list, str, np.datetime64], depth: Union[list, float], method:str='random',N:int=10):
+    def from_region(self, box: list[float], time: Union[list, str, np.datetime64], depth: Union[list, float], method:str='random',N:int=10):
         """Create a deployment plan of N floats in a region
 
         Parameters
         ----------
         box: list
             [lonmin, lonmax, latmin, latmax] defining the region
-        date: list or str or :class:`numpy.datetime64`
-            Deployment date of the floats (either a single date or a list of dates for each float)   
+        time: list or str or :class:`numpy.datetime64`
+            Deployment time of the floats (either a single time or a list of times for each float)   
         depth: list or float
             Depth of the floats
         method: str, optional
@@ -169,15 +169,15 @@ class DeploymentPlan:
             lons = np.random.uniform(box[0], box[1], N)
             lats = np.random.uniform(box[2], box[3], N)
 
-        # if date is a single value, make it a list of N values
-        if isinstance(date, (str, np.datetime64)):
-            date = [np.datetime64(date) if isinstance(date, str) else date for _ in range(N)]
+        # if time is a single value, make it a list of N values
+        if isinstance(time, (str, np.datetime64)):
+            time = [np.datetime64(time) if isinstance(time, str) else time for _ in range(N)]
 
         # if depth is a single value, make it a list of N values
         if isinstance(depth, (int, float)):
             depth = [depth]*N
         
-        self.plan = {'lon': lons, 'lat': lats, 'date': date, 'depth': depth}
+        self.plan = {'lon': lons, 'lat': lats, 'time': time, 'depth': depth}
         return self
 
     def plot(self, ax=None):
