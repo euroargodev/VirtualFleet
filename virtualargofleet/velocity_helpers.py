@@ -47,11 +47,11 @@ class VelocityField(ABC):
         summary = ["<VelocityField.%s>" % self.name]
         return "\n".join(summary)
 
-    def plot(self):
-        """Quick plot of the ParticleSet"""
-        temp_pset = ParticleSet(fieldset=self.fieldset, pclass=ArgoParticle, lon=0, lat=0, depth=0)
-        temp_pset.show(field=self.fieldset.U, with_particles=False)
-        # temp_pset.show(field = self.fieldset.V,with_particles = False)
+    # def plot(self):
+    #     """Quick plot of the ParticleSet"""
+    #     temp_pset = ParticleSet(fieldset=self.fieldset, pclass=ArgoParticle, lon=0, lat=0, depth=0)
+    #     temp_pset.show(field=self.fieldset.U, with_particles=False)
+    #     # temp_pset.show(field = self.fieldset.V,with_particles = False)
 
     def add_mask(self):
         """Create bathymetric mask for grounding management
