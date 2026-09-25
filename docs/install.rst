@@ -30,7 +30,7 @@ Required dependencies
 - numpy >= 1.18
 - pandas >= 1.1
 - xarray >= 2022.12
-- parcels >= 3.0.0
+- parcels == 3.1.4
 - zarr >= 2.13.3
 - tqdm >= 4.64.1
 
