@@ -30,7 +30,6 @@ import datetime
 
 log = logging.getLogger("virtualfleet.utils")
 path2data = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
-path2schemas = os.path.sep.join([os.path.dirname(os.path.abspath(__file__)), '..', 'schemas'])
 
 class DeploymentPlan:
     """A class to build and manage a deployment plan of virtual floats
@@ -467,7 +466,7 @@ class FloatConfiguration:
 
             # Validate json against schema:
             # json_schema = Path(os.path.join(path2schemas, 'VF-ArgoFloat-Configuration.json')).read_text()
-            json_schema = os.path.join(path2schemas, 'VF-ArgoFloat-Configuration.json')
+            json_schema = os.path.join(path2data, 'VF-ArgoFloat-Configuration.json')
             errors = VFschema_configuration.validate(name, json_schema)
             if isinstance(errors, list):
                 log.debug(list)
