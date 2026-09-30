@@ -7,6 +7,12 @@ What's New
 
 |pypi dwn|
 
+v0.5.2
+--------------------
+
+- Add deployment plan utility class. (:pr:`45`)  by `K. Balem <http://www.github.com/quai20>`_.
+
+
 v0.5.0-1 (19 Jun. 2026)
 --------------------
 

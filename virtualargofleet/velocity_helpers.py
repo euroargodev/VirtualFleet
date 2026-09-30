@@ -47,11 +47,11 @@ class VelocityField(ABC):
         summary = ["<VelocityField.%s>" % self.name]
         return "\n".join(summary)
 
-    def plot(self):
-        """Quick plot of the ParticleSet"""
-        temp_pset = ParticleSet(fieldset=self.fieldset, pclass=ArgoParticle, lon=0, lat=0, depth=0)
-        temp_pset.show(field=self.fieldset.U, with_particles=False)
-        # temp_pset.show(field = self.fieldset.V,with_particles = False)
+    # def plot(self):
+    #     """Quick plot of the ParticleSet"""
+    #     temp_pset = ParticleSet(fieldset=self.fieldset, pclass=ArgoParticle, lon=0, lat=0, depth=0)
+    #     temp_pset.show(field=self.fieldset.U, with_particles=False)
+    #     # temp_pset.show(field = self.fieldset.V,with_particles = False)
 
     def add_mask(self):
         """Create bathymetric mask for grounding management
@@ -153,14 +153,14 @@ class VelocityField_CUSTOM(VelocityField):
             self.field = src  # Dictionary with 'U' and 'V' as keys and list of corresponding files as values
             self.fieldset = FieldSet.from_netcdf(
                 src, self.var, self.dim,
-                allow_time_extrapolation=True,
+                allow_time_extrapolation=False,
                 time_periodic=time_periodic,
                 deferred_load=True)
         else:
             self.field = src  # Xarray dataset
             self.fieldset = FieldSet.from_xarray_dataset(
                 src, self.var, self.dim,
-                allow_time_extrapolation=True,
+                allow_time_extrapolation=False,
                 time_periodic=time_periodic)
 
         # Possibly handle a global field:

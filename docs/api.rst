@@ -72,7 +72,10 @@ Utilities
     utilities.simu2csv
     utilities.set_WMO
     utilities.get_float_config
-
+    utilities.DeploymentPlan
+    utilities.DeploymentPlan.from_section
+    utilities.DeploymentPlan.from_region
+    utilities.DeploymentPlan.add
 
 Parcels Particles and kernels
 =============================
