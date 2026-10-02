@@ -34,4 +34,4 @@ setuptools.setup(
         "Operating System :: Microsoft :: Windows",
         "Development Status :: 3 - Alpha",
     ]
-)
+) 
