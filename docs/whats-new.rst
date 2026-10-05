@@ -7,6 +7,11 @@ What's New
 
 |pypi dwn|
 
+v0.5.3
+--------------------
+
+- xarray version limits to 2026.7.0 & python 3.12 compatibility (:pr:`46`)  by `K. Balem <http://www.github.com/quai20>`_.
+
 v0.5.2
 --------------------
 
