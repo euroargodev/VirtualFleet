@@ -2,8 +2,8 @@ name: virtualfleet-deploy
 channels:
   - conda-forge
 dependencies:
-  - python=3.11
-  - xarray
+  - python=3.12
+  - xarray <= 2026.7.0
   - parcels==3.1.4
   - dask
   - distributed
