@@ -126,6 +126,9 @@ class VirtualFleet:
         # Velocity/Hydrodynamic field:
         if isinstance(fieldset, VelocityField):  # be nice when we forget to set the correct input
             fieldset = fieldset.fieldset
+            # Check if fieldset is global or not, and set the internal flag accordingly
+            if fieldset.isglobal:
+                self._isglobal = True
         if not isinstance(fieldset, FieldSet):
             raise TypeError("The `fieldset` argument must be a `FieldSet` Parcels or `VelocityField` instance")
        
