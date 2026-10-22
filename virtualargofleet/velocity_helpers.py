@@ -161,13 +161,13 @@ class VelocityField_CUSTOM(VelocityField):
             self.fieldset = FieldSet.from_xarray_dataset(
                 src, self.var, self.dim,
                 allow_time_extrapolation=False,
-                time_periodic=time_periodic)
-
-        # Possibly handle a global field:
-        self.set_global()
+                time_periodic=time_periodic)        
 
         # Create mask to manage grounding:
         self.add_mask()
+
+        # Possibly handle a global field:
+        self.set_global()
 
 
 def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args: object, **kwargs: object) -> object:
