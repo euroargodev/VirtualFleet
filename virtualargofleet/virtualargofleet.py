@@ -17,8 +17,9 @@ from .app_parcels import (
     ArgoParticle,
     ArgoParticle_exp,
     ArgoFloatKernel,
-    ArgoFloatKernel_exp,
-    PeriodicBoundaryConditionKernel,
+    ArgoFloatKernel_exp,    
+    ZonalPeriodicBoundaryKernel,
+    MeridionalPeriodicBoundaryKernel,
     KeepInDomain, KeepInWater #, KeepInColumn,
 )
 from .velocity_helpers import VelocityField
@@ -31,7 +32,7 @@ from typing import Union, Iterable
 log = logging.getLogger("virtualfleet.virtualfleet")
 
 
-DEFAULT_DEPLOYMENT_DEPTH = 1.0
+DEFAULT_DEPLOYMENT_DEPTH = 1.5
 """Default deployment depth when not set in the plan"""
 
 
@@ -45,7 +46,7 @@ class VirtualFleet:
                  plan: dict,
                  fieldset: Union[FieldSet, VelocityField],
                  mission: Union[dict, FloatConfiguration, Iterable[dict], Iterable[FloatConfiguration]],
-                 isglobal: bool = False,
+                 spatial_periodic: str = None,
                  **kwargs):
         """Create an Argo Virtual Fleet simulator
 
@@ -63,11 +64,14 @@ class VirtualFleet:
 
             An iterable of dictionaries or :class:`FloatConfiguration` can be passed to specified mission parameters for each
             virtual floats. In this case, the length of the iterable must match the length of the deployment plan.
-        isglobal: bool, optional, default=False
-            A boolean indicating weather the velocity field is global or not
+        spatial_periodic: str, optional, default=None
+            A string indicating the spatial periodicity of the velocity field. 
+            If "both", the velocity field is considered global and periodic in both directions.
+            If "zonal", the velocity field is considered periodic in the zonal direction only.
+            If "meridional", the velocity field is considered periodic in the meridional direction
 
         """
-        self._isglobal = bool(isglobal)
+        self._spatial_periodic = spatial_periodic
 
         # Deployment plan:
         for key in ['lat', 'lon', 'time']:
@@ -125,26 +129,16 @@ class VirtualFleet:
 
         # Velocity/Hydrodynamic field:
         if isinstance(fieldset, VelocityField):  # be nice when we forget to set the correct input
-            fieldset = fieldset.fieldset
+            # Check if fieldset is global or not, and set the internal flag accordingly
+            if fieldset.spatial_periodic:
+                self._spatial_periodic = fieldset.spatial_periodic
+            fieldset = fieldset.fieldset            
         if not isinstance(fieldset, FieldSet):
             raise TypeError("The `fieldset` argument must be a `FieldSet` Parcels or `VelocityField` instance")
        
         Particle = ArgoParticle
         FloatKernel = ArgoFloatKernel
-
-        # kernels should not be managed by key present in the mission configuration
-        #todo Update behavior to work with ArgoParticle_exp kernel
-
-        #if "area_cycle_duration" in mission:
-        #    fieldset.add_constant("area_cycle_duration", mission["area_cycle_duration"])
-        #    fieldset.add_constant("area_parking_depth", mission["area_parking_depth"])
-        #    fieldset.add_constant("area_xmin", mission["area_xmin"])
-        #    fieldset.add_constant("area_xmax", mission["area_xmax"])
-        #    fieldset.add_constant("area_ymin", mission["area_ymin"])
-        #    fieldset.add_constant("area_ymax", mission["area_ymax"])
-        #    Particle = ArgoParticle_exp
-        #    FloatKernel = ArgoFloatKernel_exp
-
+            
         # More useful parameters to be sent to floats:
         verbose_events = (
             kwargs["verbose_events"]
@@ -202,14 +196,17 @@ class VirtualFleet:
 
     def __init_kernels(self):
         """Add kernels, attention: Order matters !"""
-        K = self._parcels['FloatKernel']
-        # K += self._parcels['ParticleSet'].Kernel(KeepInWater)
-        # K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
+        K = self._parcels['FloatKernel']        
         K += self._parcels['ParticleSet'].Kernel(AdvectionRK4)
-        if self._isglobal:
-            K += self._parcels['ParticleSet'].Kernel(PeriodicBoundaryConditionKernel)
-        K += self._parcels['ParticleSet'].Kernel(KeepInWater)
-        #K += self._parcels['ParticleSet'].Kernel(KeepInColumn)
+        if self._spatial_periodic is "both":
+            K += self._parcels['ParticleSet'].Kernel(ZonalPeriodicBoundaryKernel)
+            K += self._parcels['ParticleSet'].Kernel(MeridionalPeriodicBoundaryKernel)
+        elif self._spatial_periodic == "zonal":
+            K += self._parcels['ParticleSet'].Kernel(ZonalPeriodicBoundaryKernel)
+        elif self._spatial_periodic == "meridional":
+            K += self._parcels['ParticleSet'].Kernel(MeridionalPeriodicBoundaryKernel)
+
+        K += self._parcels['ParticleSet'].Kernel(KeepInWater)        
         K += self._parcels['ParticleSet'].Kernel(KeepInDomain)
 
         self._parcels['kernels'] = K
@@ -256,11 +253,10 @@ class VirtualFleet:
         -------
         :class:`parcels.fieldset.FieldSet`
         """
-        return self._parcels['ParticleSet'].fieldset
-        # return self._parcels['fieldset']
+        return self._parcels['ParticleSet'].fieldset        
 
     # def plot_positions(self):
-    #     """Plot the last position of virtual Argo Floats
+    #     """Plot the last position of virtual Argo Floats --- DEPRECATED
 
     #     Use :meth:`parcels.particleset.baseparticleset.BaseParticleSet.show`
     #     """

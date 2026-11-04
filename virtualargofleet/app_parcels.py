@@ -379,16 +379,19 @@ def ArgoFloatKernel_exp(particle, fieldset, time):
         particle.cycle_age += particle.dt  # update cycle_age
 
 
-def PeriodicBoundaryConditionKernel(particle, fieldset, time):
-    """Define periodic Boundary Conditions."""
+def ZonalPeriodicBoundaryKernel(particle, fieldset, time):
+    """Define zonal periodic Boundary Conditions."""
     if particle.lon < fieldset.halo_west:
         particle_dlon += fieldset.halo_east - fieldset.halo_west
     elif particle.lon > fieldset.halo_east:
         particle_dlon -= fieldset.halo_east - fieldset.halo_west
+    
+def MeridionalPeriodicBoundaryKernel(particle, fieldset, time):    
+    """Define meridional periodic Boundary Conditions."""
     if particle.lat < fieldset.halo_south:
         particle_dlat += fieldset.halo_north - fieldset.halo_south
     elif particle.lat > fieldset.halo_north:
-        particle_dlast -= fieldset.halo_north - fieldset.halo_south
+        particle_dlat -= fieldset.halo_north - fieldset.halo_south
 
 
 def KeepInWater(particle, fieldset, time):
