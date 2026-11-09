@@ -100,7 +100,7 @@ The 2 main ways to get a :class:`VelocityField` instance with the :meth:`Velocit
                        variables=variables,
                        dimensions=dimensions)
 
-In this later case, the function :meth:`Velocity` will take care of creating a :class:`parcels.fieldset.FieldSet` with the appropriate land/sea mask and circular wrapper if the field is global.
+In this later case, the function :meth:`Velocity` will take care of creating a :class:`parcels.fieldset.FieldSet` with the appropriate land/sea mask.
 
 Currently, VirtualFleet supports the following values for the ``model`` options of :meth:`Velocity`:
 
@@ -109,6 +109,19 @@ Currently, VirtualFleet supports the following values for the ``model`` options 
 -  ``ARMOR3D``, ``MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012``
 -  ``custom`` if you want to set your own model definition
 
+Temporal periodicity is managed with the **time_periodic** argument of the :meth:`Velocity` function. 
+Like in Ocean Parcels, it is set to either False (default) or the length of the period (either float in seconds or datetime.timedelta object).
+Spatial periodicity is managed with the **spatial_periodic** argument of the :meth:`Velocity` function. It is set to either False (default), 'zonal', 'meridional' or 'both' depending 
+on the direction of the velocity field periodicity :
+
+.. code:: python
+
+   VELfield = Velocity(model='custom',
+                       src=filenames,
+                       variables=variables,
+                       dimensions=dimensions,
+                       spatial_periodic='zonal',
+                       time_periodic=timedelta(days=365))
 
 .. _preparation_cfg:
 

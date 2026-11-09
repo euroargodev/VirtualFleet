@@ -23,8 +23,7 @@ VirtualFleet
     :toctree: generated/
 
     VirtualFleet.simulate
-    VirtualFleet.to_index
-    VirtualFleet.plot_positions
+    VirtualFleet.to_index    
 
 **Attributes**
 
@@ -57,9 +56,7 @@ Velocity/Field
 
     Velocity
     VelocityField
-    VelocityField.add_mask
-    VelocityField.set_global
-    VelocityField.plot
+    VelocityField.add_mask    
     VelocityField.fieldset
 
 Utilities
@@ -76,6 +73,7 @@ Utilities
     utilities.DeploymentPlan.from_section
     utilities.DeploymentPlan.from_region
     utilities.DeploymentPlan.add
+    utilities.DeploymentPlan.plot
 
 Parcels Particles and kernels
 =============================

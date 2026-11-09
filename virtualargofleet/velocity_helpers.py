@@ -8,6 +8,7 @@ import glob
 from abc import ABC
 import logging
 from .app_parcels import ArgoParticle
+from typing import Union, Iterable
 
 
 log = logging.getLogger("virtualfleet.velocity")
@@ -38,9 +39,12 @@ class VelocityField(ABC):
     dim = None
     """Dimensions dictionary mapping of ``time``, ``depth``, ``lat`` and ``lon`` on netcdf velocity variable names"""
 
-    isglobal = None
-    """Boolean indicating weather the velocity field is global or not, used to add ``halo_*`` constants on the 
+    spatial_periodic = False
+    """"zonal", "meridional" or "both" indicating whether the velocity field is global or not, or only zonal or meridional, used to add ``halo_*`` constants on the 
     ``fieldset`` attribute"""
+
+    time_periodic = False
+    """Boolean or timedeltaindicating the temporal periodicity of the velocity field, used to set the ``time_periodic`` argument of the :class:`parcels.fieldset.FieldSet` constructor"""
 
 
     def __repr__(self):
@@ -48,7 +52,7 @@ class VelocityField(ABC):
         return "\n".join(summary)
 
     # def plot(self):
-    #     """Quick plot of the ParticleSet"""
+    #     """Quick plot of the ParticleSet"""  --- DEPRECATED
     #     temp_pset = ParticleSet(fieldset=self.fieldset, pclass=ArgoParticle, lon=0, lat=0, depth=0)
     #     temp_pset.show(field=self.fieldset.U, with_particles=False)
     #     # temp_pset.show(field = self.fieldset.V,with_particles = False)
@@ -71,9 +75,7 @@ class VelocityField(ABC):
                 ds = xr.open_dataset(mask_file)
                 ds = ds[{self.dim['time']: 0}]
                 ds = ds[[self.var['U'], self.var['V']]].squeeze()
-
-            #mask = ~(ds.where((~ds[self.var['U']].isnull()) | (~ds[self.var['V']].isnull()))[
-            #         self.var['U']].isnull()).transpose(self.dim['lon'], self.dim['lat'], self.dim['depth'])
+            
             # Generate bathymetric values with a 50m security
             ds['mk'] = (~ds[self.var['U']].isnull()).astype(int)
             ix = (ds['mk'].cumsum(self.dim['depth']).max(self.dim['depth']) - 1)
@@ -92,9 +94,9 @@ class VelocityField(ABC):
         else:
             raise ValueError("Can't create mask because `fieldset` is not defined")
 
-    def set_global(self):
+    def set_spatial_periodicity(self):
         """Ensure a global fieldset"""
-        if self.isglobal:
+        if self.spatial_periodic in ["both", "zonal", "meridional"]:
             self.fieldset.add_constant(
                 'halo_west', self.fieldset.U.grid.lon[0])
             self.fieldset.add_constant(
@@ -103,7 +105,12 @@ class VelocityField(ABC):
                 'halo_south', self.fieldset.U.grid.lat[0])
             self.fieldset.add_constant(
                 'halo_north', self.fieldset.U.grid.lat[-1])
-            self.fieldset.add_periodic_halo(zonal=True, meridional=True)
+            if self.spatial_periodic == "both":
+                self.fieldset.add_periodic_halo(zonal=True, meridional=True)
+            elif self.spatial_periodic == "zonal":
+                self.fieldset.add_periodic_halo(zonal=True, meridional=False)
+            elif self.spatial_periodic == "meridional":
+                self.fieldset.add_periodic_halo(zonal=False, meridional=True)
 
 
 class VelocityField_CUSTOM(VelocityField):
@@ -113,7 +120,7 @@ class VelocityField_CUSTOM(VelocityField):
                  src,
                  variables: dict,
                  dimensions: dict,
-                 isglobal: bool = False,
+                 spatial_periodic: False,
                  time_periodic=False,
                  **kwargs):
         """Create a custom VelocityField for known products"""
@@ -146,7 +153,8 @@ class VelocityField_CUSTOM(VelocityField):
 
         self.var = variables  # Dictionary mapping 'U' and 'V' to netcdf velocity variable names
         self.dim = dimensions  # Dictionary mapping 'time', 'depth', 'lat' and 'lon' to netcdf velocity variable names
-        self.isglobal = isglobal
+        self.spatial_periodic = spatial_periodic
+        self.time_periodic = time_periodic
 
         # Define parcels fieldset
         if not isinstance(src, xr.core.dataset.Dataset):
@@ -154,20 +162,20 @@ class VelocityField_CUSTOM(VelocityField):
             self.fieldset = FieldSet.from_netcdf(
                 src, self.var, self.dim,
                 allow_time_extrapolation=False,
-                time_periodic=time_periodic,
+                time_periodic=self.time_periodic,
                 deferred_load=True)
         else:
             self.field = src  # Xarray dataset
             self.fieldset = FieldSet.from_xarray_dataset(
                 src, self.var, self.dim,
                 allow_time_extrapolation=False,
-                time_periodic=time_periodic)
-
-        # Possibly handle a global field:
-        self.set_global()
+                time_periodic=self.time_periodic)        
 
         # Create mask to manage grounding:
         self.add_mask()
+
+        # Possibly handle a spatial periodicity for global or semiglobal fields:
+        self.set_spatial_periodicity()
 
 
 def VelocityFieldFacade(model: str = 'GLOBAL_ANALYSIS_FORECAST_PHY_001_024', *args: object, **kwargs: object) -> object:
