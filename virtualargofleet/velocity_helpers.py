@@ -39,12 +39,12 @@ class VelocityField(ABC):
     dim = None
     """Dimensions dictionary mapping of ``time``, ``depth``, ``lat`` and ``lon`` on netcdf velocity variable names"""
 
-    spatial_periodic = None
+    spatial_periodic = False
     """"zonal", "meridional" or "both" indicating whether the velocity field is global or not, or only zonal or meridional, used to add ``halo_*`` constants on the 
     ``fieldset`` attribute"""
 
     time_periodic = False
-    """Boolean indicating whether the velocity field is periodic in time or not, used to set the ``time_periodic`` argument of the :class:`parcels.fieldset.FieldSet` constructor"""
+    """Boolean or timedeltaindicating the temporal periodicity of the velocity field, used to set the ``time_periodic`` argument of the :class:`parcels.fieldset.FieldSet` constructor"""
 
 
     def __repr__(self):
@@ -120,7 +120,7 @@ class VelocityField_CUSTOM(VelocityField):
                  src,
                  variables: dict,
                  dimensions: dict,
-                 spatial_periodic: str = None,
+                 spatial_periodic: False,
                  time_periodic=False,
                  **kwargs):
         """Create a custom VelocityField for known products"""

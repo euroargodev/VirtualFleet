@@ -64,7 +64,7 @@ class VirtualFleet:
 
             An iterable of dictionaries or :class:`FloatConfiguration` can be passed to specified mission parameters for each
             virtual floats. In this case, the length of the iterable must match the length of the deployment plan.
-        spatial_periodic: str, optional, default=None
+        spatial_periodic: False or str, optional, default=False
             A string indicating the spatial periodicity of the velocity field. 
             If "both", the velocity field is considered global and periodic in both directions.
             If "zonal", the velocity field is considered periodic in the zonal direction only.
