@@ -198,7 +198,7 @@ class VirtualFleet:
         """Add kernels, attention: Order matters !"""
         K = self._parcels['FloatKernel']        
         K += self._parcels['ParticleSet'].Kernel(AdvectionRK4)
-        if self._spatial_periodic is "both":
+        if self._spatial_periodic == "both":
             K += self._parcels['ParticleSet'].Kernel(ZonalPeriodicBoundaryKernel)
             K += self._parcels['ParticleSet'].Kernel(MeridionalPeriodicBoundaryKernel)
         elif self._spatial_periodic == "zonal":

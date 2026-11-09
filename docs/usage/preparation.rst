@@ -111,7 +111,7 @@ Currently, VirtualFleet supports the following values for the ``model`` options 
 
 Temporal periodicity is managed with the **time_periodic** argument of the :meth:`Velocity` function. 
 Like in ocean Parcels, It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
-Spatial perdiodicity is managed with the **spatial_periodic** argument of the :meth:`Velocity` function. It is set to either False, 'zonal', 'meridional' or 'both' depending 
+Spatial periodicity is managed with the **spatial_periodic** argument of the :meth:`Velocity` function. It is set to either False, 'zonal', 'meridional' or 'both' depending 
 on the direction of the velocity field periodicity :
 
 .. code:: python
