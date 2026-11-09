@@ -84,11 +84,14 @@ class DeploymentPlan:
                     params['time'] = [np.datetime64(d) if isinstance(d, str) else d for d in params['time']]
         elif not isinstance(params['time'], np.datetime64):
             raise ValueError("params['time'] must be a string or a np.datetime64")        
-            
-        self.plan['lon'] = np.append(self.plan['lon'], params['lon'])
-        self.plan['lat'] = np.append(self.plan['lat'], params['lat'])
-        self.plan['time'] = np.append(self.plan['time'], params['time'])
-        self.plan['depth'] = np.append(self.plan['depth'], params['depth'])
+        # if sel.plan is empty, create it, otherwise append to it
+        if len(self.plan) == 0:
+            self.plan = {'lon': np.array([params['lon']]), 'lat': np.array([params['lat']]), 'time': np.array([params['time']]), 'depth': np.array([params['depth']])}
+        else:    
+            self.plan['lon'] = np.append(self.plan['lon'], params['lon'])
+            self.plan['lat'] = np.append(self.plan['lat'], params['lat'])
+            self.plan['time'] = np.append(self.plan['time'], params['time'])
+            self.plan['depth'] = np.append(self.plan['depth'], params['depth'])
         return self
 
     def from_section(self, pointA:Annotated[list,2], 
