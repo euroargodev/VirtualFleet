@@ -56,8 +56,7 @@ Velocity/Field
 
     Velocity
     VelocityField
-    VelocityField.add_mask
-    VelocityField.set_spatial_periodic    
+    VelocityField.add_mask    
     VelocityField.fieldset
 
 Utilities

@@ -10,8 +10,7 @@
     virtualargofleet.velocity_helpers.VelocityFieldFacade
 
     virtualargofleet.velocity_helpers.VelocityField
-    virtualargofleet.velocity_helpers.VelocityField.add_mask
-    virtualargofleet.velocity_helpers.VelocityField.set_spatial_periodic
+    virtualargofleet.velocity_helpers.VelocityField.add_mask    
     virtualargofleet.velocity_helpers.VelocityField.fieldset
 
     virtualargofleet.virtualargofleet.VirtualFleet
