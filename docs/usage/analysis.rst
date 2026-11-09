@@ -14,11 +14,11 @@ In order to look at the virtual floats trajectories you can read data directly f
 
    ds = xr.open_zarr(VFleet.output)
 
-You can quickly plot the last position of the floats:
+.. You can quickly plot the last position of the floats: #DEPRECATED
 
-.. code:: python
+.. .. code:: python
 
-   VFleet.plot_positions()
+..    VFleet.plot_positions()
 
 You can extract a profile index from the trajectory file, after the VFleet simulation:
 

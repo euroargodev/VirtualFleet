@@ -11,13 +11,11 @@
 
     virtualargofleet.velocity_helpers.VelocityField
     virtualargofleet.velocity_helpers.VelocityField.add_mask
-    virtualargofleet.velocity_helpers.VelocityField.set_global
-    virtualargofleet.velocity_helpers.VelocityField.plot
+    virtualargofleet.velocity_helpers.VelocityField.set_spatial_periodic
     virtualargofleet.velocity_helpers.VelocityField.fieldset
 
     virtualargofleet.virtualargofleet.VirtualFleet
-    virtualargofleet.virtualargofleet.VirtualFleet.simulate
-    virtualargofleet.virtualargofleet.VirtualFleet.plot_positions
+    virtualargofleet.virtualargofleet.VirtualFleet.simulate    
     virtualargofleet.virtualargofleet.VirtualFleet.to_index
     virtualargofleet.virtualargofleet.VirtualFleet.ParticleSet
     virtualargofleet.virtualargofleet.VirtualFleet.fieldset
@@ -36,6 +34,7 @@
     virtualargofleet.utilities.DeploymentPlan.from_section
     virtualargofleet.utilities.DeploymentPlan.from_region
     virtualargofleet.utilities.DeploymentPlan.add
+    virtualargofleet.utilities.DeploymentPlan.plot
 
     virtualargofleet.app_parcels.ArgoParticle
     virtualargofleet.app_parcels.ArgoFloatKernel
