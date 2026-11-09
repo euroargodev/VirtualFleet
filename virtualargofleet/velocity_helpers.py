@@ -40,8 +40,11 @@ class VelocityField(ABC):
     """Dimensions dictionary mapping of ``time``, ``depth``, ``lat`` and ``lon`` on netcdf velocity variable names"""
 
     spatial_periodic = None
-    """"zonal", "meridional" or "both"indicating whether the velocity field is global or not, or only zonal or meridional, used to add ``halo_*`` constants on the 
+    """"zonal", "meridional" or "both" indicating whether the velocity field is global or not, or only zonal or meridional, used to add ``halo_*`` constants on the 
     ``fieldset`` attribute"""
+
+    time_periodic = False
+    """Boolean indicating whether the velocity field is periodic in time or not, used to set the ``time_periodic`` argument of the :class:`parcels.fieldset.FieldSet` constructor"""
 
 
     def __repr__(self):
@@ -151,6 +154,7 @@ class VelocityField_CUSTOM(VelocityField):
         self.var = variables  # Dictionary mapping 'U' and 'V' to netcdf velocity variable names
         self.dim = dimensions  # Dictionary mapping 'time', 'depth', 'lat' and 'lon' to netcdf velocity variable names
         self.spatial_periodic = spatial_periodic
+        self.time_periodic = time_periodic
 
         # Define parcels fieldset
         if not isinstance(src, xr.core.dataset.Dataset):
@@ -158,14 +162,14 @@ class VelocityField_CUSTOM(VelocityField):
             self.fieldset = FieldSet.from_netcdf(
                 src, self.var, self.dim,
                 allow_time_extrapolation=False,
-                time_periodic=time_periodic,
+                time_periodic=self.time_periodic,
                 deferred_load=True)
         else:
             self.field = src  # Xarray dataset
             self.fieldset = FieldSet.from_xarray_dataset(
                 src, self.var, self.dim,
                 allow_time_extrapolation=False,
-                time_periodic=time_periodic)        
+                time_periodic=self.time_periodic)        
 
         # Create mask to manage grounding:
         self.add_mask()

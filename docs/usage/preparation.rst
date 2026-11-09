@@ -100,7 +100,7 @@ The 2 main ways to get a :class:`VelocityField` instance with the :meth:`Velocit
                        variables=variables,
                        dimensions=dimensions)
 
-In this later case, the function :meth:`Velocity` will take care of creating a :class:`parcels.fieldset.FieldSet` with the appropriate land/sea mask and circular wrapper if the field is global.
+In this later case, the function :meth:`Velocity` will take care of creating a :class:`parcels.fieldset.FieldSet` with the appropriate land/sea mask.
 
 Currently, VirtualFleet supports the following values for the ``model`` options of :meth:`Velocity`:
 
@@ -108,6 +108,8 @@ Currently, VirtualFleet supports the following values for the ``model`` options 
 -  ``MEDSEA_ANALYSISFORECAST_PHY_006_013``
 -  ``ARMOR3D``, ``MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012``
 -  ``custom`` if you want to set your own model definition
+
+Temporal periodicity is managed with the 
 
 
 .. _preparation_cfg:
